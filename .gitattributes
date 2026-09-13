@@ -1,0 +1,47 @@
+# Varsayilan: git satir sonlarini kendisi yonetsin
+* text=auto
+
+# ---------------------------------------------------------------
+# Unity YAML dosyalari
+# eol=lf: Unity bu dosyalari LF ile yazar, CRLF'e cevirmek gereksiz
+#         degisiklik uretir ve diff'leri kirletir.
+# merge=unityyamlmerge: Unity'nin kendi birlestirme araci
+#         (kurulum: git config merge.unityyamlmerge.driver ...)
+# ---------------------------------------------------------------
+*.unity        text eol=lf merge=unityyamlmerge
+*.prefab       text eol=lf merge=unityyamlmerge
+*.asset        text eol=lf merge=unityyamlmerge
+*.meta         text eol=lf merge=unityyamlmerge
+*.controller   text eol=lf merge=unityyamlmerge
+*.anim         text eol=lf merge=unityyamlmerge
+*.mat          text eol=lf merge=unityyamlmerge
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge
+*.mixer        text eol=lf merge=unityyamlmerge
+
+# Kod ve metin
+*.cs           text diff=csharp
+*.md           text
+*.json         text
+*.txt          text
+*.shader       text
+*.ps1          text eol=crlf
+
+# ---------------------------------------------------------------
+# Ikili dosyalar - git bunlara dokunmasin
+# ---------------------------------------------------------------
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.gif          binary
+*.ico          binary
+*.psd          binary
+*.aseprite     binary
+*.ase          binary
+*.wav          binary
+*.mp3          binary
+*.ogg          binary
+*.ttf          binary
+*.otf          binary
+*.dll          binary
+*.exe          binary
+*.unitypackage binary
