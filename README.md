@@ -8,20 +8,31 @@ Dışarıdan tek bir asset indirmene gerek yok — grafikler kod ile üretiliyor
 
 ---
 
-## Durum: kurulum tamamlandı
+## Başlangıç
 
-Bu makinede her şey kurulu ve doğrulandı:
+**Gereken:** Unity **6000.0.83f1** (Unity 6 LTS). Proje bu sürüme sabitlenmiş
+(`ProjectSettings/ProjectVersion.txt`). Farklı bir sürümün varsa Unity Hub
+"farklı sürümle aç" diye sorar — sorun değil.
 
-| Bileşen | Durum |
+1. Depoyu klonla
+2. Unity Hub → **Add** → **Add project from disk** → bu klasör
+3. Aç (ilk açılış birkaç dakika sürer, `Library/` oluşturuluyor)
+4. `Assets/Scenes/Level01.unity` sahnesine çift tıkla
+5. **Play**
+
+Sahne depoda hazır geliyor — 84 nesne, oynanabilir durumda.
+
+> Sürüm eşleme için `setup.ps1` çalıştırabilirsin: kurulu en yeni Unity'yi
+> bulup `ProjectVersion.txt`'yi ona göre günceller.
+
+### Doğrulandı
+
+| | |
 |---|---|
-| Unity Hub | 3.21.2 |
-| Unity Editor | 6000.0.83f1 (Unity 6 LTS) |
-| Unity CLI | 1.0.0-beta.9 (`unity` komutu PATH'te) |
-| Lisans | Aktif (Personal) |
-| Derleme | 0 hata, 0 uyarı |
-| Örnek bölüm | `Assets/Scenes/Level01.unity` — 84 nesne |
-
-`Assets/Scenes/Level01.unity` sahnesini açıp **Play**'e basman yeterli.
+| Derlendiği sürüm | Unity 6000.0.83f1 |
+| Derleme sonucu | 0 hata, 0 uyarı |
+| Örnek bölüm | 84 nesne, batch modda üretildi ve test edildi |
+| Harici bağımlılık | Yok — sprite'lar kod ile üretiliyor |
 
 ### Bölümü yeniden üretmek
 
@@ -38,7 +49,7 @@ sahnenin üzerine yazar.**
 Editor'ü hiç açmadan, terminalden de çalıştırılabilir:
 
 ```bash
-unity open C:\project\2d-platformer
+unity open .
 ```
 
 Bölümü baştan kurmak için (Editor kapalıyken):
@@ -211,6 +222,10 @@ Bu proje `Library/`, `Temp/`, `obj/` klasörleri olmadan geliyor — Unity ilk
 açılışta bunları kendisi üretir, birkaç dakika sürer. `.gitignore` zaten bu
 klasörleri dışlıyor, projeyi doğrudan git'e ekleyebilirsin.
 
-`setup.ps1` şu an gerekli değil (proje zaten kurulu sürüme sabitlendi). İleride
-başka bir Unity sürümü kurar ve projeyi ona taşımak istersen çalıştırabilirsin —
-kurulu en yeni sürümü bulup `ProjectVersion.txt` dosyasını günceller.
+`setup.ps1` isteğe bağlıdır: kurulu Unity sürümlerini tarar, en yenisini bulur
+ve `ProjectSettings/ProjectVersion.txt` dosyasını ona göre günceller. Projeyi
+farklı bir Unity sürümüyle açmak istediğinde işini kolaylaştırır.
+
+```bash
+powershell -ExecutionPolicy Bypass -File setup.ps1
+```
