@@ -81,30 +81,36 @@ zorluk
 | 12 | 100,7–113,1 | Diken + **4,4 boşluk** (%83) | **Zirve** | ✔ |
 | 13 | 113,1–124,1 | Düz zemin, bayrak | Rahatlama | ✘ |
 
-**Toplam 124,1 birim.** Tahmin 29,5 sn, **ölçülen 28,86 sn** — tahmin %2
-tutturdu.
+**Toplam 124,1 birim** — kurulum çıktısıyla birebir doğrulandı, sorun yok.
+Tahmin 29,5 sn, ilk oynanış 28,86 sn — tahmin %2 tutturdu.
 
-### Ölçüm (ilk v2 oynanışı)
+### Ölçüm
 
-| | v1 | v2 |
-|---|---|---|
-| Süre | 19,58 sn | **28,86 sn** |
-| Ölüm | 0 | 0 |
-| Para | 30/31 | **50/50** |
+| | v1 | v2 — 1. koşu | v2 — 2. koşu |
+|---|---|---|---|
+| Süre | 19,58 sn | 28,86 sn | **22,24 sn** |
+| Ölüm | 0 | 0 | **2** |
+| Para | 30/31 | 50/50 | 44/50 |
+| Hız | 4,24 birim/sn | 4,30 birim/sn | **5,58 birim/sn** |
 
-Süre hedefin 1,1 saniye altında ama bu **temiz bir koşu**: sıfır ölüm,
-bütün paralar. Yani neredeyse optimal oynanış. Takılan bir oyuncu 30'u
-rahat geçer — bölümü sırf sayıyı tutturmak için uzatmak ölçüyü kandırmak
-olurdu.
+**Hedefe göre durum:** İlk oynanış 28,86 sn — hedefin 1,1 saniye altında.
+Bölümü sırf sayıyı tutturmak için uzatmak ölçüyü kandırmak olurdu; bölüm
+olduğu gibi bırakıldı.
 
-Asıl dikkat çeken **sıfır ölüm**: %83'lük final boşluğu ve diken koridoru
-ilk denemede geçildi. Bölüm 1 için bu kabul edilebilir (öğretme bölümü),
-ama Bölüm 2'nin gerçekten ölüm aldırması gerekiyor.
+**İkinci koşu neden daha hızlı?** Aynı oyuncu, aynı bölüm — sadece artık
+biliyor. %30 hızlanma. Bu yüzden "30–90 sn" hedefi **ilk oynanış** için
+anlamlı; tekrar oynayan biri her bölümü hedefin altında bitirir.
+`LevelCursor`'ın süre tahmini de bu yüzden ilk-oynanış hızını kullanıyor.
 
-**Not:** Bu süre `bestTime` alanından okunamadı — v1'in rekoru (19,58)
-orada duruyordu ve v2 daha uzun olduğu için kırılamazdı.
-`totalPlayTime` farkından (48,43 − 19,58) hesaplandı. Bu bir hataydı ve
-düzeltildi: [10-checkpoint-ve-kayit.md](10-checkpoint-ve-kayit.md#tasarım-sürümü).
+**Asıl kazanç: 0 → 2 ölüm.** v1'de ve v2'nin ilk koşusunda sıfır ölüm
+vardı — yani bölüm hiç direnç göstermiyordu. Artık gösteriyor. Para da
+50/50'den 44/50'ye düştü: geri dönüp toplanacak bir şey var.
+
+**Not:** İlk koşunun süresi `bestTime` alanından okunamadı — v1'in rekoru
+(19,58) orada duruyordu ve v2 daha uzun olduğu için kırılamazdı.
+`totalPlayTime` farkından hesaplandı. Bu bir hataydı, düzeltildi:
+[10-checkpoint-ve-kayit.md](10-checkpoint-ve-kayit.md#9-tasarım-sürümü).
+İkinci koşuda düzeltme çalıştı, rekor sıfırlandı ve süre doğrudan okundu.
 
 ---
 
@@ -244,7 +250,7 @@ zıplamanın nereden başlaması gerektiğini söylüyorlar. Alçak zıplama yet
 - [x] Paralar rota gösteriyor
 - [x] Zorluk eğrisi dalga (47 → 56 → **49** → 68 → 68 → **83**)
 - [x] Diken tuzağı yok (otomatik doğrulandı)
-- [~] Süre 30–90 sn arasında — **ölçüldü: 28,86 sn** (bkz. aşağıda)
+- [~] Süre 30–90 sn arasında — ilk oynanış **28,86 sn** (1,1 sn altında, kabul edildi)
 - [ ] 5 saniye testi: ekrana bakınca nereye gideceğin belli
 - [ ] Bulanıklık testi
 - [ ] Bir başkası takılmadan bitirdi
