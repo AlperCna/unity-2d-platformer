@@ -465,7 +465,6 @@ namespace Platformer.EditorTools
         /// <summary>Insa bitince cagir: ozet ve sorun sayisi.</summary>
         public void Report()
         {
-            Paint();
             ValidateSpikeLandings();
 
             // 4,2 birim/saniye — OLCULEN deger, uc kosudan:
@@ -540,7 +539,15 @@ namespace Platformer.EditorTools
         /// yaptigi isin aynisi, ama tahminsiz: bolum koddan uretildigi icin
         /// hangi hucrenin dolu oldugunu kesin biliyoruz.
         /// </summary>
-        private void Paint()
+        /// <summary>
+        /// Insa bitince, SAHNE KAYDEDILMEDEN once cagir.
+        ///
+        /// Onceden Report() icinden cagriliyordu ama Report en sonda,
+        /// SaveScene'den SONRA calisiyor - karolar bellekte olusur, dosyaya
+        /// yazilmazdi. Oyun oynanirken calisir, sahne kapatilip acilinca
+        /// zemin yok olurdu.
+        /// </summary>
+        public void Build()
         {
             if (rig == null) return;
 
