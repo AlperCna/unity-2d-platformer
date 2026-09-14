@@ -60,6 +60,8 @@ namespace Platformer.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log($"Karo varliklari: {created} yeni, {updated} guncellendi " +
                       $"({TileFolder})");
+
+            RuleTileFactory.Generate();
         }
 
         public static string TilePath(int mask) =>
@@ -75,6 +77,7 @@ namespace Platformer.EditorTools
             // tazelenmeli - yoksa Tile'lar eski dilimleri gostermeye calisir.
             bool sheetRebuilt = TilesetFactory.EnsureUpToDate();
 
+            // GenerateAll kendi icinde Rule Tile'i da tazeliyor
             if (sheetRebuilt || Load(0) == null) GenerateAll();
         }
 

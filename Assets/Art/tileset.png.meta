@@ -100,8 +100,8 @@ TextureImporter:
       name: tileset_00
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 2
+        y: 2
         width: 32
         height: 32
       alignment: 0
@@ -122,8 +122,8 @@ TextureImporter:
       name: tileset_01
       rect:
         serializedVersion: 2
-        x: 32
-        y: 0
+        x: 38
+        y: 2
         width: 32
         height: 32
       alignment: 0
@@ -144,8 +144,8 @@ TextureImporter:
       name: tileset_02
       rect:
         serializedVersion: 2
-        x: 64
-        y: 0
+        x: 74
+        y: 2
         width: 32
         height: 32
       alignment: 0
@@ -166,8 +166,8 @@ TextureImporter:
       name: tileset_03
       rect:
         serializedVersion: 2
-        x: 96
-        y: 0
+        x: 110
+        y: 2
         width: 32
         height: 32
       alignment: 0
@@ -188,8 +188,8 @@ TextureImporter:
       name: tileset_04
       rect:
         serializedVersion: 2
-        x: 0
-        y: 32
+        x: 2
+        y: 38
         width: 32
         height: 32
       alignment: 0
@@ -210,8 +210,8 @@ TextureImporter:
       name: tileset_05
       rect:
         serializedVersion: 2
-        x: 32
-        y: 32
+        x: 38
+        y: 38
         width: 32
         height: 32
       alignment: 0
@@ -232,8 +232,8 @@ TextureImporter:
       name: tileset_06
       rect:
         serializedVersion: 2
-        x: 64
-        y: 32
+        x: 74
+        y: 38
         width: 32
         height: 32
       alignment: 0
@@ -254,8 +254,8 @@ TextureImporter:
       name: tileset_07
       rect:
         serializedVersion: 2
-        x: 96
-        y: 32
+        x: 110
+        y: 38
         width: 32
         height: 32
       alignment: 0
@@ -276,8 +276,8 @@ TextureImporter:
       name: tileset_08
       rect:
         serializedVersion: 2
-        x: 0
-        y: 64
+        x: 2
+        y: 74
         width: 32
         height: 32
       alignment: 0
@@ -298,8 +298,8 @@ TextureImporter:
       name: tileset_09
       rect:
         serializedVersion: 2
-        x: 32
-        y: 64
+        x: 38
+        y: 74
         width: 32
         height: 32
       alignment: 0
@@ -320,8 +320,8 @@ TextureImporter:
       name: tileset_10
       rect:
         serializedVersion: 2
-        x: 64
-        y: 64
+        x: 74
+        y: 74
         width: 32
         height: 32
       alignment: 0
@@ -342,8 +342,8 @@ TextureImporter:
       name: tileset_11
       rect:
         serializedVersion: 2
-        x: 96
-        y: 64
+        x: 110
+        y: 74
         width: 32
         height: 32
       alignment: 0
@@ -364,8 +364,8 @@ TextureImporter:
       name: tileset_12
       rect:
         serializedVersion: 2
-        x: 0
-        y: 96
+        x: 2
+        y: 110
         width: 32
         height: 32
       alignment: 0
@@ -386,8 +386,8 @@ TextureImporter:
       name: tileset_13
       rect:
         serializedVersion: 2
-        x: 32
-        y: 96
+        x: 38
+        y: 110
         width: 32
         height: 32
       alignment: 0
@@ -408,8 +408,8 @@ TextureImporter:
       name: tileset_14
       rect:
         serializedVersion: 2
-        x: 64
-        y: 96
+        x: 74
+        y: 110
         width: 32
         height: 32
       alignment: 0
@@ -430,8 +430,8 @@ TextureImporter:
       name: tileset_15
       rect:
         serializedVersion: 2
-        x: 96
-        y: 96
+        x: 110
+        y: 110
         width: 32
         height: 32
       alignment: 0
