@@ -275,8 +275,8 @@ Bu tabloyu doldur, her epic bitince işaretle:
 
 | # | Epic | Durum | Bitiş tarihi | Not |
 |---|---|---|---|---|
-| 01 | Vizyon | ☐ | | |
-| 02 | Hissiyat | ☐ | | |
+| 01 | Vizyon | ✅ | 14.09.2026 | Dash + dengeli/klasik. [VIZYON.md](VIZYON.md) |
+| 02 | Hissiyat | ✅ | 14.09.2026 | Ölçüldü: 3,03 / 5,31 / 7,62. [AYARLAR.md](AYARLAR.md) |
 | 03 | Kamera | ☐ | | |
 | 04 | Seviye tasarımı | ☐ | | |
 | 05 | Tilemap | ☐ | | |
