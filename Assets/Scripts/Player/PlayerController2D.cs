@@ -56,6 +56,23 @@ namespace Platformer.Player
         [Tooltip("Yere inmeden once basilan zipla tusunun hafizada kalma suresi.")]
         [SerializeField] private float jumpBufferTime = 0.12f;
 
+        [Header("Dash (imza mekanigi)")]
+        [Tooltip("Dash sirasindaki hiz. moveSpeed'in ~2 kati iyi bir baslangic.")]
+        [SerializeField] private float dashSpeed = 18f;
+
+        [Tooltip("Dash ne kadar surer. Kisa = keskin, uzun = akici.")]
+        [SerializeField] private float dashDuration = 0.16f;
+
+        [Tooltip("Iki dash arasi zorunlu bekleme.")]
+        [SerializeField] private float dashCooldown = 0.35f;
+
+        [Tooltip("Dash bitince hiz bu orana dusurulur. 1 = hiz korunur (firlamis hissi).")]
+        [Range(0.2f, 1f)]
+        [SerializeField] private float dashEndSpeedMultiplier = 0.55f;
+
+        [Tooltip("Dash yonu 8 yon mu olsun, yoksa sadece yatay mi?")]
+        [SerializeField] private bool allowDiagonalDash = true;
+
         [Header("Zemin Algilama")]
         [Tooltip("Hangi layer'lar zemin sayilir. Player layer'ini burada ISARETLEME.")]
         [SerializeField] private LayerMask groundLayers = ~0;
@@ -77,9 +94,15 @@ namespace Platformer.Player
         public bool FacingRight { get; private set; } = true;
         public Vector2 Velocity => rb != null ? rb.GetVelocity() : Vector2.zero;
 
+        public bool IsDashing { get; private set; }
+
+        /// <summary>Dash hakki var mi? UI/gorsel geri bildirim icin.</summary>
+        public bool DashReady => dashAvailable && dashCooldownLeft <= 0f;
+
         // Ses, parcacik, animasyon gibi sistemler buraya baglanabilir
         public System.Action OnJumped;
         public System.Action OnLanded;
+        public System.Action OnDashed;
 
         // --- Dahili sayaclar ---
         private float coyoteCounter;
@@ -88,6 +111,12 @@ namespace Platformer.Player
         private bool wasGroundedLastFrame;
         private bool frozen;
         private float velocityXSmoothing;
+
+        // --- Dash durumu ---
+        private float dashTimeLeft;
+        private float dashCooldownLeft;
+        private bool dashAvailable = true;
+        private Vector2 dashDirection;
 
         // jumpHeight ve jumpApexTime'dan turetilen fizik degerleri
         private float gravity;
@@ -139,6 +168,15 @@ namespace Platformer.Player
             if (frozen) return;
 
             CheckGround();
+
+            // Dash sirasinda normal hareket ve yercekimi devre disi:
+            // karakter duz bir cizgide, sabit hizla gider.
+            if (IsDashing)
+            {
+                UpdateDash();
+                return;
+            }
+
             ApplyHorizontalMovement();
             HandleJump();
             ApplyGravity();
@@ -162,6 +200,16 @@ namespace Platformer.Player
                 IsJumping = false;
             }
 
+            // Dash: Shift veya sag fare
+            bool dashPressed = Input.GetKeyDown(KeyCode.LeftShift)
+                               || Input.GetKeyDown(KeyCode.RightShift)
+                               || Input.GetKeyDown(KeyCode.Mouse1);
+
+            if (dashPressed && !IsDashing && DashReady)
+            {
+                StartDash();
+            }
+
             UpdateFacing();
         }
 
@@ -177,6 +225,8 @@ namespace Platformer.Player
             }
 
             jumpBufferCounter -= Time.deltaTime;
+
+            if (dashCooldownLeft > 0f) dashCooldownLeft -= Time.deltaTime;
         }
 
         private void CheckGround()
@@ -189,6 +239,7 @@ namespace Platformer.Player
             {
                 jumpsLeft = extraJumps;
                 IsJumping = false;
+                dashAvailable = true;   // dash hakki yerde yenilenir
                 OnLanded?.Invoke();
             }
 
@@ -240,6 +291,51 @@ namespace Platformer.Player
             OnJumped?.Invoke();
         }
 
+        /// <summary>
+        /// Dash'i baslatir. Yon: giris varsa o yon, giris yoksa baktigi yon.
+        /// </summary>
+        private void StartDash()
+        {
+            float inputX = HorizontalInput;
+            float inputY = allowDiagonalDash ? Input.GetAxisRaw("Vertical") : 0f;
+
+            if (Mathf.Abs(inputX) < 0.01f && Mathf.Abs(inputY) < 0.01f)
+            {
+                // Giris yok -> baktigi yone dash
+                dashDirection = FacingRight ? Vector2.right : Vector2.left;
+            }
+            else
+            {
+                dashDirection = new Vector2(inputX, inputY).normalized;
+            }
+
+            IsDashing = true;
+            dashTimeLeft = dashDuration;
+            dashAvailable = false;
+            dashCooldownLeft = dashCooldown;
+
+            OnDashed?.Invoke();
+        }
+
+        private void UpdateDash()
+        {
+            dashTimeLeft -= Time.fixedDeltaTime;
+
+            if (dashTimeLeft <= 0f)
+            {
+                IsDashing = false;
+
+                // Hizi kes - yoksa dash bitince firlamis gibi devam eder
+                rb.SetVelocity(rb.GetVelocity() * dashEndSpeedMultiplier);
+
+                // Yatay yumusatmayi da sifirla ki SmoothDamp eski hizi hatirlamasin
+                velocityXSmoothing = 0f;
+                return;
+            }
+
+            rb.SetVelocity(dashDirection * dashSpeed);
+        }
+
         private void ApplyGravity()
         {
             // Yerdeyken asagi hiz biriktirmiyoruz. Bunun yerine kucuk sabit bir
@@ -275,6 +371,7 @@ namespace Platformer.Player
         public void Freeze()
         {
             frozen = true;
+            IsDashing = false;
             HorizontalInput = 0f;
             if (rb != null) rb.SetVelocity(Vector2.zero);
         }
@@ -287,6 +384,12 @@ namespace Platformer.Player
             jumpBufferCounter = 0f;
             coyoteCounter = 0f;
             IsJumping = false;
+
+            // Respawn sonrasi dash hakki dolu baslasin
+            IsDashing = false;
+            dashTimeLeft = 0f;
+            dashCooldownLeft = 0f;
+            dashAvailable = true;
         }
 
         /// <summary>Zipla pedi / yay gibi disaridan firlatma icin.</summary>
