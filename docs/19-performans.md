@@ -72,20 +72,27 @@ Editor'deki sayılar gerçeği yansıtmaz.
 | `FindObjectOfType<T>()` | Referansı sakla | Çok pahalı |
 | `Camera.main` her karede | Cache'le | İçeride `FindGameObjectWithTag` çağırır |
 | `"Para: " + x` her karede | Değer değişince güncelle | String tahsisi |
-| `Physics2D.OverlapBoxAll` | `OverlapBoxNonAlloc` | Dizi yeniden kullanılır |
+| `Physics2D.OverlapBoxAll` | `OverlapBox` + `ContactFilter2D` + `List` | Liste yeniden kullanılır |
 | `foreach` bazı koleksiyonlarda | `for` döngüsü | Enumerator tahsisi |
 | `new List<T>()` döngüde | Alanı yeniden kullan | Tahsis |
 | `LINQ` (`.Where`, `.Select`) | Elle döngü | Çok tahsis üretir |
 
-**Projendeki iyi örnek** — `MovingPlatform`:
+**Projendeki iyi örnek** — [`MovingPlatform`](../Assets/Scripts/Gameplay/MovingPlatform.cs):
 
 ```csharp
-// Her karede yeni dizi olusturmak yerine tek diziyi yeniden kullaniyor
-private readonly Collider2D[] passengerBuffer = new Collider2D[8];
+// Her karede yeni koleksiyon olusturmak yerine ayni listeyi yeniden kullaniyor
+private readonly List<Collider2D> passengerResults = new List<Collider2D>(8);
+private ContactFilter2D passengerFilter;   // Awake'te bir kez kurulur
 
-int count = Physics2D.OverlapBoxNonAlloc(
-    checkCenter, checkSize, 0f, passengerBuffer, passengerLayers);
+int count = Physics2D.OverlapBox(checkCenter, checkSize, 0f,
+                                 passengerFilter, passengerResults);
 ```
+
+> ⚠️ **`OverlapBoxNonAlloc` kullanma.** Uzun süre "doğru" yöntemdi ama
+> Unity 6'da kullanımdan kaldırıldı (`CS0618`). Bu projede bir kez
+> kullanılıp sonra değiştirildi. `ContactFilter2D` + `List` sürümü hem
+> eski hem yeni Unity'de çalışıyor ve aynı şekilde çöp üretmiyor —
+> `#if` gerektirmiyor.
 
 **Kabul edilebilir örnek** — `HudController`:
 

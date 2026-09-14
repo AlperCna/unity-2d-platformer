@@ -46,7 +46,10 @@ namespace Platformer.Gameplay
             }
 
             PlayerHealth health = other.GetComponent<PlayerHealth>();
-            if (health != null) health.Kill();
+
+            // gameObject'i veriyoruz ki olum aninda bu tehlike parlasin -
+            // oyuncu NEDEN oldugunu gorsun
+            if (health != null) health.Kill(gameObject);
         }
     }
 }

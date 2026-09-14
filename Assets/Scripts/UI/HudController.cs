@@ -5,19 +5,28 @@ using Platformer.Core;
 namespace Platformer.UI
 {
     /// <summary>
-    /// Ekrandaki skor / can gostergesi ve bolum sonu - oyun bitti panelleri.
+    /// Ekrandaki gostergeler.
+    ///
+    /// CAN GOSTERMIYOR - oyunda sinirsiz deneme var. Onun yerine olum
+    /// SAYACI var: ceza degil, istatistik. Oyuncu kendi gelisimini gorur,
+    /// sen de hangi bolumun bozuk oldugunu (Epic 17).
+    ///
     /// GameManager'i her karede sorgulamak yerine olaylarina abone olur.
     /// </summary>
     public class HudController : MonoBehaviour
     {
         [Header("Gostergeler")]
         [SerializeField] private Text scoreText;
-        [SerializeField] private Text livesText;
+        [SerializeField] private Text deathText;
+        [SerializeField] private Text timeText;
         [SerializeField] private Text messageText;
 
         [Header("Mesajlar")]
-        [SerializeField] private string levelCompleteMessage = "BOLUM TAMAMLANDI!\nYeniden baslamak icin R";
-        [SerializeField] private string gameOverMessage = "OYUN BITTI\nYeniden baslamak icin R";
+        [SerializeField] private string levelCompleteMessage = "BOLUM TAMAMLANDI!";
+
+        [Header("Sure")]
+        [Tooltip("Sureyi ekranda goster. Kapaliysa yine olculur, sadece gorunmez.")]
+        [SerializeField] private bool showTimer = true;
 
         private void Start()
         {
@@ -28,17 +37,15 @@ namespace Platformer.UI
                 return;
             }
 
-            // Olaylara abone ol
             GameManager.Instance.OnScoreChanged += HandleScoreChanged;
-            GameManager.Instance.OnLivesChanged += HandleLivesChanged;
+            GameManager.Instance.OnDeathCountChanged += HandleDeathCountChanged;
             GameManager.Instance.OnLevelCompleted += HandleLevelCompleted;
-            GameManager.Instance.OnGameOver += HandleGameOver;
 
-            // Baslangic degerlerini hemen goster
             HandleScoreChanged(GameManager.Instance.Score, GameManager.Instance.TotalCoins);
-            HandleLivesChanged(GameManager.Instance.Lives);
+            HandleDeathCountChanged(GameManager.Instance.DeathCount);
 
             if (messageText != null) messageText.text = string.Empty;
+            if (timeText != null) timeText.gameObject.SetActive(showTimer);
         }
 
         private void OnDestroy()
@@ -47,14 +54,20 @@ namespace Platformer.UI
             if (GameManager.Instance == null) return;
 
             GameManager.Instance.OnScoreChanged -= HandleScoreChanged;
-            GameManager.Instance.OnLivesChanged -= HandleLivesChanged;
+            GameManager.Instance.OnDeathCountChanged -= HandleDeathCountChanged;
             GameManager.Instance.OnLevelCompleted -= HandleLevelCompleted;
-            GameManager.Instance.OnGameOver -= HandleGameOver;
         }
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.R) && GameManager.Instance != null)
+            if (GameManager.Instance == null) return;
+
+            if (showTimer && timeText != null && !GameManager.Instance.LevelCompleted)
+            {
+                timeText.text = GameManager.FormatTime(GameManager.Instance.LevelTime);
+            }
+
+            if (Input.GetKeyDown(KeyCode.R))
             {
                 GameManager.Instance.RestartLevel();
             }
@@ -65,19 +78,22 @@ namespace Platformer.UI
             if (scoreText != null) scoreText.text = $"Para: {score} / {total}";
         }
 
-        private void HandleLivesChanged(int lives)
+        private void HandleDeathCountChanged(int deaths)
         {
-            if (livesText != null) livesText.text = $"Can: {lives}";
+            if (deathText != null) deathText.text = $"Olum: {deaths}";
         }
 
         private void HandleLevelCompleted()
         {
-            if (messageText != null) messageText.text = levelCompleteMessage;
-        }
+            if (messageText == null) return;
 
-        private void HandleGameOver()
-        {
-            if (messageText != null) messageText.text = gameOverMessage;
+            GameManager gm = GameManager.Instance;
+            messageText.text =
+                $"{levelCompleteMessage}\n\n" +
+                $"Sure   {GameManager.FormatTime(gm.LevelTime)}\n" +
+                $"Para   {gm.Score} / {gm.TotalCoins}\n" +
+                $"Olum   {gm.DeathCount}\n\n" +
+                "Yeniden baslamak icin R";
         }
     }
 }

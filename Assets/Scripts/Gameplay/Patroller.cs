@@ -123,7 +123,7 @@ namespace Platformer.Gameplay
             }
             else
             {
-                health.Kill();
+                health.Kill(gameObject);
             }
         }
 
