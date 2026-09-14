@@ -8,5 +8,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level01.unity
     guid: 692c9d3dd6f1d1b46bf2a055a433e568
+  - enabled: 1
+    path: Assets/Scenes/DusmanTestOdasi.unity
+    guid: 08b96604a1538e04391cb39911e42d49
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
