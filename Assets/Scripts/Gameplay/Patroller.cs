@@ -11,7 +11,7 @@ namespace Platformer.Gameplay
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(Collider2D))]
-    public class Patroller : MonoBehaviour
+    public class Patroller : MonoBehaviour, IResettable
     {
         [Header("Hareket")]
         [SerializeField] private float moveSpeed = 2f;
@@ -47,6 +47,11 @@ namespace Platformer.Gameplay
         private int direction;
         private bool isDead;
 
+        // Respawn'da geri donulecek baslangic durumu
+        private Vector3 initialPosition;
+        private Vector3 initialScale;
+        private Color initialColor = Color.white;
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
@@ -55,6 +60,48 @@ namespace Platformer.Gameplay
 
             rb.freezeRotation = true;
             direction = startFacingRight ? 1 : -1;
+            ApplyFacing();
+
+            // Respawn'da geri donebilmek icin baslangic durumunu sakla
+            initialPosition = transform.position;
+            initialScale = transform.localScale;
+            if (spriteRenderer != null) initialColor = spriteRenderer.color;
+        }
+
+        /// <summary>
+        /// Respawn'da baslangic konumuna doner ve tekrar canlanir.
+        ///
+        /// Olurken SetActive(false) degil Destroy kullansaydik burada
+        /// geri getirecek nesne kalmazdi - o yuzden olum efekti nesneyi
+        /// yok etmiyor, sadece gizliyor.
+        /// </summary>
+        public void ResetToInitialState()
+        {
+            // Devam eden ezilme animasyonunu durdur, yoksa sifirladigimiz
+            // olcegi ve rengi tekrar bozar
+            StopAllCoroutines();
+
+            isDead = false;
+            direction = startFacingRight ? 1 : -1;
+
+            transform.position = initialPosition;
+            transform.localScale = initialScale;
+
+            bodyCollider.enabled = true;
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = initialColor;
+                spriteRenderer.enabled = true;
+            }
+
+            if (rb != null)
+            {
+                rb.bodyType = RigidbodyType2D.Dynamic;
+                rb.SetVelocity(Vector2.zero);
+            }
+
+            gameObject.SetActive(true);
             ApplyFacing();
         }
 
@@ -173,7 +220,10 @@ namespace Platformer.Gameplay
                 yield return null;
             }
 
-            Destroy(gameObject);
+            // Destroy DEGIL: respawn'da geri gelmesi lazim (IResettable).
+            // Destroy edilseydi GameManager'in onbellekteki referansi olu
+            // kalirdi ve dusman bir daha asla donmezdi.
+            gameObject.SetActive(false);
         }
 
         private void OnDrawGizmosSelected()

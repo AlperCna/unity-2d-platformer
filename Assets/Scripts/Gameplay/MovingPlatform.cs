@@ -1,4 +1,5 @@
 using UnityEngine;
+using Platformer.Core;
 
 namespace Platformer.Gameplay
 {
@@ -9,7 +10,7 @@ namespace Platformer.Gameplay
     /// boylece karakterin olcegi/rotasyonu bozulmaz.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
-    public class MovingPlatform : MonoBehaviour
+    public class MovingPlatform : MonoBehaviour, IResettable
     {
         public enum LoopMode
         {
@@ -182,6 +183,26 @@ namespace Platformer.Gameplay
             {
                 currentIndex = (currentIndex + 1) % waypoints.Length;
             }
+        }
+
+        /// <summary>
+        /// Respawn'da baslangic noktasina doner.
+        ///
+        /// Bu olmadan: platform boslugun ortasindayken olursen, checkpoint'te
+        /// dogdugunda platform hala orada olur ve gecemezsin. Beklersen gelir
+        /// ama ritim bozulur; en kotusu platform ulasilamaz bir yerdeyse
+        /// sonsuz olum dongusune girersin.
+        /// </summary>
+        public void ResetToInitialState()
+        {
+            transform.position = origin;
+
+            currentIndex = 0;
+            direction = 1;
+            waitTimer = 0f;
+            segmentProgress = 0f;
+
+            if (rb != null) rb.SetVelocity(Vector2.zero);
         }
 
         private void OnDrawGizmos()

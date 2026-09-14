@@ -39,6 +39,9 @@ namespace Platformer.EditorTools
         [MenuItem("Tools/2D Platformer/Ornek Bolumu Olustur", false, 1)]
         public static void BuildEverything()
         {
+            if (!EditorGuards.RequireEditMode("Ornek Bolumu Olustur",
+                "Yeni sahne olusturmak Play modunda mumkun degil.")) return;
+
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
             bool proceed = EditorUtility.DisplayDialog(
@@ -76,6 +79,9 @@ namespace Platformer.EditorTools
         [MenuItem("Tools/2D Platformer/Sadece Grafikleri Uret", false, 20)]
         public static void GenerateArtOnly()
         {
+            if (!EditorGuards.RequireEditMode("Sadece Grafikleri Uret",
+                "Asset yeniden import etmek Play modunda sorun cikarir.")) return;
+
             // Bu menu bilincli bir istek: var olanlarin uzerine YAZAR.
             bool ok = EditorUtility.DisplayDialog(
                 "Grafikleri Yeniden Uret",
@@ -92,6 +98,9 @@ namespace Platformer.EditorTools
         [MenuItem("Tools/2D Platformer/Sadece Proje Ayarlarini Uygula", false, 21)]
         public static void ConfigureProjectOnly()
         {
+            if (!EditorGuards.RequireEditMode("Sadece Proje Ayarlarini Uygula",
+                "Layer ve input ayarlari Play modunda degistirilmemeli.")) return;
+
             ConfigureProject();
             Debug.Log("2D Platformer: proje ayarlari uygulandi.");
         }
@@ -689,11 +698,14 @@ namespace Platformer.EditorTools
             so.FindProperty("killPlaneY").floatValue = -12f;
             so.ApplyModifiedProperties();
 
-            // TimeController AYRI bir nesnede: DontDestroyOnLoad ile sahneler
-            // arasi yasiyor. GameManager ise bolume ozel (skor, checkpoint
+            // Kalici yoneticiler AYRI nesnelerde: DontDestroyOnLoad ile sahneler
+            // arasi yasiyorlar. GameManager ise bolume ozel (skor, checkpoint
             // her bolumde sifirlanmali), o yuzden ayni nesnede olamazlar.
             var timeObject = new GameObject("TimeController");
             timeObject.AddComponent<TimeController>();
+
+            var saveObject = new GameObject("SaveManager");
+            saveObject.AddComponent<SaveManager>();
         }
 
         // --- Kucuk yardimci -------------------------------------------

@@ -1,5 +1,13 @@
 # Epic 10 — Checkpoint ve Kayıt Sistemi
 
+> ✅ **TAMAMLANDI — 14 Eylül 2026.**
+> `IResettable` + `SaveManager` yazıldı. Respawn'da platform ve düşmanlar
+> başa dönüyor, paralar toplanmış kalıyor. Kalıcı kayıt JSON olarak
+> `persistentDataPath` altında; bozuk kayıt testi geçti.
+>
+> Ses ayarı alanları `SaveData` içinde hazır ama henüz kimse okumuyor —
+> Epic 13 (ses) ve Epic 15 (ayarlar menüsü) bağlayacak.
+
 **Amaç:** Oyuncunun ilerlemesini kaybetmemesi. Oyunu kapatıp ertesi gün
 kaldığı yerden devam edebilmesi.
 
@@ -461,13 +469,13 @@ private static void DeleteSaveFromMenu()
 
 ## Kabul kriteri
 
-- [ ] Bölüm içinde ölünce en fazla 45 sn geriye gidiyorsun
-- [ ] Respawn'da platformlar/düşmanlar sıfırlanıyor, paralar kalıyor
-- [ ] Oyunu kapatıp açınca kaldığın bölüm hatırlanıyor
-- [ ] Her bölümün para/sır/süre durumu kayıtlı
-- [ ] Kayıt dosyasını elle bozunca oyun çökmüyor
-- [ ] Ses ayarları kayıtlı ve geri yükleniyor
-- [ ] Kayıt yazılırken elektrik kesilse eski kayıt bozulmuyor (tmp dosya)
+- [x] Bölüm içinde ölünce en fazla 45 sn geriye gidiyorsun
+- [x] Respawn'da platformlar/düşmanlar sıfırlanıyor, paralar kalıyor
+- [x] Oyunu kapatıp açınca kaldığın bölüm hatırlanıyor
+- [x] Her bölümün para/süre durumu kayıtlı *(sır → Epic 08)*
+- [x] Kayıt dosyasını elle bozunca oyun çökmüyor
+- [ ] Ses ayarları kayıtlı ve geri yükleniyor *(alanlar hazır → Epic 13/15 bağlayacak)*
+- [x] Kayıt yazılırken elektrik kesilse eski kayıt bozulmuyor (tmp + File.Replace)
 
 ---
 

@@ -294,8 +294,8 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 | 3 | 03 | Kamera | M1 | ✅ | 14.09.2026 |
 | 4 | 04 | Seviye tasarımı | M1 | ✅ | 14.09.2026 |
 | 5 | 09 | Can/Ölüm | M1 | ✅ | 14.09.2026 |
-| 6 | 10 | Checkpoint/Kayıt | M1 | ⬜ | **sıradaki** |
-| — | — | *M1 kapısı: Bölüm 1'i birine oynat* | | ⬜ | |
+| 6 | 10 | Checkpoint/Kayıt | M1 | ✅ | 14.09.2026 |
+| — | — | **M1 KAPISI: Bölüm 1'i birine oynat** | | ⬜ | **sıradaki** |
 | 7 | 05 | Tilemap | M2 | ⬜ | |
 | 8 | 06 | Düşmanlar | M2 | ⬜ | |
 | 9 | 07 | Tehlikeler | M2 | ⬜ | |
@@ -380,7 +380,7 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 | 03 Kamera | ✅ | Dikey takip, sarsıntı, otomatik sınır aracı |
 | 04 Seviye tasarımı | ✅ | [BOLUM-01.md](BOLUM-01.md) + `LevelCursor` |
 | 09 Can/Ölüm | ✅ | 0,45 sn ölüm, hit stop, ölüm sayacı |
-| 10 Checkpoint/Kayıt | ⬜ | **sıradaki** |
+| 10 Checkpoint/Kayıt | ✅ | IResettable + JSON kayıt |
 
 **Ölçülen değerler** (bölüm tasarımının cetveli):
 
@@ -394,4 +394,4 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 **Açık madde:** Bölüm 1'i başkasına oynatma — M1 kapısına ertelendi
 (Epic 09 ve 10 bitmeden geri bildirim yanıltıcı olur).
 
-Sıradaki adım: **[Epic 10 — Checkpoint ve kayıt](10-checkpoint-ve-kayit.md)**.
+**M1'in altı epic'i de bitti.** Sıradaki adım kod değil: **Bölüm 1'i birine oynat.**
