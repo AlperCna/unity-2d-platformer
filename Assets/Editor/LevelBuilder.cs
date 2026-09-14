@@ -29,8 +29,57 @@ namespace Platformer.EditorTools
         internal const int SortEnemy = 8;
         internal const int SortPlayer = 10;
 
-        internal static int groundLayer;
-        internal static int playerLayer;
+        // ---------------------------------------------------------------
+        // Layer indeksleri
+        //
+        // BUNLAR DUZ STATIC ALANDI VE BIR HATAYA SEBEP OLDU.
+        //
+        // Sadece ConfigureProject() icinde atraniyorlardi ve Unity script
+        // derleyince static'ler sifirlanir. "Prefablari Uret" menusu
+        // ConfigureProject cagirmiyordu; o menuden uretilen Player
+        // prefab'ine zemin maskesi olarak 1 << 0 (Default) gomuldu.
+        //
+        // Sonuc sinsiydi: Bolum 1'de hicbir sey olmadi (Default katmaninda
+        // karakterin altinda bir sey yok). Ama dusman test odasinda
+        // dusmanlar Default'ta oldugu icin, havada bir dusmanin ustunden
+        // gecerken IsGrounded true oluyor ve karakter yere inmek yerine
+        // saniyede 1 birimle SUZULUYORDU.
+        //
+        // Artik tembel cozumleniyorlar: ilk okundugunda proje ayarindan
+        // isimle bulunuyor. Derlemeden etkilenmiyor, cagri sirasi onemsiz.
+        // ---------------------------------------------------------------
+
+        private static int groundLayerCache = -1;
+        private static int playerLayerCache = -1;
+
+        internal static int groundLayer
+        {
+            get => Resolve(ref groundLayerCache, "Ground");
+            set => groundLayerCache = value;
+        }
+
+        internal static int playerLayer
+        {
+            get => Resolve(ref playerLayerCache, "Player");
+            set => playerLayerCache = value;
+        }
+
+        private static int Resolve(ref int cache, string layerName)
+        {
+            if (cache >= 0) return cache;
+
+            cache = LayerMask.NameToLayer(layerName);
+
+            if (cache < 0)
+            {
+                Debug.LogError($"'{layerName}' layer'i proje ayarlarinda yok. " +
+                               "Tools > 2D Platformer > Sadece Proje Ayarlarini Uygula " +
+                               "calistir.");
+                return 0;
+            }
+
+            return cache;
+        }
 
         // ===============================================================
         // Menu girisleri
