@@ -1,5 +1,8 @@
 # Epic 01 — Oyun Vizyonu ve Kapsam
 
+> ✅ **TAMAMLANDI — 14 Eylül 2026.** Çıktı: [VIZYON.md](VIZYON.md), [SONRA.md](SONRA.md).
+> İmza mekaniği dash seçildi ve yatayla sınırlandı. Vizyon onaylandı.
+
 **Amaç:** Ne yaptığını bir sayfada yazılı hale getirmek. Proje bitene kadar
 başvuracağın referans bu olacak.
 

@@ -1,5 +1,9 @@
 # Epic 02 — Karakter Hissiyatı
 
+> ✅ **TAMAMLANDI — 14 Eylül 2026.** Çıktı: [AYARLAR.md](AYARLAR.md) + zorluk cetveli.
+> Dört tarz karşılaştırıldı, "dengeli" seçildi. Ölçümler: 3,03 / 5,31 / 7,62.
+> Coyote time ve jump buffer oyun içinde test edildi, ikisi de çalışıyor.
+
 **Amaç:** Karakteri kontrol etmenin kendisini eğlenceli hale getirmek. Bölüm
 olmasa bile, boş bir zeminde gezinmek keyifli olmalı.
 
