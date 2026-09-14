@@ -63,6 +63,8 @@ namespace Platformer.EditorTools
             created += Ensure(EnemyShooter, BuildShooter) ? 1 : 0;
             created += Ensure(EnemyFlyer, BuildFlyer) ? 1 : 0;
 
+            RepairWiring();
+
             if (verbose || created > 0)
             {
                 Debug.Log($"Prefablar: {created} yeni uretildi, digerlerine " +
@@ -70,6 +72,138 @@ namespace Platformer.EditorTools
                           $"  Ayar degistirmek icin prefab'i ac; kurulumlar arasinda kalir.\n" +
                           $"  Sifirlamak icin prefab'i sil, yeniden uretilir.");
             }
+        }
+
+        // ---------------------------------------------------------------
+        // Layer cozumleme
+        //
+        // NEDEN STATIC KULLANMIYORUZ:
+        // LevelBuilder.groundLayer bir static ve sadece ConfigureProject()
+        // icinde atraniyor. Unity script derleyince static'ler sifirlanir.
+        // "Prefablari Uret" menusu ConfigureProject cagirmadigi icin, o
+        // menuden uretilen Player prefab'ine 1 << 0 (Default) gomuldu ve
+        // orada KALDI - EnsureAll var olan prefab'in ustune yazmiyor.
+        //
+        // Sonuc: karakterin zemin algisi yanlis layer'a bakiyordu. Bolum 1'de
+        // farkedilmedi (Default'ta altinda bir sey yok), ama dusman test
+        // odasinda dusmanlar Default'ta oldugu icin havada IsGrounded true
+        // oluyor ve karakter suzuluyordu.
+        //
+        // Isimden cozmek her zaman dogru: layer'lar proje ayarinda duruyor,
+        // derlemeden etkilenmiyor.
+        // ---------------------------------------------------------------
+
+        // LevelBuilder artik bunlari tembel cozumluyor - tek kaynak orasi.
+        private static int GroundLayer => LevelBuilder.groundLayer;
+        private static int PlayerLayer => LevelBuilder.playerLayer;
+
+        /// <summary>
+        /// Var olan prefablarda MAKINE'nin sahip oldugu alanlari dogrular.
+        ///
+        /// EnsureAll bilincli olarak var olan prefabin ustune yazmiyor -
+        /// yoksa senin yaptigin ayarlar her kurulumda silinirdi. Ama bu,
+        /// yanlis uretilmis bir prefabin sonsuza kadar yanlis kalmasi
+        /// demekti; nitekim oyle oldu.
+        ///
+        /// Ayrim su: BOYUT, RENK, HIZ senin; LAYER ve LAYER MASKESI
+        /// makinenin. Ikincileri elle degistirmek icin bir sebep yok ve
+        /// yanlis olduklarinda oyun sessizce bozuluyor.
+        /// </summary>
+        internal static void RepairWiring()
+        {
+            int fixedCount = 0;
+
+            fixedCount += RepairPlayer();
+            fixedCount += RepairLayerMask(EnemyPatroller, "groundLayers",
+                                          1 << GroundLayer,
+                                          typeof(Gameplay.Patroller));
+            fixedCount += RepairLayerMask(Projectile, "blockerLayers",
+                                          1 << GroundLayer,
+                                          typeof(Gameplay.Projectile));
+            fixedCount += RepairShooterReference();
+
+            if (fixedCount > 0)
+            {
+                AssetDatabase.SaveAssets();
+                Debug.LogWarning($"Prefablarda {fixedCount} hatali baglanti duzeltildi. " +
+                                 "Ayrintilar yukarida.");
+            }
+        }
+
+        private static int RepairPlayer()
+        {
+            GameObject prefab = Load(Player);
+            if (prefab == null) return 0;
+
+            int n = 0;
+
+            if (prefab.layer != PlayerLayer)
+            {
+                Debug.LogWarning($"Player.prefab layer {prefab.layer} -> {PlayerLayer} " +
+                                 "(Player) olarak duzeltildi.");
+                prefab.layer = PlayerLayer;
+                EditorUtility.SetDirty(prefab);
+                n++;
+            }
+
+            n += RepairLayerMask(Player, "groundLayers", 1 << GroundLayer,
+                                 typeof(Platformer.Player.PlayerController2D));
+            return n;
+        }
+
+        private static int RepairLayerMask(string prefabName, string field,
+                                           int expected, System.Type componentType)
+        {
+            GameObject prefab = Load(prefabName);
+            if (prefab == null) return 0;
+
+            var component = prefab.GetComponent(componentType);
+            if (component == null) return 0;
+
+            var so = new SerializedObject(component);
+            SerializedProperty prop = so.FindProperty(field);
+            if (prop == null || prop.intValue == expected) return 0;
+
+            Debug.LogWarning(
+                $"{prefabName}.prefab '{field}' = {prop.intValue} " +
+                $"(layer {LayerIndexOf(prop.intValue)}) YANLIS -> {expected} " +
+                $"(layer {LayerIndexOf(expected)}) olarak duzeltildi.");
+
+            prop.intValue = expected;
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(prefab);
+            return 1;
+        }
+
+        private static string LayerIndexOf(int mask)
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                if ((mask & (1 << i)) != 0) return $"{i} '{LayerMask.LayerToName(i)}'";
+            }
+            return "yok";
+        }
+
+        /// <summary>Atici, mermi prefabini kaybetmis olabilir.</summary>
+        private static int RepairShooterReference()
+        {
+            GameObject shooter = Load(EnemyShooter);
+            GameObject bullet = Load(Projectile);
+            if (shooter == null || bullet == null) return 0;
+
+            var component = shooter.GetComponent<Gameplay.ShooterEnemy>();
+            if (component == null) return 0;
+
+            var so = new SerializedObject(component);
+            SerializedProperty prop = so.FindProperty("projectilePrefab");
+            if (prop == null || prop.objectReferenceValue != null) return 0;
+
+            prop.objectReferenceValue = bullet.GetComponent<Gameplay.Projectile>();
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(shooter);
+
+            Debug.LogWarning("Enemy_Shooter.prefab mermi referansi bostu, baglandi.");
+            return 1;
         }
 
         public static string PathOf(string name) => $"{Folder}/{name}.prefab";
@@ -223,7 +357,7 @@ namespace Platformer.EditorTools
 
             var projectile = go.AddComponent<Gameplay.Projectile>();
             var so = new SerializedObject(projectile);
-            so.FindProperty("blockerLayers").intValue = 1 << LevelBuilder.groundLayer;
+            so.FindProperty("blockerLayers").intValue = 1 << GroundLayer;
             so.ApplyModifiedProperties();
 
             return go;
@@ -250,7 +384,7 @@ namespace Platformer.EditorTools
 
             var patroller = go.AddComponent<Gameplay.Patroller>();
             var so = new SerializedObject(patroller);
-            so.FindProperty("groundLayers").intValue = 1 << LevelBuilder.groundLayer;
+            so.FindProperty("groundLayers").intValue = 1 << GroundLayer;
             so.ApplyModifiedProperties();
 
             return go;
@@ -308,7 +442,7 @@ namespace Platformer.EditorTools
         {
             var go = new GameObject(Player);
             go.tag = "Player";
-            go.layer = LevelBuilder.playerLayer;
+            go.layer = PlayerLayer;
 
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = SpriteFactory.Load("player");
@@ -329,7 +463,7 @@ namespace Platformer.EditorTools
 
             var controller = go.AddComponent<Player.PlayerController2D>();
             var so = new SerializedObject(controller);
-            so.FindProperty("groundLayers").intValue = 1 << LevelBuilder.groundLayer;
+            so.FindProperty("groundLayers").intValue = 1 << GroundLayer;
             so.ApplyModifiedProperties();
 
             go.AddComponent<Player.PlayerHealth>();
