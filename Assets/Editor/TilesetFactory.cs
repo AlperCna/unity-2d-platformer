@@ -73,6 +73,8 @@ namespace Platformer.EditorTools
                 "Asset uretimi Play modunda yapilamaz.")) return;
 
             GenerateInternal();
+            TileAssetFactory.GenerateAll();     // sprite -> Tile varliklari
+            RuleTileFactory.Generate();         // elle boyama icin
 
             Debug.Log($"Karo seti uretildi: {SheetPath}\n" +
                       $"  {Columns}x{Rows} = {Columns * Rows} karo, {TileSize}x{TileSize} piksel (+{Padding} dolgu)\n" +

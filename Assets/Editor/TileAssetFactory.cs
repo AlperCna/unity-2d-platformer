@@ -60,8 +60,6 @@ namespace Platformer.EditorTools
             AssetDatabase.SaveAssets();
             Debug.Log($"Karo varliklari: {created} yeni, {updated} guncellendi " +
                       $"({TileFolder})");
-
-            RuleTileFactory.Generate();
         }
 
         public static string TilePath(int mask) =>
@@ -70,15 +68,24 @@ namespace Platformer.EditorTools
         public static Tile Load(int mask) =>
             AssetDatabase.LoadAssetAtPath<Tile>(TilePath(mask));
 
-        /// <summary>Varliklar eksikse uretir. Bolum kurucular bunu cagirir.</summary>
+        /// <summary>
+        /// Eksik olan her varligi uretir. Bolum kurucular bunu cagirir.
+        ///
+        /// HER VARLIK AYRI KONTROL EDILIYOR. Onceden tek bir vekil kontrol
+        /// vardi ("karo 0 var mi"); Rule Tile sonradan eklendiginde atlas
+        /// guncel ve karolar yerinde oldugu icin "yapacak is yok" sanildi ve
+        /// Rule Tile hic uretilmedi. Konsol temizdi, hata yoktu - varlik
+        /// diskte yoktu. Vekil kontrol, sorumlu oldugu her seyi kapsamiyorsa
+        /// sessizce yaniltir.
+        /// </summary>
         internal static void EnsureGenerated()
         {
             // Sayfa yenilendiyse karo varliklarinin sprite referanslari da
             // tazelenmeli - yoksa Tile'lar eski dilimleri gostermeye calisir.
             bool sheetRebuilt = TilesetFactory.EnsureUpToDate();
 
-            // GenerateAll kendi icinde Rule Tile'i da tazeliyor
             if (sheetRebuilt || Load(0) == null) GenerateAll();
+            if (sheetRebuilt || !RuleTileFactory.Exists) RuleTileFactory.Generate();
         }
 
         private static void EnsureFolder()

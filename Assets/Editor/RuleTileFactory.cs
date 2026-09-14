@@ -34,6 +34,10 @@ namespace Platformer.EditorTools
         private const int Filled = 1;      // RuleTile.TilingRuleOutput.Neighbor.This
         private const int Empty = 2;       // RuleTile.TilingRuleOutput.Neighbor.NotThis
 
+        /// <summary>Varlik diskte var mi.</summary>
+        public static bool Exists =>
+            AssetDatabase.LoadAssetAtPath<RuleTile>(AssetPath) != null;
+
         public static void Generate()
         {
             var tile = AssetDatabase.LoadAssetAtPath<RuleTile>(AssetPath);
