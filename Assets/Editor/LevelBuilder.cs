@@ -611,8 +611,12 @@ namespace Platformer.EditorTools
             Text scoreText = CreateText(canvasObject.transform, "ScoreText", "Para: 0 / 0",
                 new Vector2(0f, 1f), new Vector2(40f, -40f), TextAnchor.UpperLeft, 40);
 
-            Text livesText = CreateText(canvasObject.transform, "LivesText", "Can: 3",
+            // Can degil olum SAYACI - sinirsiz deneme var (Epic 09)
+            Text deathText = CreateText(canvasObject.transform, "DeathText", "Olum: 0",
                 new Vector2(0f, 1f), new Vector2(40f, -100f), TextAnchor.UpperLeft, 40);
+
+            Text timeText = CreateText(canvasObject.transform, "TimeText", "0:00",
+                new Vector2(1f, 1f), new Vector2(-40f, -40f), TextAnchor.UpperRight, 40);
 
             Text messageText = CreateText(canvasObject.transform, "MessageText", string.Empty,
                 new Vector2(0.5f, 0.5f), Vector2.zero, TextAnchor.MiddleCenter, 64);
@@ -620,7 +624,8 @@ namespace Platformer.EditorTools
             var hud = canvasObject.AddComponent<HudController>();
             var so = new SerializedObject(hud);
             so.FindProperty("scoreText").objectReferenceValue = scoreText;
-            so.FindProperty("livesText").objectReferenceValue = livesText;
+            so.FindProperty("deathText").objectReferenceValue = deathText;
+            so.FindProperty("timeText").objectReferenceValue = timeText;
             so.FindProperty("messageText").objectReferenceValue = messageText;
             so.ApplyModifiedProperties();
         }
@@ -682,8 +687,13 @@ namespace Platformer.EditorTools
 
             var so = new SerializedObject(manager);
             so.FindProperty("killPlaneY").floatValue = -12f;
-            so.FindProperty("startingLives").intValue = 3;
             so.ApplyModifiedProperties();
+
+            // TimeController AYRI bir nesnede: DontDestroyOnLoad ile sahneler
+            // arasi yasiyor. GameManager ise bolume ozel (skor, checkpoint
+            // her bolumde sifirlanmali), o yuzden ayni nesnede olamazlar.
+            var timeObject = new GameObject("TimeController");
+            timeObject.AddComponent<TimeController>();
         }
 
         // --- Kucuk yardimci -------------------------------------------

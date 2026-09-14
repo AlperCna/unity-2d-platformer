@@ -1,5 +1,13 @@
 # Epic 09 — Can, Hasar, Ölüm
 
+> ✅ **TAMAMLANDI — 14 Eylül 2026.**
+> Ölüm 0,9 → **0,45 sn**. Hit stop (`TimeController`), kamera sarsıntısı,
+> öldüren nesnenin vurgulanması eklendi. Can sistemi kaldırıldı —
+> sınırsız deneme, can yerine ölüm sayacı.
+>
+> Kabul kriterlerinden ikisi bu epic'e ait değildi ve öyle işaretlendi:
+> ses (Epic 13) ve `IResettable` ile bölüm sıfırlama (Epic 10).
+
 **Amaç:** Ölümü cezalandırıcı değil, **öğretici** hale getirmek.
 
 **Ön koşul:** [Epic 02](02-karakter-hissiyati.md)
@@ -94,66 +102,24 @@ Süre bütçesi:
 Çarpışma anında oyunu birkaç kare dondurmak, darbeyi "hissettirir".
 Az iş, çok etki.
 
-`Assets/Scripts/Core/TimeController.cs`:
+**Uygulandı:** [`Assets/Scripts/Core/TimeController.cs`](../Assets/Scripts/Core/TimeController.cs)
 
 ```csharp
-using System.Collections;
-using UnityEngine;
-
-namespace Platformer.Core
-{
-    /// <summary>
-    /// Kisa sureli zaman donmasi (hit stop) ve yavaslatma.
-    /// DontDestroyOnLoad - sahne degisiminde timeScale takili kalmasin.
-    /// </summary>
-    public class TimeController : MonoBehaviour
-    {
-        public static TimeController Instance { get; private set; }
-
-        private Coroutine current;
-
-        private void Awake()
-        {
-            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-
-        /// <summary>Oyunu kisa sure tamamen dondurur.</summary>
-        public void HitStop(float duration)
-        {
-            if (current != null) StopCoroutine(current);
-            current = StartCoroutine(HitStopRoutine(duration));
-        }
-
-        private IEnumerator HitStopRoutine(float duration)
-        {
-            float original = Time.timeScale;
-            Time.timeScale = 0f;
-
-            // ZORUNLU: WaitForSeconds timeScale 0'da sonsuza kadar bekler
-            yield return new WaitForSecondsRealtime(duration);
-
-            Time.timeScale = original;
-            current = null;
-        }
-
-        /// <summary>Sahne degisimi gibi durumlarda guvenlik agi.</summary>
-        public void ResetTimeScale()
-        {
-            if (current != null) StopCoroutine(current);
-            current = null;
-            Time.timeScale = 1f;
-        }
-
-        private void OnDisable()
-        {
-            // Nesne yok olursa oyun donmus kalmasin
-            Time.timeScale = 1f;
-        }
-    }
-}
+TimeController.Instance?.HitStop(0.08f);
 ```
+
+Üç tuzağı var, üçü de kapatıldı:
+
+**1. `timeScale = 0` iken `WaitForSeconds` sonsuza kadar bekler.**
+`WaitForSecondsRealtime` kullanılmalı — yoksa oyun kalıcı donar.
+
+**2. Coroutine yarıda kesilirse oyun donmuş kalır.** Sahne değişimi veya
+nesne yok olması bunu yapar. `OnDisable` güvenlik ağı `timeScale = 1`
+yazıyor; o satırı silme.
+
+**3. Efekti başlatan nesne yok olabilir.** Ezilen düşman kendi hit stop'unu
+başlatıp sonra `Destroy` olursa coroutine ölür ve oyun donuk kalır.
+Bu yüzden hit stop **kalıcı bir yöneticide** çalışıyor, çağıran nesnede değil.
 
 **Kullanım süreleri:**
 
@@ -169,46 +135,20 @@ namespace Platformer.Core
 
 ### 4. Ölüm geri bildirimini güçlendir
 
-`PlayerHealth.Kill()` içini zenginleştir:
+**Uygulandı:** [`Assets/Scripts/Player/PlayerHealth.cs`](../Assets/Scripts/Player/PlayerHealth.cs)
 
-```csharp
-public void Kill()
-{
-    if (IsDead || IsInvulnerable) return;
+Ölüm dizisi (toplam ~0,45 sn):
 
-    IsDead = true;
+| Zaman | Ne olur |
+|---|---|
+| 0,00 | Hit stop (0,08 sn) + kamera sarsıntısı + öldüren nesne parlar |
+| 0,08 | Karakter yukarı sıçrar, rengi değişir |
+| 0,45 | Checkpoint'te doğar, **anında** kontrol edilebilir |
+| +0,50 | Kısa dokunulmazlık (yanıp sönerek) |
 
-    // 1. Zaman - darbeyi hissettir
-    TimeController.Instance?.HitStop(0.08f);
-
-    // 2. Kamera
-    var cam = UnityEngine.Camera.main?.GetComponent<CameraRig.CameraFollow>();
-    cam?.Shake(0.25f, 0.4f);
-
-    // 3. Kontrol
-    controller.Freeze();
-    if (bodyCollider != null) bodyCollider.enabled = false;
-
-    // 4. Gorsel
-    if (spriteRenderer != null) spriteRenderer.color = deathTint;
-    // Epic 14: parcacik patlamasi + ekran kirmizi flas
-
-    // 5. Ses (Epic 13)
-    // AudioManager.Instance?.PlaySfx(deathClip);
-
-    OnDied?.Invoke();
-
-    if (GameManager.Instance != null)
-    {
-        GameManager.Instance.ReportPlayerDeath();
-        StartCoroutine(RespawnAfterDelay(GameManager.Instance.RespawnDelay));
-    }
-    else
-    {
-        StartCoroutine(RespawnAfterDelay(0.45f));
-    }
-}
-```
+**Tüm zamanlamalar unscaled.** `WaitForSeconds` kullansaydık hit stop
+süresi respawn'a eklenir (`0,08 + 0,45 = 0,53`) ve hit stop'u her
+uzattığımızda ölüm yavaşlardı. Şimdi 0,45 gerçekten 0,45.
 
 - [ ] Ölüm çok katmanlı geri bildirim veriyor
 
@@ -216,36 +156,11 @@ public void Kill()
 
 Oyuncu **neden** öldüğünü anlamalı. Anlaşılmayan ölüm, haksız ölümdür.
 
-```csharp
-/// <summary>Olduren nesneyi kisa sure vurgular.</summary>
-public void Kill(GameObject killer = null)
-{
-    if (IsDead || IsInvulnerable) return;
+Uygulama `PlayerHealth.HighlightKiller()` içinde. İki detay:
 
-    if (killer != null) StartCoroutine(HighlightKiller(killer));
-    // ... geri kalan Kill() kodu
-}
-
-private IEnumerator HighlightKiller(GameObject killer)
-{
-    var sr = killer.GetComponentInChildren<SpriteRenderer>();
-    if (sr == null) yield break;
-
-    Color original = sr.color;
-    float t = 0f;
-    const float duration = 0.4f;
-
-    while (t < duration)
-    {
-        t += Time.unscaledDeltaTime;
-        float blink = Mathf.PingPong(t * 10f, 1f);
-        sr.color = Color.Lerp(original, Color.white, blink);
-        yield return null;
-    }
-
-    sr.color = original;
-}
-```
+- `Time.unscaledDeltaTime` kullanıyor — hit stop sırasında da yanıp sönsün
+- Her karede `sr == null` kontrolü var — öldüren nesne bu sırada yok olabilir
+  (ezilen düşman gibi)
 
 `Hazard` ve `EnemyBase` içinden `health.Kill(gameObject)` diye çağır.
 
@@ -317,13 +232,13 @@ public void ReportPlayerDeath(Vector2 position)
 ## Kabul kriteri
 
 - [ ] Ölümden yeniden oynamaya geçiş **0.6 saniyeden kısa**
-- [ ] Ölüm görsel + işitsel + zamansal olarak net
-- [ ] Neden öldüğün anlaşılıyor
-- [ ] Respawn sonrası anında kontrol var
-- [ ] Hareketli parçalar respawn'da sıfırlanıyor
-- [ ] 20 kez üst üste ölmek sinir bozucu değil
-- [ ] `Time.timeScale` hiçbir durumda 0'da takılı kalmıyor
-- [ ] Game Over ekranı yok
+- [x] Ölüm görsel ve zamansal olarak net *(işitsel kısım → Epic 13)*
+- [x] Neden öldüğün anlaşılıyor — öldüren nesne parlıyor
+- [x] Respawn sonrası anında kontrol var
+- [ ] Hareketli parçalar respawn'da sıfırlanıyor *(→ Epic 10, `IResettable`)*
+- [x] 20 kez üst üste ölmek sinir bozucu değil
+- [x] `Time.timeScale` hiçbir durumda 0'da takılı kalmıyor
+- [x] Game Over ekranı yok
 
 ---
 

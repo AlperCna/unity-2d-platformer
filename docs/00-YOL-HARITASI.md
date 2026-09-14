@@ -283,7 +283,7 @@ Bu tabloyu doldur, her epic bitince işaretle:
 | 06 | Düşmanlar | ☐ | | |
 | 07 | Tehlikeler | ☐ | | |
 | 08 | Toplanabilirler | ☐ | | |
-| 09 | Can/Ölüm | ☐ | | |
+| 09 | Can/Ölüm | ✅ | 14.09.2026 | 0,45 sn ölüm, hit stop, sınırsız deneme |
 | 10 | Checkpoint/Kayıt | ☐ | | |
 | 11 | Sanat | ☐ | | |
 | 12 | Animasyon | ☐ | | |
@@ -364,8 +364,8 @@ Bu tabloyu doldur, her epic bitince işaretle:
 | 02 Hissiyat | ✅ | [AYARLAR.md](AYARLAR.md) + ölçümler + zorluk cetveli |
 | 03 Kamera | ✅ | Dikey takip, sarsıntı, otomatik sınır aracı |
 | 04 Seviye tasarımı | ✅ | [BOLUM-01.md](BOLUM-01.md) + `LevelCursor` |
-| 09 Can/Ölüm | ⬜ | **sıradaki** |
-| 10 Checkpoint/Kayıt | ⬜ | |
+| 09 Can/Ölüm | ✅ | 0,45 sn ölüm, hit stop, ölüm sayacı |
+| 10 Checkpoint/Kayıt | ⬜ | **sıradaki** |
 
 **Ölçülen değerler** (bölüm tasarımının cetveli):
 
@@ -379,4 +379,4 @@ Bu tabloyu doldur, her epic bitince işaretle:
 **Açık madde:** Bölüm 1'i başkasına oynatma — M1 kapısına ertelendi
 (Epic 09 ve 10 bitmeden geri bildirim yanıltıcı olur).
 
-Sıradaki adım: **[Epic 09 — Can, hasar, ölüm](09-can-hasar-olum.md)**.
+Sıradaki adım: **[Epic 10 — Checkpoint ve kayıt](10-checkpoint-ve-kayit.md)**.

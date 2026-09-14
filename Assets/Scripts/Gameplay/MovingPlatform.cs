@@ -54,8 +54,15 @@ namespace Platformer.Gameplay
         private float waitTimer;
         private float segmentProgress;
 
-        // Ayni diziyi tekrar kullaniyoruz - her karede cop uretmemek icin
-        private readonly Collider2D[] passengerBuffer = new Collider2D[8];
+        // Ayni listeyi tekrar kullaniyoruz - her karede cop uretmemek icin.
+        //
+        // ContactFilter2D + List surumu kullaniliyor; eski OverlapBoxNonAlloc
+        // Unity 6'da kullanimdan kaldirildi (CS0618). Bu surum hem eski hem
+        // yeni Unity'de calisiyor, o yuzden #if gerekmiyor.
+        private readonly System.Collections.Generic.List<Collider2D> passengerResults
+            = new System.Collections.Generic.List<Collider2D>(8);
+
+        private ContactFilter2D passengerFilter;
 
         private void Awake()
         {
@@ -68,6 +75,14 @@ namespace Platformer.Gameplay
             rb.useFullKinematicContacts = true;
 
             origin = transform.position;
+
+            // Yolcu aramasi icin filtre. Bir kez kurulur, her karede yeniden degil.
+            passengerFilter = new ContactFilter2D
+            {
+                useLayerMask = true,
+                useTriggers = false      // para/tehlike trigger'lari yolcu degil
+            };
+            passengerFilter.SetLayerMask(passengerLayers);
 
             if (waypoints == null || waypoints.Length < 2)
             {
@@ -122,11 +137,12 @@ namespace Platformer.Gameplay
             Vector2 checkCenter = new Vector2(bounds.center.x, bounds.max.y + passengerCheckHeight * 0.5f);
             Vector2 checkSize = new Vector2(bounds.size.x, passengerCheckHeight);
 
-            int count = Physics2D.OverlapBoxNonAlloc(checkCenter, checkSize, 0f, passengerBuffer, passengerLayers);
+            int count = Physics2D.OverlapBox(checkCenter, checkSize, 0f,
+                                             passengerFilter, passengerResults);
 
             for (int i = 0; i < count; i++)
             {
-                Collider2D passenger = passengerBuffer[i];
+                Collider2D passenger = passengerResults[i];
                 if (passenger == null || passenger.attachedRigidbody == rb) continue;
 
                 passenger.transform.position += (Vector3)delta;
