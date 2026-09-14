@@ -517,14 +517,14 @@ geri dönmek isteyeceksin.
 
 ## Kabul kriteri
 
-- [ ] Test odasında 30 saniye gezmek sıkıcı değil
+- [x] Test odasında 30 saniye gezmek sıkıcı değil
 - [ ] Zıplama mesafesi tahmin edilebilir
-- [ ] Kenardan düşerken hâlâ zıplayabiliyorsun (coyote time)
-- [ ] Yere inmeden basılan zıpla kaybolmuyor (jump buffer)
-- [ ] Tuşu kısa basınca alçak, uzun basınca yüksek zıplıyorsun
-- [ ] İmza mekaniği çalışıyor ve keyifli
-- [ ] Altı ölçüm tabloya yazıldı
-- [ ] Ayarlar `docs/AYARLAR.md` içinde
+- [x] Kenardan düşerken hâlâ zıplayabiliyorsun (coyote time)
+- [x] Yere inmeden basılan zıpla kaybolmuyor (jump buffer)
+- [x] Tuşu kısa basınca alçak, uzun basınca yüksek zıplıyorsun
+- [x] İmza mekaniği çalışıyor ve keyifli
+- [x] Altı ölçüm tabloya yazıldı
+- [x] Ayarlar `docs/AYARLAR.md` içinde
 - [ ] Kontrol gecikmesi hissedilmiyor
 
 ---

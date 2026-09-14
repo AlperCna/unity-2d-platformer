@@ -231,11 +231,11 @@ public void ReportPlayerDeath(Vector2 position)
 
 ## Kabul kriteri
 
-- [ ] Ölümden yeniden oynamaya geçiş **0.6 saniyeden kısa**
+- [x] Ölümden yeniden oynamaya geçiş **0.6 saniyeden kısa**
 - [x] Ölüm görsel ve zamansal olarak net *(işitsel kısım → Epic 13)*
 - [x] Neden öldüğün anlaşılıyor — öldüren nesne parlıyor
 - [x] Respawn sonrası anında kontrol var
-- [ ] Hareketli parçalar respawn'da sıfırlanıyor *(→ Epic 10, `IResettable`)*
+- [x] Hareketli parçalar respawn'da sıfırlanıyor *(→ Epic 10, `IResettable`)*
 - [x] 20 kez üst üste ölmek sinir bozucu değil
 - [x] `Time.timeScale` hiçbir durumda 0'da takılı kalmıyor
 - [x] Game Over ekranı yok

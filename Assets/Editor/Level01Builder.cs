@@ -73,64 +73,115 @@ namespace Platformer.EditorTools
         {
             var c = new LevelCursor(parent, LevelBuilder.groundLayer, "Bolum 1");
 
-            // --- 1. GIRIS (0-6 sn) --------------------------------------
-            // Saga gitmekten baska secenek yok. Olum imkansiz.
-            c.Ground(12f, "Zemin_Giris");
+            // --- 1. GIRIS -----------------------------------------------
+            // Saga gitmekten baska secenek yok, olum imkansiz.
+            // v1'de 12 birimdi: hicbir sey olmadan 3 saniye yuruyordun.
+            c.Ground(9f, "Zemin_Giris");
             c.Coins(3);
 
-            // --- 2. ILK ZIPLAMA (6-10 sn) -------------------------------
-            // 1,2 birim: minimum zipla 1,5 oldugu icin tusa DOKUNMAK yeter.
+            // --- 2. ILK ZIPLAMA -----------------------------------------
+            // 1,2 birim: en kisa zipla bile 1,5 oldugu icin tusa DOKUNMAK yeter.
             // Oyuncu "zipla var" bilgisini bedavaya ogrenir.
             c.Step(1.2f, 4f, "Basamak_Tanitim");
             c.Coins(2);
 
-            // --- 3. GERCEK ZIPLAMA (10-16 sn) ---------------------------
+            // --- 3. GERCEK ZIPLAMA --------------------------------------
             // 2,2 birim (%73): artik gercek bir zipla gerekiyor.
             c.Step(2.2f, 5f, "Basamak_Uygulama");
             c.Coins(3);
 
-            // --- 4. ILK BOSLUK (16-22 sn) -------------------------------
-            // 2,5 birim (%47 - "cok kolay"). Ilk olum ihtimali burada.
-            // Para yayi ziplamanin yorungesini cizip yol gosteriyor.
+            // --- 4. ILK BOSLUK ------------ %47 --------------------------
+            // Ilk olum ihtimali. Para yayi yorungeyi cizip yol gosteriyor.
             c.Gap(2.5f, coinArc: 4);
 
-            // --- 5. NEFES (22-27 sn) ------------------------------------
-            // Tehlikesiz duz zemin. Checkpoint burada: zor kisimlardan ONCE.
-            c.Ground(9f, "Zemin_Nefes");
+            // --- 5. RITIM (YENI) -------- %53 %56 %49 -------------------
+            // Uc ardisik bosluk: zipla-in-zipla-in-zipla.
+            //
+            // Fiil ayni (ziplamak) ama HIS bambaska. Tek bosluk "engel"dir;
+            // ardisik bosluk "ritim"dir, oyuncu akisa girer. v1'in en buyuk
+            // eksigi buydu - her engel tek basina duruyordu, akis yoktu.
+            //
+            // Son bosluk KASITLI olarak dahakucuk (%49): oyuncu ritimden
+            // kazanarak cikar, tokatlanarak degil.
+            c.Ground(3.5f, "Ritim_1");
+            c.Gap(2.8f, coinArc: 3);
+            c.Ground(3f, "Ritim_2");
+            c.Gap(3f, coinArc: 3);
+            c.Ground(3.5f, "Ritim_3");
+            c.Gap(2.6f, coinArc: 3);
+            c.Ground(4f, "Ritim_4");
+
+            // --- 6. NEFES + CHECKPOINT ----------------------------------
+            // Ritimden sonra dinlenme. Checkpoint zor kisimlardan ONCE.
+            c.Ground(8f, "Zemin_Nefes");
             c.Coins(3);
             c.Checkpoint(1.5f);
 
-            // --- 6. DIKEN TANITIMI (27-34 sn) ---------------------------
-            // Tek diken, 10 birimlik genis zeminde. Gorursun, rahatca
-            // ustunden ziplarsin. Olum mumkun ama kacinmasi kolay.
-            c.Ground(10f, "Zemin_DikenTanitim");
+            // --- 7. DIKEN TANITIMI --------------------------------------
+            // Tek diken, genis zeminde. Gorursun, rahatca ustunden ziplarsin.
+            //
+            // Zemin 11 birim, diken 5'te: dikenden TAM zipla atilirsa
+            // 10,8'e iniyor - hala zeminde. Daha dar yapsam, dogru ziplayan
+            // oyuncu bir sonraki bosluga dusup olurdu. Dogru oynayani
+            // cezalandiran tasarim en kotusudur.
+            c.Ground(11f, "Zemin_DikenTanitim");
             c.Spikes(1, offsetFromSegmentStart: 5f);
 
-            // --- 7. ZORLUK ARTISI (34-41 sn) ----------------------------
-            // 3,5 birim (%66 - "kolay"). Bir onceki bosluktan genis.
-            c.Gap(3.5f, coinArc: 5);
+            // --- 8. TIRMANIS (YENI) ------ %68 --------------------------
+            // Bosluk + hemen ardindan yukari basamak.
+            //
+            // 3,2 birim duz zeminde %60'tir; ama 1,4 birim YUKARIYA inecegin
+            // icin gecerli limit 5,31 degil 4,72 - yani %68. Ayni bosluk,
+            // daha zor. LevelCursor bunu artik kendisi hesapliyor.
+            c.Gap(3.2f, coinArc: 4);
+            c.Step(1.4f, 4f, "Tirmanis_1");
+            c.Coins(2);
+            c.Step(1.4f, 4f, "Tirmanis_2");
+            c.Coins(2);
 
-            // --- Inis: gorsel cesitlilik, zorluk eklemez ----------------
-            c.Drop(2f, 8f, "Inis");
+            // --- 9. DIKEN KORIDORU (YENI) -------------------------------
+            // Iki birimlik kesintisiz diken. Bosluktan farki: zemini
+            // GORUYORSUN ama basamiyorsun. v1'deki her diken tekti ve
+            // tek adimda geciliyordu; bu ilk defa mesafe olcturuyor.
+            //
+            // Ustundeki paralar ziplamanin nereden baslamasi gerektigini
+            // soyluyor - alcak zipla yetmez.
+            c.Ground(9f, "Zemin_DikenKoridoru");
+            c.Spikes(2, offsetFromSegmentStart: 4.5f);
+            c.Coins(3, heightAboveGround: 2.8f, spacing: 1.1f);
+
+            // --- 10. INIS + CHECKPOINT ----------------------------------
+            // Nefes. Asagi inmek bedava, zorluk eklemez.
+            //
+            // Ikinci checkpoint: bolum v1'in 1,5 kati uzunlukta, tek
+            // checkpoint'le en sondaki bosluktan olmek 70 birim geri
+            // gondermek demekti.
+            c.Drop(2.8f, 7f, "Inis");
             c.Coins(3);
+            c.Checkpoint(1.5f);
 
-            // --- 8. BIRLESTIRME (41-48 sn) ------------------------------
-            // Once diken (ogrenileni tekrar), sonra bolumun en genis boslugu.
-            // Bosluktan once 4 birim duz kosu mesafesi var - tam hiza ulasmak
-            // icin ~2 birim gerekiyor, yani rahat.
+            // --- 11. BIRLESTIRME --------- %68 --------------------------
+            // Diken korudoru + genis bosluk art arda. Ogrenilen iki sey
+            // ayni nefeste.
             c.Ground(8f, "Zemin_DikenUygulama");
-            c.Spikes(2, offsetFromSegmentStart: 2f);
+            c.Spikes(2, offsetFromSegmentStart: 1.5f);
 
-            c.Gap(4f, coinArc: 5);   // %75 - bolum 1'in tavani
+            c.Gap(3.6f, coinArc: 4);
 
-            // Inisin hemen ardinda diken YOK; once yer ver, sonra tehlike.
-            c.Ground(7f, "Zemin_SonDiken");
-            c.Spikes(1, offsetFromSegmentStart: 4.5f);
+            c.Ground(8f, "Zemin_SonDiken");
+            c.Spikes(1, offsetFromSegmentStart: 1.5f);
 
-            // --- 9. BITIS (48-53 sn) ------------------------------------
-            // Rahat yaklasim, bayrak uzaktan gorunuyor.
-            c.Ground(10f, "Zemin_Bitis");
+            // --- 12. FINAL --------------- %83 --------------------------
+            // Bolumun tepesi. v1'in en zor ani %75'ti; bolum kendi
+            // tavanina hic yaklasmadan bitiyordu.
+            c.Gap(4.4f, coinArc: 5);
+            c.Ground(6f, "Zemin_Final");
             c.Coins(3);
+
+            // --- 13. BITIS ----------------------------------------------
+            // Kisa. v1'de finalden sonra 17 birim bos zemin vardi; bolum
+            // en zayif notasinda bitiyordu.
+            c.Ground(5f, "Zemin_Bitis");
             c.Goal();
 
             return c;

@@ -265,11 +265,11 @@ Kurallar:
 
 ## Kabul kriteri
 
-- [ ] Zorluk tabloların (mesafe ve yükseklik) yazılı
-- [ ] Bölüm 1 bitmiş ve oynanabilir
-- [ ] İlk 10 saniyede ölmek imkânsız
-- [ ] Hiç yazılı tutorial yok
-- [ ] Bölümde en az 2 nefes alanı var
+- [x] Zorluk tabloların (mesafe ve yükseklik) yazılı
+- [x] Bölüm 1 bitmiş ve oynanabilir
+- [x] İlk 10 saniyede ölmek imkânsız
+- [x] Hiç yazılı tutorial yok
+- [x] Bölümde en az 2 nefes alanı var
 - [ ] Bulanıklık ve 5 saniye testleri geçiliyor
 - [ ] Bir başkası takılmadan bitirdi
 
