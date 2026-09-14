@@ -29,6 +29,9 @@ namespace Platformer.EditorTools
         [MenuItem("Tools/2D Platformer/Test Odasi Olustur", false, 2)]
         public static void Build()
         {
+            if (!EditorGuards.RequireEditMode("Test Odasi Olustur",
+                "Yeni sahne olusturmak Play modunda mumkun degil.")) return;
+
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
             bool ok = EditorUtility.DisplayDialog(

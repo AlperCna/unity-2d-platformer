@@ -26,15 +26,8 @@ namespace Platformer.EditorTools
         [MenuItem("Tools/2D Platformer/Kamera Sinirlarini Hesapla", false, 30)]
         public static void Calculate()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                EditorUtility.DisplayDialog(
-                    "Play modunda calismaz",
-                    "Kamera sinirlari Play modunda degistirilemez — Play'den cikinca " +
-                    "degisiklikler zaten geri alinir.\n\nOnce Play'i durdur, sonra tekrar dene.",
-                    "Tamam");
-                return;
-            }
+            if (!EditorGuards.RequireEditMode("Kamera Sinirlarini Hesapla",
+                "Play modunda yapilan sahne degisiklikleri Play bitince geri alinir.")) return;
 
 #if UNITY_2023_1_OR_NEWER
             var follow = Object.FindAnyObjectByType<CameraFollow>();

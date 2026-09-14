@@ -11,6 +11,10 @@ namespace Platformer.Core
     {
         public static GameManager Instance { get; private set; }
 
+        [Header("Bolum")]
+        [Tooltip("0'dan baslayan bolum numarasi. Kayit sistemi bunu kullanir.")]
+        [SerializeField] private int levelIndex = 0;
+
         [Header("Olum")]
         [Tooltip("Oldukten sonra yeniden dogana kadar gecen sure. " +
                  "0.6'nin uzerine CIKMA - 30 kez olecek oyuncu icin her 0.1 sn 3 sn demek.")]
@@ -57,6 +61,7 @@ namespace Platformer.Core
         public System.Action OnLevelCompleted;
 
         private Transform player;
+        private IResettable[] resettables;
 
         private void Awake()
         {
@@ -87,6 +92,8 @@ namespace Platformer.Core
 #else
             TotalCoins = FindObjectsOfType<Gameplay.Coin>(true).Length;
 #endif
+
+            CacheResettables();
 
             OnScoreChanged?.Invoke(Score, TotalCoins);
             OnDeathCountChanged?.Invoke(DeathCount);
@@ -141,13 +148,45 @@ namespace Platformer.Core
         /// <summary>
         /// Respawn'da cagrilir: bolumdeki hareketli parcalar basa donsun.
         ///
-        /// Epic 10'da IResettable arayuzuyle doldurulacak. Simdilik bos,
-        /// ama cagri noktasi burada olsun ki PlayerHealth'i sonra
-        /// degistirmek gerekmesin.
+        /// Paralar ve checkpoint'ler IResettable UYGULAMADIGI icin
+        /// sifirlanmaz - toplanmis/aktif kalirlar.
         /// </summary>
         public void ResetLevelState()
         {
-            // Epic 10: sahnedeki tum IResettable'lari cagir
+            if (resettables == null) return;
+
+            foreach (IResettable r in resettables)
+            {
+                // Yok edilmis nesneleri atla. Unity'nin null kontrolu
+                // Destroy edilmis MonoBehaviour'lari da yakalar.
+                if (r is MonoBehaviour mb && mb == null) continue;
+
+                r.ResetToInitialState();
+            }
+        }
+
+        /// <summary>
+        /// Sahnedeki tum IResettable'lari bir kez bulur ve saklar.
+        ///
+        /// Her respawn'da aramak pahali olurdu: FindObjectsByType tum
+        /// sahneyi tarar ve olum 30 kez tekrarlanacak bir olay.
+        /// </summary>
+        private void CacheResettables()
+        {
+#if UNITY_2023_1_OR_NEWER
+            var behaviours = FindObjectsByType<MonoBehaviour>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+#endif
+
+            var list = new System.Collections.Generic.List<IResettable>();
+            foreach (MonoBehaviour b in behaviours)
+            {
+                if (b is IResettable r) list.Add(r);
+            }
+
+            resettables = list.ToArray();
         }
 
         public void CompleteLevel()
@@ -155,6 +194,20 @@ namespace Platformer.Core
             if (LevelCompleted) return;
 
             LevelCompleted = true;
+
+            // Karakteri dondur - bayraga degdikten sonra kosmaya devam etmesin
+            if (player != null)
+            {
+                player.GetComponent<Player.PlayerController2D>()?.Freeze();
+            }
+
+            // Kalici kayit. Sir sistemi Epic 08'de gelecek, simdilik false.
+            SaveManager.Instance?.CompleteLevel(
+                levelIndex, Score, TotalCoins,
+                secret: false,
+                time: LevelTime,
+                deaths: DeathCount);
+
             OnLevelCompleted?.Invoke();
         }
 

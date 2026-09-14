@@ -24,6 +24,9 @@ namespace Platformer.EditorTools
         [MenuItem("Tools/2D Platformer/Bolum 1'i Kur", false, 3)]
         public static void Build()
         {
+            if (!EditorGuards.RequireEditMode("Bolum 1'i Kur",
+                "Yeni sahne olusturmak Play modunda mumkun degil.")) return;
+
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
             bool ok = EditorUtility.DisplayDialog(
