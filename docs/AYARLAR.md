@@ -69,6 +69,19 @@ hissine yaklaşır — ama sen dengeli/klasik seçtin, uzun tarafta kal.
 | **Maks. mesafe (dash'li)** | 8,10 | **7,62** | −6% (tepe zamanlaması) |
 | Dash kazancı | +2,91 | **+2,31** | |
 
+İki ek değer **hesaplandı, ölçülmedi** — tasarım için kritik değiller ama
+işe yarıyorlar:
+
+| Değer | Hesaplanan | Ne işe yarar |
+|---|---|---|
+| Min. zıplama yüksekliği (hızlı dokunuş) | **~1,5 birim** | 1,0–1,4 birimlik basamaklar hafif dokunuşla geçilir — ritim için |
+| Havada kalma süresi | **~0,65 sn** | 0,38 sn yükselme + 0,27 sn düşme |
+
+Min. yükseklik hesabı: en hızlı insan dokunuşu ~0,08 sn. O sürede karakter
+1,17 birim yükselir, sonra `jumpCutMultiplier = 0,45` hızı keser ve 0,35 birim
+daha çıkar. Yani **hiçbir zıplama 1,5 birimin altında olamaz** — 1,0 birimlik
+bir basamak, tuşa dokunman yeterli olduğu için "bedava" hissettirir.
+
 ### Dash neden teoriden az kazandırıyor
 
 Dash yatay hızı 18'e sabitlerken **dikey hızı da sıfırlıyor**. Tepe noktasından

@@ -1,9 +1,9 @@
 # VİZYON
 
-> Bu belge projenin pusulası. Yeni bir fikir geldiğinde buraya bak:
-> vizyona uymuyorsa `SONRA.md`'ye yaz ve **yapma**.
+> Projenin pusulası. Yeni bir fikir geldiğinde buraya bak — vizyona uymuyorsa
+> [SONRA.md](SONRA.md)'ye yaz ve **yapma**.
 >
-> Son güncelleme: 14 Eylül 2026
+> **Onaylandı: 14 Eylül 2026**
 
 ---
 
@@ -12,79 +12,53 @@
 > **Sıçradıkça sönen, yere değdikçe yeniden dolan bir kıvılcımın,
 > rüzgârlı bir vadiyi geçme hikâyesi.**
 
-**Bu cümleyi değiştirebilirsin — tema senin.** Mekanik ve his zaten
-kararlaştırıldı; aşağıdaki her şey onlardan türüyor ve tema değişse de geçerli.
-
-İki alternatif, aynı mekaniğe oturuyor:
-
-| Tema | Cümle | Neden işe yarar |
-|---|---|---|
-| **Kıvılcım** *(seçili)* | Yukarıdaki | Dash = enerji patlaması; yere değince dolması doğal. Mevcut turuncu sprite'a birebir uyuyor. |
-| Kurye robot | "Paketi teslim etmek için fabrikayı geçmeye çalışan küçük bir kurye robot." | Dash = itki motoru. Endüstriyel tema, tilemap çizmesi kolay. |
-| Kâğıt uçak | "Rüzgârla taşınan, hamle hakkı sınırlı bir kâğıt uçak." | Dash = rüzgâr hamlesi. Sade sanat, az çizim. |
-
-**Neden "kıvılcım" önerildi:** dash mekaniğini tema açıklıyor. Oyuncu
-"neden yere değince dash yenileniyor?" diye sormaz — kıvılcım yere
-değince yeniden tutuşur. Mekanik ve tema birbirini destekliyor.
-
----
+Tema mekaniği açıklıyor: kıvılcım yere değince yeniden tutuşur, dash hakkı da
+yerde yenilenir. Oyuncu "neden böyle?" diye sormaz.
 
 ## Üç sütun
 
-**1. Okunabilirlik** — Oyuncu ölmeden önce ölümü görebilmeli. Şüpheye
-düştüğümüzde oyuncu lehine karar veririz: collider'lar görselden küçük,
-tehlikelerin uyarısı var, hiçbir şey ekran dışından gelmez.
+**Okunabilirlik** — Oyuncu ölümü gelmeden görebilmeli. Şüphede oyuncu lehine
+karar veririz: collider'lar görselden küçük, tehlikelerin uyarısı var, hiçbir
+şey ekran dışından gelmez.
 
-**2. Akıcılık** — Dash, zıplamayı kesmez; onu uzatır. İyi oynayan biri
-bölümü hiç durmadan geçebilmeli. Bekleme, yükleme, gereksiz duraklama yok.
+**Akıcılık** — Dash zıplamayı kesmez, uzatır. İyi oynayan biri bölümü hiç
+durmadan geçebilmeli.
 
-**3. Adalet** — Ölüm cezası neredeyse sıfır (0.45 sn), checkpoint'ler cömert.
-Zorluk "tekrar ettirmek"ten değil, "öğretmek"ten gelir.
-
----
+**Adalet** — Ölüm cezası 0,45 saniye, checkpoint'ler cömert. Zorluk tekrar
+ettirmekten değil, öğretmekten gelir.
 
 ## Çekirdek döngü
 
 ```
-Bölüme gir
-  → önündeki boşluğu/tehlikeyi oku
-    → zıpla, gerekiyorsa havada dash'le
-      → yere değ, dash hakkın yenilensin
-        → tekrar
-          → başar veya öl (anında yeniden)
+boşluğu oku → zıpla → gerekiyorsa dash → yere değ, dash yenilensin → tekrar
 ```
 
-**30 saniyelik ritim:** zıpla–dash–in, zıpla–dash–in. Dash'in yerde
-yenilenmesi bu ritmi kuruyor: havada bir hamle hakkın var, onu nerede
-harcayacağına karar veriyorsun.
+Havada tek hamle hakkın var; onu nerede harcayacağına karar veriyorsun.
 
 ---
 
 ## İmza mekaniği: Dash
 
-Havada ileri fırlama. Yerçekimi devre dışı, sabit hız, sabit süre.
+Yatay, havada tek kullanım, yere değince yenilenir.
 
-| Kural | Değer | Neden |
-|---|---|---|
-| Yön | **Sadece yatay** (giriş yoksa baktığın yön) | Yükseklik yalnızca zıplamayla belirlensin |
-| Dash sırasında yerçekimi | Kapalı | Düz çizgi, tahmin edilebilir |
-| Hak yenilenmesi | **Yere değince** | Havada sonsuz dash olmasın |
-| Bekleme | 0.35 sn | Yerde spam edilmesin |
-| Bitince | Hız %55'e düşer | "Fırlamış" hissi olmasın |
+| Kural | Değer |
+|---|---|
+| Yön | **Sadece yatay** (giriş yoksa baktığın yön) |
+| Dash sırasında yerçekimi | Kapalı |
+| Hak yenilenmesi | Yere değince |
+| Bekleme | 0,35 sn |
+| Bitince | Hız %55'e düşer |
 
-**Neden yatay?** 8 yönlü dash denendi ve yukarı dash erişilebilir yüksekliği
-3.2'den 6.5 birime çıkardı — iki katı. Bu, her platform yüksekliğini
-"dash'siz mi, dash'li mi?" diye iki kez hesaplamayı gerektirir ve ilk oyunda
-bölüm tasarımını gereksiz zorlaştırır. Yatay dash, dikey ekseni zıplamaya
-bırakıp tek bir hesap bırakıyor.
+**Neden yatay:** 8 yönlü denendi, yukarı dash erişilebilir yüksekliği 3,03'ten
+6,47'ye çıkardı. Her platform yüksekliğini iki kez hesaplamak gerekirdi.
+Yatay dash dikey ekseni tamamen zıplamaya bırakıyor.
 
-**Bölüm tasarımına etkisi:** ölçüldü — dash, zıplama mesafesini
-**5,31'den 7,62'ye** çıkarıyor (+%43). Yani iki tür boşluk tasarlanabilir:
+**Tasarıma etkisi:** ölçüldü — mesafeyi 5,31'den 7,62'ye çıkarıyor. İki tür
+boşluk demek:
 
-- **5,3'ün altı** → dash'siz geçilir. Ritim kurar, akış sağlar.
-- **5,5'in üstü** → dash zorunlu. Karar noktası yaratır.
+- **5,3 altı** → dash'siz geçilir, ritim kurar
+- **5,5 üstü** → dash zorunlu, karar noktası yaratır
 
-Bu ikilik, tek mekanikle bölüm çeşitliliği üretmenin yolu.
 Tam cetvel: [AYARLAR.md](AYARLAR.md#zorluk-cetveli)
 
 ---
@@ -93,55 +67,32 @@ Tam cetvel: [AYARLAR.md](AYARLAR.md#zorluk-cetveli)
 
 | | Hedef |
 |---|---|
-| Bölüm sayısı | **10–12** |
-| Bölüm başına süre | 30–90 saniye |
-| Toplam oynanış | 10–15 dakika |
-| Düşman çeşidi | 3 (devriye, mermi atan, uçan) |
-| Tehlike çeşidi | 5 (diken, boşluk, hareketli platform, düşen platform, aralıklı diken) |
-| Mekanik | 1 imza (dash) + temel zıplama |
-| Boss | **Yok** |
-| Hikâye | En fazla 3 ekran yazı |
-| Müzik | 2–3 parça |
+| Bölüm | **10–12** |
+| Bölüm süresi | 30–90 sn |
+| Toplam oynanış | 10–15 dk |
+| Düşman | 3 çeşit |
+| Tehlike | 5 çeşit |
+| Mekanik | 1 imza + zıplama |
+| Boss | Yok |
+| Hikâye | En fazla 3 ekran |
 | Platform | Windows |
 
-Bu tablo **bitiş çizgisi**. Hepsi tamamlandığında oyun bitmiştir.
-
----
+Bu tablo **bitiş çizgisi**. Hepsi tamamlanınca oyun bitmiştir.
 
 ## Referanslar
 
-**Super Mario Bros. / Celeste karışımı bir his.**
-
 | Oyun | Alıyorum | Almıyorum |
 |---|---|---|
-| **Super Mario Bros.** | Dengeli zıplama hissi, affedici toleranslar, keşif için nefes alanları | Güç-yükseltmeleri, dünya haritası, 8 dünyalık yapı |
-| **Celeste** | Dash mekaniği, sıfıra yakın ölüm cezası, bölüm başına tek fikir | Hikâye, diyalog, B-side'lar, aşırı zorluk |
-| **Hollow Knight** | **Hiçbir şey.** Üç kişinin üç yılı — benim ölçeğimde değil. | |
-
-Son satır kasıtlı: referansın senin ölçeğinde olmazsa kendi oyunun
-hep yetersiz görünür.
+| **Mario** | Dengeli zıplama, affedici toleranslar, nefes alanları | Güç-yükseltmeleri, dünya haritası |
+| **Celeste** | Dash, sıfıra yakın ölüm cezası, bölüm başına tek fikir | Hikâye, B-side'lar, aşırı zorluk |
+| **Hollow Knight** | **Hiçbir şey** — üç kişinin üç yılı, benim ölçeğimde değil | |
 
 ---
 
-## Bu oyunda OLMAYACAK şeyler
+## OLMAYACAK şeyler
+
+Hikâye · diyalog · envanter · beceri ağacı · ikinci mekanik · boss ·
+açık dünya · çok oyunculu · karakter özelleştirme · çoklu dil ·
+zorluk seviyeleri
 
 Buraya ekleme yaptıkça bitmeye yaklaşırsın.
-
-- Hikâye, diyalog, ara sahne
-- Envanter, para ekonomisi, mağaza
-- Beceri ağacı, yükseltme
-- İkinci bir mekanik (duvar sekmesi, kanca, yerçekimi çevirme)
-- Boss savaşı
-- Açık dünya / geri dönülebilir harita
-- Çok oyunculu
-- Karakter özelleştirme
-- Birden fazla dil
-- Kolay/Normal/Zor seviyeleri
-
----
-
-## Bağlantılar
-
-- [Yol haritası](00-YOL-HARITASI.md)
-- [Karakter ayarları](AYARLAR.md)
-- [Sonra listesi](SONRA.md)
