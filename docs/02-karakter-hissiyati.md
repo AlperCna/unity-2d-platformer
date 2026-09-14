@@ -68,6 +68,12 @@ jumpVelocity = gravity * jumpApexTime;
 Bunun anlamı: **istediğin hissi doğrudan yazabiliyorsun.** "Daha yükseğe
 zıplasın" demek için `jumpHeight`'ı artırırsın; yerçekimi kendini ayarlar.
 
+> ⚠️ **Ayar ≠ ulaşılan yükseklik.** `jumpHeight = 3.2` sürekli matematiğin
+> ideali; oyunda gerçekten ulaşılan yükseklik **3,03**. Fark, fiziğin saniyede
+> 50 ayrık adımda çalışmasından. Bölüm tasarımında **3,03 kullan** —
+> `MovementSettings.RealJumpHeight` bu düzeltmeyi yapıyor.
+> Ayrıntı: [AYARLAR.md](AYARLAR.md#neden-teorik--gerçek)
+
 ---
 
 ## Görevler
@@ -172,55 +178,41 @@ oyna, sonra geri al — farkı hemen hissedersin.
 Zıplama değerlerini kesinleştirdikten sonra **ölç**. Bu sayılar bölüm
 tasarımının dilbilgisi olacak (Epic 04).
 
-**Ölçme yöntemi — geçici debug script'i:**
+**Ölçme aracı:** [`Assets/Scripts/DevTools/JumpMeasure.cs`](../Assets/Scripts/DevTools/JumpMeasure.cs)
+Test odasındaki Player'a ekli, ölçümleri ekranda gösteriyor.
+
+Yazarken **iki hata yapıldı**; ikisi de sessizce yanlış sayı üretiyordu.
+Kendi ölçüm aracını yazarsan bunlara dikkat et:
+
+**Hata 1 — ölçüm bir fizik karesi geç başlıyordu.**
 
 ```csharp
-using UnityEngine;
-using Platformer.Player;
-using Platformer.Core;
+// YANLIS: yerden ayrilmayi beklemek
+if (!measuring && !controller.IsGrounded) { startY = transform.position.y; }
+```
 
-/// Test odasina ekle, oyna, Console'a bak. Olcum bitince sil.
-public class JumpMeasure : MonoBehaviour
+O anda karakter zaten `v₀ × dt = 16,84 × 0,02 ≈ 0,34` birim yükselmiş oluyor.
+Her ölçüm o kadar eksik çıkıyordu. Doğrusu `OnJumped` olayını dinlemek.
+
+**Hata 2 — düzeltmenin kendisi yeni bir hata doğurdu.**
+
+`OnJumped`, `FixedUpdate` içinde `HandleJump()` sırasında tetikleniyor ve
+**o anda `IsGrounded` hâlâ `true`** (zemin kontrolü aynı karede daha önce
+çalıştı). Sonraki `Update`'te kod "yere indik" sanıp ölçümü anında bitiriyor
+ve `0,17` gibi saçma sayılar üretiyordu.
+
+```csharp
+// DOGRU: once gercekten havalanmayi bekle
+if (!leftGround)
 {
-    private PlayerController2D controller;
-    private Rigidbody2D rb;
-
-    private float startY, maxY, startX;
-    private bool measuring;
-
-    private void Awake()
-    {
-        controller = GetComponent<PlayerController2D>();
-        rb = GetComponent<Rigidbody2D>();
-    }
-
-    private void Update()
-    {
-        // Zipla basladi
-        if (!measuring && !controller.IsGrounded)
-        {
-            measuring = true;
-            startY = transform.position.y;
-            startX = transform.position.x;
-            maxY = startY;
-        }
-
-        if (measuring)
-        {
-            maxY = Mathf.Max(maxY, transform.position.y);
-
-            // Yere indi
-            if (controller.IsGrounded)
-            {
-                measuring = false;
-                float height = maxY - startY;
-                float distance = Mathf.Abs(transform.position.x - startX);
-                Debug.Log($"Yukseklik: {height:F2} birim | Mesafe: {distance:F2} birim");
-            }
-        }
-    }
+    if (!controller.IsGrounded) leftGround = true;
+    return;
 }
 ```
+
+**Hata 3 — eğimli zıplamalar cetveli kirletiyordu.** Basamaktan aşağı
+zıplarsan havada daha uzun kalırsın ve mesafe şişer. Araç artık sadece
+kalkış ve iniş yüksekliği yakın olan **düz zıplamaları** sayıyor.
 
 Şunları ölç ve tabloya yaz:
 

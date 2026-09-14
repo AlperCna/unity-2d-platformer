@@ -298,27 +298,85 @@ Bu tabloyu doldur, her epic bitince işaretle:
 
 ---
 
+## Kod envanteri
+
+> **Okuma kılavuzu:** epic dosyalarındaki kod örneklerinin çoğu **henüz
+> yazılmamış** dosyalara aittir — onlar o epic'in işidir. Aşağıdaki tablo
+> şu an gerçekten var olanları gösterir.
+>
+> ✅ oyunda kullanılıyor · 🔧 geliştirme aracı (oyuna girmez)
+
+### Çalışma zamanı — `Assets/Scripts/`
+
+| Dosya | Durum | Not |
+|---|---|---|
+| `Core/GameManager.cs` | ✅ | Skor, can, checkpoint, ölüm çizgisi |
+| `Core/Rigidbody2DExtensions.cs` | ✅ | Unity 2022 / Unity 6 uyumluluğu |
+| `Player/PlayerController2D.cs` | ✅ | Coyote time, jump buffer, değişken zıplama, **dash** |
+| `Player/PlayerHealth.cs` | ✅ | Ölüm ve respawn *(Epic 09'da geliştirilecek)* |
+| `Camera/CameraFollow.cs` | ✅ | Yere değilen yükseklik takibi, sarsıntı, sınırlar |
+| `Gameplay/Coin.cs` | ✅ | |
+| `Gameplay/Hazard.cs` | ✅ | |
+| `Gameplay/Patroller.cs` | ✅ | *(Epic 06'da `EnemyBase`'e taşınacak)* |
+| `Gameplay/MovingPlatform.cs` | ✅ | Yolcu taşıyor |
+| `Gameplay/Checkpoint.cs` | ✅ | Oturum içi *(Epic 10'da kalıcı kayıt)* |
+| `Gameplay/LevelGoal.cs` | ✅ | |
+| `Gameplay/ParallaxLayer.cs` | ✅ | |
+| `UI/HudController.cs` | ✅ | *(Epic 15'te TMP'ye geçecek)* |
+| `DevTools/JumpMeasure.cs` | 🔧 | Zıplama ölçümü (Epic 02) |
+| `DevTools/FeelTuner.cs` | 🔧 | Hazır ayar karşılaştırması, sarsıntı testi |
+| `DevTools/TestRoomLabel.cs` | 🔧 | Scene view ölçü etiketleri |
+| `DevTools/TestRoomRespawn.cs` | 🔧 | Test odasında boşluğa düşünce başa dön |
+
+### Editor — `Assets/Editor/`
+
+| Dosya | Durum | Not |
+|---|---|---|
+| `SpriteFactory.cs` | ✅ | 8 sprite'ı kod ile üretir, var olanı atlar |
+| `LevelCursor.cs` | ✅ | Bölümü adım adım tarif etme + **cetvel doğrulaması** |
+| `Level01Builder.cs` | ✅ | Bölüm 1 (bkz. [BOLUM-01.md](BOLUM-01.md)) |
+| `LevelBuilder.cs` | ✅ | Eski demo bölüm + proje ayarları + ortak yardımcılar |
+| `CameraBoundsTool.cs` | ✅ | Kamera sınırı hesabı (tek uygulama) |
+| `TestRoomBuilder.cs` | 🔧 | Ölçülü test odası |
+
+---
+
+## Tools menüsü
+
+| Menü | Ne yapar |
+|---|---|
+| **Ornek Bolumu Olustur** | Eski demo bölüm (düşmanlı, hareketli platformlu) |
+| **Bolum 1'i Kur** | Gerçek Bölüm 1 — `Level01.unity` üzerine yazar |
+| **Test Odasi Olustur** | Ölçülü test odası — oyuna girmez |
+| **Kamera Sinirlarini Hesapla** | Açık sahnenin sınırlarını ölçüp yazar |
+| **Sadece Grafikleri Uret** | 8 PNG'yi **yeniden** üretir (onay sorar) |
+| **Sadece Proje Ayarlarini Uygula** | Layer, tag, input ayarları |
+
+---
+
 ## Şu an neredesin
 
-İskelet hazır ve doğrulandı:
+**M1 — Dikey Dilim: 4/6 epic bitti.**
 
-| Sistem | Dosya | Durum |
+| Epic | Durum | Çıktı |
 |---|---|---|
-| Karakter kontrolü | `Scripts/Player/PlayerController2D.cs` | ✅ Coyote time, jump buffer, değişken zıplama |
-| Ölüm/respawn | `Scripts/Player/PlayerHealth.cs` | ✅ Temel çalışıyor |
-| Kamera | `Scripts/Camera/CameraFollow.cs` | ✅ Ölü bölge, ileri bakış, sınırlar |
-| Oyun durumu | `Scripts/Core/GameManager.cs` | ✅ Skor, can, checkpoint |
-| Düşman | `Scripts/Gameplay/Patroller.cs` | ✅ Devriye + ezilebilir |
-| Hareketli platform | `Scripts/Gameplay/MovingPlatform.cs` | ✅ Yolcu taşıyor |
-| Tehlike | `Scripts/Gameplay/Hazard.cs` | ✅ Yönlü olabilir |
-| Toplanabilir | `Scripts/Gameplay/Coin.cs` | ✅ Animasyonlu |
-| Checkpoint | `Scripts/Gameplay/Checkpoint.cs` | ✅ |
-| HUD | `Scripts/UI/HudController.cs` | ✅ Skor/can |
-| Bölüm üreteci | `Editor/LevelBuilder.cs` | ✅ Tek tıkla örnek bölüm |
-| Grafik üreteci | `Editor/SpriteFactory.cs` | ✅ 8 sprite kod ile |
+| 01 Vizyon | ✅ | [VIZYON.md](VIZYON.md), [SONRA.md](SONRA.md) |
+| 02 Hissiyat | ✅ | [AYARLAR.md](AYARLAR.md) + ölçümler + zorluk cetveli |
+| 03 Kamera | ✅ | Dikey takip, sarsıntı, otomatik sınır aracı |
+| 04 Seviye tasarımı | ✅ | [BOLUM-01.md](BOLUM-01.md) + `LevelCursor` |
+| 09 Can/Ölüm | ⬜ | **sıradaki** |
+| 10 Checkpoint/Kayıt | ⬜ | |
 
-Bu, **M1'in yaklaşık yarısı** demek. Eksik olan: hissiyat ayarı, sanat,
-ses ve bölüm tasarımı.
+**Ölçülen değerler** (bölüm tasarımının cetveli):
 
-Sıradaki adım: **[Epic 01 — Oyun vizyonu](01-oyun-vizyonu.md)**. Kod
-yazmayacaksın, bir sayfa yazı yazacaksın. Atlamak isteyeceksin — atlama.
+| | Değer |
+|---|---|
+| Maks. zıplama yüksekliği | **3,03** birim |
+| Maks. mesafe (dash'siz) | **5,31** birim |
+| Maks. mesafe (dash'li) | **7,62** birim |
+| Min. zıplama (dokunuş) | ~1,5 birim |
+
+**Açık madde:** Bölüm 1'i başkasına oynatma — M1 kapısına ertelendi
+(Epic 09 ve 10 bitmeden geri bildirim yanıltıcı olur).
+
+Sıradaki adım: **[Epic 09 — Can, hasar, ölüm](09-can-hasar-olum.md)**.
