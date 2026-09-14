@@ -104,9 +104,12 @@ namespace Platformer.EditorTools
             // Iki kat. Alttan zipla ile ustune cikilir, ASAGI + ZIPLA ile
             // geri inilir. Ust katta para var - inmek istemezsen almazsin.
             c.Ground(14f, "TekYonlu_Alani");
-            c.OneWay(atX: c.X - 10f, heightAboveGround: 3f, width: 4f);
-            c.OneWay(atX: c.X - 4f, heightAboveGround: 3f, width: 4f);
-            c.Coins(3, heightAboveGround: 4f);
+            // 2,0 birim: ust yuzey 2,25'e geliyor, yani maksimum ziplamanin
+            // (3,03) %74'u. 3,0 vermistim ve ULASILAMIYORDU - platformun
+            // kalinligini hesaba katmayi unutmustum.
+            c.OneWay(atX: c.X - 10f, heightAboveGround: 2f, width: 4f);
+            c.OneWay(atX: c.X - 4f, heightAboveGround: 2f, width: 4f);
+            c.Coins(3, heightAboveGround: 3.6f);
 
             c.Gap(2f);
             c.Ground(6f, "Nefes_3");
