@@ -63,8 +63,15 @@ namespace Platformer.Gameplay
             hazardCollider = GetComponent<Collider2D>();
             hazardCollider.isTrigger = true;
 
-            ResetCycle();
+            // SIRA ONEMLI: once turetilen sinif kendi referanslarini bulsun,
+            // SONRA dongu baslasin.
+            //
+            // Tersiydi ve su hatayi verdi: ResetCycle -> OnPhaseChanged ->
+            // FireJet gorseline dokunuyor, ama gorsel henuz bulunmamis.
+            // "UnassignedReferenceException: flameVisual has not been assigned"
+            // Oyun acilir acilmaz her karede hata basiyordu.
             OnAwakeHazard();
+            ResetCycle();
         }
 
         protected virtual void OnAwakeHazard() { }

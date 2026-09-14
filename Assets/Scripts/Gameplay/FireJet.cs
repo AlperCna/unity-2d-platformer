@@ -15,7 +15,7 @@ namespace Platformer.Gameplay
     public class FireJet : TimedHazard
     {
         [Header("Alev")]
-        [Tooltip("Uzayip kisalacak gorsel. Bos birakirsan ilk cocuk kullanilir.")]
+        [Tooltip("Uzayip kisalacak gorsel. Bos birakirsan \"Flame\" adli cocuk aranir.")]
         [SerializeField] private Transform flameVisual;
 
         [Tooltip("Alevin tam boyu (birim).")]
@@ -42,9 +42,13 @@ namespace Platformer.Gameplay
 
         protected override void OnAwakeHazard()
         {
+            // Yedek arama ISME gore. Once indekse gore araniyordu ve
+            // prefabin ilk cocugu "Nozzle" oldugu icin yanlis nesneyi
+            // buluyordu - alev yerine namluyu uzatmaya calisirdi.
+            if (flameVisual == null) flameVisual = transform.Find("Flame");
             if (flameVisual == null && transform.childCount > 0)
             {
-                flameVisual = transform.GetChild(0);
+                flameVisual = transform.GetChild(transform.childCount - 1);
             }
 
             flameRenderer = flameVisual != null

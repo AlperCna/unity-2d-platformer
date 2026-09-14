@@ -11,5 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/DusmanTestOdasi.unity
     guid: 08b96604a1538e04391cb39911e42d49
+  - enabled: 1
+    path: Assets/Scenes/TehlikeTestOdasi.unity
+    guid: 38bf2fac65b6626458aa51b48c48ce39
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

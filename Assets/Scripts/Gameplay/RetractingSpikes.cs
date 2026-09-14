@@ -14,8 +14,8 @@ namespace Platformer.Gameplay
     public class RetractingSpikes : TimedHazard
     {
         [Header("Gorsel")]
-        [Tooltip("Asagi yukari hareket edecek olan gorsel. Bos birakirsan " +
-                 "ilk cocuk nesne kullanilir.")]
+        [Tooltip("Asagi yukari hareket edecek olan gorsel. Prefab bunu " +
+                 "acikca bagliyor; bos kalirsa ilk cocuk kullanilir.")]
         [SerializeField] private Transform spikeVisual;
 
         [Tooltip("Tamamen ciktiginda ne kadar yukarida olsun.")]
