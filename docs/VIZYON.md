@@ -66,18 +66,26 @@ Havada ileri fırlama. Yerçekimi devre dışı, sabit hız, sabit süre.
 
 | Kural | Değer | Neden |
 |---|---|---|
-| Yön | 8 yön (giriş yoksa baktığın yön) | Esneklik |
+| Yön | **Sadece yatay** (giriş yoksa baktığın yön) | Yükseklik yalnızca zıplamayla belirlensin |
 | Dash sırasında yerçekimi | Kapalı | Düz çizgi, tahmin edilebilir |
 | Hak yenilenmesi | **Yere değince** | Havada sonsuz dash olmasın |
 | Bekleme | 0.35 sn | Yerde spam edilmesin |
 | Bitince | Hız %55'e düşer | "Fırlamış" hissi olmasın |
 
-**Bölüm tasarımına etkisi:** dash, zıplama mesafesini yaklaşık **%55
-artırıyor**. Yani iki tür boşluk tasarlayabilirsin:
-- Dash'siz geçilebilen (kolay, ritim)
-- Dash gerektiren (karar noktası)
+**Neden yatay?** 8 yönlü dash denendi ve yukarı dash erişilebilir yüksekliği
+3.2'den 6.5 birime çıkardı — iki katı. Bu, her platform yüksekliğini
+"dash'siz mi, dash'li mi?" diye iki kez hesaplamayı gerektirir ve ilk oyunda
+bölüm tasarımını gereksiz zorlaştırır. Yatay dash, dikey ekseni zıplamaya
+bırakıp tek bir hesap bırakıyor.
+
+**Bölüm tasarımına etkisi:** ölçüldü — dash, zıplama mesafesini
+**5,31'den 7,62'ye** çıkarıyor (+%43). Yani iki tür boşluk tasarlanabilir:
+
+- **5,3'ün altı** → dash'siz geçilir. Ritim kurar, akış sağlar.
+- **5,5'in üstü** → dash zorunlu. Karar noktası yaratır.
 
 Bu ikilik, tek mekanikle bölüm çeşitliliği üretmenin yolu.
+Tam cetvel: [AYARLAR.md](AYARLAR.md#zorluk-cetveli)
 
 ---
 

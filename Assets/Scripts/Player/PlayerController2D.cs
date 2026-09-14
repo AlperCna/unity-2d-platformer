@@ -70,8 +70,10 @@ namespace Platformer.Player
         [Range(0.2f, 1f)]
         [SerializeField] private float dashEndSpeedMultiplier = 0.55f;
 
-        [Tooltip("Dash yonu 8 yon mu olsun, yoksa sadece yatay mi?")]
-        [SerializeField] private bool allowDiagonalDash = true;
+        [Tooltip("Acik: 8 yonlu dash (yukari dash erisilebilir yuksekligi IKIYE KATLAR, " +
+                 "her platform yuksekligini iki kez hesaplaman gerekir). " +
+                 "Kapali: sadece yatay - yukseklik yalnizca ziplamayla belirlenir.")]
+        [SerializeField] private bool allowDiagonalDash = false;
 
         [Header("Zemin Algilama")]
         [Tooltip("Hangi layer'lar zemin sayilir. Player layer'ini burada ISARETLEME.")]
@@ -139,6 +141,89 @@ namespace Platformer.Player
         private void OnValidate()
         {
             // Inspector'da deger degistirince fizik hemen guncellensin
+            RecalculateJumpPhysics();
+        }
+
+        // ---------------------------------------------------------------
+        // Ayarlari disaridan okuma/yazma
+        // Hazir ayar karsilastirmasi ve testler icin (Epic 02, Gorev 2).
+        // ---------------------------------------------------------------
+
+        /// <summary>Hareket hissini belirleyen tum degerler tek pakette.</summary>
+        [System.Serializable]
+        public struct MovementSettings
+        {
+            public float moveSpeed;
+            public float accelerationTime;
+            public float decelerationTime;
+            public float airControl;
+            public float jumpHeight;
+            public float jumpApexTime;
+            public float fallGravityMultiplier;
+            public float jumpCutMultiplier;
+            public float coyoteTime;
+            public float jumpBufferTime;
+
+            // --- Turetilen olculer (sadece okunur, gosterim icin) ---
+
+            /// <summary>Hesaplanan yercekimi: g = 2h / t^2</summary>
+            public float Gravity => (2f * jumpHeight) / (jumpApexTime * jumpApexTime);
+
+            /// <summary>Zipla aninda verilen dikey hiz.</summary>
+            public float JumpVelocity => Gravity * jumpApexTime;
+
+            /// <summary>
+            /// Oyunda GERCEKTEN ulasilan yukseklik.
+            ///
+            /// jumpHeight surekli matematigin ideali; fizik ise saniyede 50 ayrik
+            /// adimla calisiyor (yari-ortuk Euler). Her adimda once hiz azaliyor,
+            /// sonra konum degisiyor - bu, tepe noktasini (v0 * dt) / 2 kadar dusuruyor.
+            ///
+            /// Bolum tasariminda CETVEL OLARAK BUNU KULLAN, jumpHeight'i degil.
+            /// Olculdu ve dogrulandi: 3.20 istenen -> 3.03 gercek.
+            /// </summary>
+            public float RealJumpHeight =>
+                jumpHeight - (JumpVelocity * Time.fixedDeltaTime) * 0.5f;
+
+            /// <summary>Tepeden yere dusme suresi (agir yercekimiyle).</summary>
+            public float FallTime => jumpApexTime / Mathf.Sqrt(Mathf.Max(fallGravityMultiplier, 0.01f));
+
+            /// <summary>Toplam havada kalma suresi.</summary>
+            public float AirTime => jumpApexTime + FallTime;
+
+            /// <summary>Tam hizda kosarak zipladiginda kat edilen yatay mesafe.</summary>
+            public float JumpDistance => moveSpeed * AirTime;
+        }
+
+        /// <summary>Su anki ayarlari okur.</summary>
+        public MovementSettings GetSettings() => new MovementSettings
+        {
+            moveSpeed = moveSpeed,
+            accelerationTime = accelerationTime,
+            decelerationTime = decelerationTime,
+            airControl = airControl,
+            jumpHeight = jumpHeight,
+            jumpApexTime = jumpApexTime,
+            fallGravityMultiplier = fallGravityMultiplier,
+            jumpCutMultiplier = jumpCutMultiplier,
+            coyoteTime = coyoteTime,
+            jumpBufferTime = jumpBufferTime
+        };
+
+        /// <summary>Ayarlari toptan uygular ve fizigi yeniden hesaplar.</summary>
+        public void ApplySettings(MovementSettings s)
+        {
+            moveSpeed = s.moveSpeed;
+            accelerationTime = s.accelerationTime;
+            decelerationTime = s.decelerationTime;
+            airControl = s.airControl;
+            jumpHeight = s.jumpHeight;
+            jumpApexTime = s.jumpApexTime;
+            fallGravityMultiplier = s.fallGravityMultiplier;
+            jumpCutMultiplier = s.jumpCutMultiplier;
+            coyoteTime = s.coyoteTime;
+            jumpBufferTime = s.jumpBufferTime;
+
             RecalculateJumpPhysics();
         }
 
