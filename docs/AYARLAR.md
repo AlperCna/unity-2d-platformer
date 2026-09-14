@@ -164,6 +164,41 @@ Tek mekanikle çeşitlilik üretmenin yolu:
 
 ---
 
+## Kamera ayarları
+
+Hepsi ölçümlerden türetildi — göz kararı değil.
+
+| Değer | Ayar | Nereden geliyor |
+|---|---|---|
+| Orthographic Size | **7** | 14 birim görüş = 4,6 × zıplama yüksekliği (3,03) |
+| Görünen genişlik (16:9) | ~24,9 birim | 3,3 × dash'li zıplama mesafesi (7,62) — iki zıplama ilerisini görürsün |
+| Look Ahead Distance | **2,2** | Zıplama mesafesinin ~%41'i |
+| Horizontal Dead Zone | **1,6** | Küçük düzeltmelerde kamera titremesin |
+| Max Vertical Drift | **4,5** | 1,5 × zıplama yüksekliği — normal zıplama bu sınırı hiç tetiklemez |
+| Fast Fall Threshold | **−9** | Terminal hız 22; −9 gerçek bir düşüşü işaret eder |
+
+### Dikey takip neden farklı çalışıyor
+
+Kamera karakterin **anlık yüksekliğini değil, en son yere değdiği yüksekliği**
+takip ediyor. Normal zıplamada ekran hiç oynamıyor.
+
+Ölü bölgeyi büyütmek de bir çözüm olurdu ama 3,03 birimlik zıplamayı
+kapsaması için ölü bölgenin 6+ birim olması gerekirdi — 14 birimlik görüşün
+neredeyse yarısı. Bu sefer de yeni bir yüksekliğe indiğinde kamera geç
+tepki verirdi.
+
+Üç istisna var:
+
+1. **Yere değince** — yeni yükseklik kaydedilir, kamera yumuşakça oraya geçer
+2. **Kayıtlı yüksekliğin altına hızlı düşerken** — nereye düştüğünü görmen lazım
+3. **4,5 birimden fazla uzaklaşınca** — karakter ekrandan çıkmasın
+
+İkinci kuraldaki "kayıtlı yüksekliğin **altına**" şartı kritik: normal bir
+zıplamanın inişinde de hız eşiği aşılıyor. O şart olmasaydı her zıplamada
+kamera inişe eşlik eder, önlemeye çalıştığımız zıpzıp hareketi geri gelirdi.
+
+---
+
 ## Değişiklik günlüğü
 
 | Tarih | Ne değişti | Neden |

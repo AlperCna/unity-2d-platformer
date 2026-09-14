@@ -1,5 +1,10 @@
 # Epic 03 — Kamera
 
+> ✅ **TAMAMLANDI — 14 Eylül 2026.** Ayarlar: [AYARLAR.md](AYARLAR.md#kamera-ayarları)
+> Dikey takip "son yere değilen yükseklik" mantığına çevrildi. Sarsıntı
+> altyapısı kuruldu ve hit stop ile birlikte test edildi. Sınır hesaplama
+> aracı ölüm çizgisini ve zıplama yüksekliğini hesaba katıyor.
+
 **Amaç:** Oyuncunun gitmek istediği yeri görebilmesi. İyi kamera fark edilmez;
 kötü kamera oyunu bitirir.
 
@@ -67,25 +72,38 @@ Pixel Perfect Camera bileşenini kullan, o ölçeği kendisi yönetir.
 
 - [ ] Size belirlendi, gerekçesi `docs/AYARLAR.md`'ye yazıldı
 
-### 2. Ölü bölgeyi ayarla
+### 2. Dikey takip: ölü bölge değil, "son yere değilen yükseklik"
 
-`Dead Zone` — karakterin içinde hareket edebileceği, kameranın kımıldamadığı
-dikdörtgen.
+Yaygın tavsiye "dikey ölü bölgeyi büyüt"tür. **Bu projede denendi ve yetmedi** —
+sebebini bilmek işine yarar.
 
-| Eksen | Öneri | Neden |
+Ölü bölge, kameranın kımıldamadığı bir bant. Zıplama yüksekliği 3,03 birim
+olduğu için bandın en az 6 birim olması gerekirdi (karakter merkezden ±3,03
+gidiyor). Kamera 14 birim görüyor, yani bandın **%43'ü**. O kadar büyük bir
+bant da yeni bir yüksekliğe indiğinde kamerayı geç tepki verdiriyor.
+
+**Uygulanan çözüm:** kamera karakterin anlık yüksekliğini değil, **en son yere
+değdiği yüksekliği** takip eder. Normal zıplamada ekran hiç oynamaz — çünkü
+zıplarken takip edilen değer hiç değişmez.
+
+Üç istisna:
+
+| Durum | Davranış | Neden |
 |---|---|---|
-| Yatay | 1.0 – 2.0 birim | Küçük olsun ki kamera takip etsin |
-| **Dikey** | **1.5 – 3.0 birim** | **Büyük olsun ki zıplarken ekran oynamasın** |
+| Yere değdi | Yeni yükseklik kaydedilir | Gerçekten yeni bir kata çıktın |
+| Kayıtlı yüksekliğin **altına** hızlı düşüyor | Takip eder | Nereye düştüğünü görmen lazım |
+| 4,5 birimden fazla uzaklaştı | Kuralı bozup takip eder | Karakter ekrandan çıkmasın |
 
-Dikey ölü bölge yoksa **her zıplamada ekran yukarı aşağı oynar** ve uzun
-oynayışta mide bulandırır. Bu, amatör platform oyunlarının en belirgin
-işaretidir.
+İkinci satırdaki **"altına"** şartı kritik ve atlanması çok kolay: normal bir
+zıplamanın inişinde de hız eşiği aşılır (düşüş yerçekimi 84 ile 0,1 saniyede
+−9'u geçer). O şart olmasa her zıplamada kamera inişe eşlik eder ve önlemeye
+çalıştığın zıpzıp hareketi geri gelir.
 
-Ölü bölgenin dikey yüksekliği en az **zıplama yüksekliğin kadar** olsun ki
-normal bir zıplama kamerayı hiç kımıldatmasın.
+Yatayda ölü bölge hâlâ var ve işe yarıyor (1,6 birim) — orada zıplama gibi
+büyük ve düzenli bir hareket yok.
 
-- [ ] Ölü bölge ayarlandı
 - [ ] Zıplarken ekran sabit kalıyor
+- [ ] Yeni bir kata çıkınca kamera yumuşakça takip ediyor
 
 ### 3. İleri bakışı ayarla
 
@@ -107,48 +125,40 @@ oyuncu rahatsız olur. 0.3'ün altına inme.
 
 - [ ] İleri bakış ayarlandı
 
-### 4. Düşerken aşağıyı göster
+### 4. Kamera ne kadar aşağı takip etmeli
 
-Platform oyunlarının klasik sorunu: karakter zıplayınca kamera takip etmeli mi?
+Cevap: **ölüm çizgisine kadar.** Altında görülecek bir şey yok — oyuncu zaten öldü.
 
-**Kural:**
-- **Yukarı zıplarken takip etme** — ölü bölge hallediyor
-- **Düşerken takip et** — düştüğün yeri görmen lazım
+Ama bu sadece takip mantığıyla çözülmez; **sınırlar** da izin vermeli.
+Bu projede tam olarak şu yaşandı:
 
-`CameraFollow.cs` içine ekle:
-
-```csharp
-[Header("Dusus Takibi")]
-[Tooltip("Bu dusus hizinin uzerinde dikey olu bolge daralir.")]
-[SerializeField] private float fastFallThreshold = -8f;
-
-[Tooltip("Hizli duserken olu bolge bu orana kucultulur.")]
-[Range(0.1f, 1f)]
-[SerializeField] private float fastFallDeadZoneScale = 0.25f;
+```
+kamera boyutu 7        → 14 birim yükseklik görüyor
+alt sınır −6           → kamera merkezi −6 + 7 = +1'in altına inemiyor
+sonuç                  → karakter boşluğa düşüyor, kamera yerinde kalıyor
 ```
 
-`LateUpdate()` içinde, ölü bölge kontrolünden **önce**:
+Takip mantığı doğru çalışıyordu, `ClampToBounds` engelliyordu.
+
+**Çözüm:** alt sınır `GameManager.killPlaneY`'ye kadar inmeli.
+`CameraBoundsTool` artık bunu kendisi okuyor:
 
 ```csharp
-// Hizli duserken dikey olu bolgeyi kucult - inis noktasi gorunsun
-float effectiveDeadZoneY = deadZone.y;
-if (targetBody != null)
+if (TryGetKillPlane(out float killPlaneY))
 {
-    float vy = Platformer.Core.Rigidbody2DExtensions.GetVelocity(targetBody).y;
-    if (vy < fastFallThreshold)
-    {
-        effectiveDeadZoneY = deadZone.y * fastFallDeadZoneScale;
-    }
+    min.y = Mathf.Min(min.y, killPlaneY - 1f);
 }
 ```
 
-Sonra `deadZone.y` yerine `effectiveDeadZoneY` kullan:
+`Level01`'de ölüm çizgisi −12, alt sınır −13 oluyor, kamera merkezi −6'ya kadar
+inebiliyor — zeminin 6 birim altını gösteriyor.
 
-```csharp
-if (Mathf.Abs(dy) < effectiveDeadZoneY * 0.5f) desired.y = transform.position.y;
-```
+**Dikkat:** bölümün dikey aralığı kameranın gördüğünden darsa kamera dikeyde
+hiç hareket edemez (kod ortalayıp sabitler). Test odasında bu yaşandı: içerik
+7 birim, kamera 16 birim. Araç artık bu durumda uyarı veriyor.
 
 - [ ] Düşerken aşağısı görünüyor
+- [ ] Alt sınır ölüm çizgisini kapsıyor
 
 ### 5. Kamera sarsıntısı ekle
 
