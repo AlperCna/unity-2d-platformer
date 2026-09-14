@@ -35,6 +35,13 @@ namespace Platformer.EditorTools
         public const string EnemyShooter = "Enemy_Shooter";
         public const string EnemyFlyer = "Enemy_Flyer";
 
+        // Epic 07
+        public const string RetractingSpikes = "Hazard_RetractingSpikes";
+        public const string FireJet = "Hazard_FireJet";
+        public const string FallingPlatform = "Platform_Falling";
+        public const string OneWayPlatform = "Platform_OneWay";
+        public const string JumpPad = "JumpPad";
+
         [MenuItem("Tools/2D Platformer/Prefablari Uret", false, 23)]
         public static void GenerateMenu()
         {
@@ -62,6 +69,12 @@ namespace Platformer.EditorTools
             created += Ensure(EnemyPatroller, BuildPatroller) ? 1 : 0;
             created += Ensure(EnemyShooter, BuildShooter) ? 1 : 0;
             created += Ensure(EnemyFlyer, BuildFlyer) ? 1 : 0;
+
+            created += Ensure(RetractingSpikes, BuildRetractingSpikes) ? 1 : 0;
+            created += Ensure(FireJet, BuildFireJet) ? 1 : 0;
+            created += Ensure(FallingPlatform, BuildFallingPlatform) ? 1 : 0;
+            created += Ensure(OneWayPlatform, BuildOneWayPlatform) ? 1 : 0;
+            created += Ensure(JumpPad, BuildJumpPad) ? 1 : 0;
 
             RepairWiring();
 
@@ -332,6 +345,146 @@ namespace Platformer.EditorTools
             trigger.size = new Vector2(1.3f, 1.75f);
 
             go.AddComponent<Gameplay.LevelGoal>();
+            return go;
+        }
+
+        // ---------------------------------------------------------------
+        // Tehlikeler ve engeller (Epic 07)
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Yerden cikan diken. Gorsel AYRI COCUK NESNEDE cunku asagi yukari
+        /// hareket eden o; collider ve script kok nesnede sabit kaliyor.
+        /// </summary>
+        private static GameObject BuildRetractingSpikes()
+        {
+            var go = new GameObject(RetractingSpikes);
+
+            var visual = new GameObject("Visual");
+            visual.transform.SetParent(go.transform);
+            visual.transform.localPosition = new Vector3(0f, -0.9f, 0f);  // gizli halde
+
+            var renderer = visual.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("spike");
+            renderer.sortingOrder = LevelBuilder.SortPlatform + 1;
+
+            // Collider gorselden kucuk - "degmedim ki" olmasin
+            var trigger = go.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(0.75f, 0.55f);
+            trigger.offset = new Vector2(0f, 0.28f);
+
+            go.AddComponent<Gameplay.RetractingSpikes>();
+            return go;
+        }
+
+        private static GameObject BuildFireJet()
+        {
+            var go = new GameObject(FireJet);
+
+            // Namlu: alev kapaliyken de nereden cikacagi gorunsun
+            var nozzle = new GameObject("Nozzle");
+            nozzle.transform.SetParent(go.transform);
+            nozzle.transform.localPosition = Vector3.zero;
+            var nozzleRenderer = nozzle.AddComponent<SpriteRenderer>();
+            nozzleRenderer.sprite = SpriteFactory.Load("square");
+            nozzleRenderer.color = SpriteFactory.Metal;
+            nozzleRenderer.drawMode = SpriteDrawMode.Sliced;
+            nozzleRenderer.size = new Vector2(0.8f, 0.3f);
+            nozzleRenderer.sortingOrder = LevelBuilder.SortPlatform + 1;
+
+            var visual = new GameObject("Flame");
+            visual.transform.SetParent(go.transform);
+            visual.transform.localPosition = Vector3.zero;
+
+            var renderer = visual.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("flame");
+            renderer.drawMode = SpriteDrawMode.Tiled;
+            renderer.tileMode = SpriteTileMode.Continuous;
+            renderer.size = new Vector2(0.8f, 0.01f);
+            renderer.sortingOrder = LevelBuilder.SortItem;
+
+            var trigger = go.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(0.6f, 0.01f);
+
+            go.AddComponent<Gameplay.FireJet>();
+            return go;
+        }
+
+        private static GameObject BuildFallingPlatform()
+        {
+            var go = new GameObject(FallingPlatform);
+            go.layer = GroundLayer;                 // uzerine basiliyor
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = TilesetFactory.LoadTile(15);   // tek basina duran karo
+            renderer.drawMode = SpriteDrawMode.Tiled;
+            renderer.tileMode = SpriteTileMode.Continuous;
+            renderer.size = new Vector2(2f, 1f);
+            renderer.sortingOrder = LevelBuilder.SortPlatform;
+
+            var body = go.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+
+            var box = go.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(2f, 1f);
+            box.sharedMaterial = new PhysicsMaterial2D("PlatformFrictionless")
+            {
+                friction = 0f,
+                bounciness = 0f,
+            };
+
+            go.AddComponent<Gameplay.FallingPlatform>();
+            return go;
+        }
+
+        private static GameObject BuildOneWayPlatform()
+        {
+            var go = new GameObject(OneWayPlatform);
+            go.layer = GroundLayer;
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = TilesetFactory.LoadTile(15);
+            renderer.drawMode = SpriteDrawMode.Tiled;
+            renderer.tileMode = SpriteTileMode.Continuous;
+            renderer.size = new Vector2(3f, 0.5f);
+            renderer.sortingOrder = LevelBuilder.SortPlatform;
+
+            var box = go.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(3f, 0.5f);
+            box.sharedMaterial = new PhysicsMaterial2D("PlatformFrictionless")
+            {
+                friction = 0f,
+                bounciness = 0f,
+            };
+
+            // Sira: Effector once, cunku OneWayPlatform onu [RequireComponent]
+            // ile istiyor ve Awake'de ayarliyor.
+            go.AddComponent<PlatformEffector2D>();
+            go.AddComponent<Gameplay.OneWayPlatform>();
+            return go;
+        }
+
+        private static GameObject BuildJumpPad()
+        {
+            var go = new GameObject(JumpPad);
+
+            var visual = new GameObject("Visual");
+            visual.transform.SetParent(go.transform);
+            visual.transform.localPosition = Vector3.zero;
+
+            var renderer = visual.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("jumppad");
+            renderer.sortingOrder = LevelBuilder.SortItem;
+
+            var trigger = go.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(1f, 0.5f);
+            trigger.offset = new Vector2(0f, 0.25f);
+
+            go.AddComponent<Gameplay.JumpPad>();
             return go;
         }
 

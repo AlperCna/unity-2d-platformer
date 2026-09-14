@@ -67,6 +67,8 @@ namespace Platformer.EditorTools
                 ("enemy",      CreateEnemy),
                 ("shooter",    CreateShooter),
                 ("bullet",     CreateBullet),
+                ("flame",      CreateFlame),
+                ("jumppad",    CreateJumpPad),
                 ("checkpoint", CreateCheckpoint),
                 ("goal",       CreateGoalFlag),
             };
@@ -276,6 +278,63 @@ namespace Platformer.EditorTools
             canvas.FillCircle(7, 9, 2, Hex("#FFF0C8"));
 
             canvas.Save("bullet");
+        }
+
+        /// <summary>
+        /// Alev sutunu. DIKEY OLARAK TEKRARLANABILIR olmali: FireJet
+        /// gorselin boyunu degistiriyor ve Tiled modda cizdiriyor, yani
+        /// ust ve alt kenarlar birbirine uymali. Bu yuzden desen dikeyde
+        /// sabit, sadece yatayda degisiyor.
+        /// </summary>
+        private static void CreateFlame()
+        {
+            var canvas = new PixelCanvas(16, 16);
+
+            Color outer = Hex("#E05A1E");
+            Color mid = Hex("#FF8A3D");
+            Color core = Hex("#FFD98A");
+
+            canvas.FillRect(2, 0, 12, 16, outer);
+            canvas.FillRect(4, 0, 8, 16, mid);
+            canvas.FillRect(6, 0, 4, 16, core);
+
+            // Kenarlara hafif tirtik - duz bir sutun gibi durmasin
+            for (int y = 0; y < 16; y += 4)
+            {
+                canvas.FillRect(1, y, 1, 2, outer);
+                canvas.FillRect(14, y + 2, 1, 2, outer);
+            }
+
+            canvas.Save("flame");
+        }
+
+        /// <summary>
+        /// Zipla pedi. Yay gibi gorunmeli ki ne ise yaradigi BAKAR BAKMAZ
+        /// anlasilsin - Epic 07'nin okunabilirlik kurali.
+        /// </summary>
+        private static void CreateJumpPad()
+        {
+            var canvas = new PixelCanvas(32, 16);
+
+            // Taban
+            canvas.FillRect(2, 0, 28, 4, Metal);
+            canvas.FillRect(2, 0, 28, 2, Ink);
+
+            // Yay katmanlari
+            Color spring = Hex("#4ED2C8");
+            Color springDark = Hex("#2FA79E");
+            for (int i = 0; i < 3; i++)
+            {
+                int y = 4 + i * 3;
+                canvas.FillRect(5, y, 22, 2, spring);
+                canvas.FillRect(5, y, 22, 1, springDark);
+            }
+
+            // Ust plaka
+            canvas.FillRect(1, 13, 30, 3, spring);
+            canvas.FillRect(1, 15, 30, 1, Hex("#8AF0E8"));
+
+            canvas.Save("jumppad");
         }
 
         private static void CreateCheckpoint()
