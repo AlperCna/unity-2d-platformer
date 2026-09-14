@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Platformer.Player;
 
@@ -11,12 +12,12 @@ namespace Platformer.Gameplay
     /// icin ASAGI + ZIPLA.
     ///
     /// PlatformEffector2D isin yarisini yapiyor (alttan gecirme). Bu script
-    /// digger yarisi: istekle asagi inme.
+    /// diger yarisi: istekle asagi inme.
     ///
     /// NEDEN COLLIDER'I KAPATMIYORUZ:
     /// Basit yol collider.enabled = false olurdu ama o an platformun
     /// UZERINDEKI baska bir sey de duserdi. Bunun yerine sadece OYUNCU ile
-    /// carpismayi gec ici kapatiyoruz - Physics2D.IgnoreCollision.
+    /// carpismayi gecici kapatiyoruz - Physics2D.IgnoreCollision.
     /// </summary>
     [RequireComponent(typeof(PlatformEffector2D))]
     [RequireComponent(typeof(Collider2D))]
@@ -31,6 +32,9 @@ namespace Platformer.Gameplay
 
         private Collider2D platformCollider;
         private PlatformEffector2D effector;
+
+        /// <summary>Su an ustunde duran oyuncular.</summary>
+        private readonly List<Collider2D> riders = new List<Collider2D>();
 
         private void Awake()
         {
@@ -48,25 +52,58 @@ namespace Platformer.Gameplay
             effector.rotationalOffset = 0f;
         }
 
-        private void OnCollisionStay2D(Collision2D collision)
+        private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (!collision.collider.CompareTag("Player")) return;
+            if (collision.collider.CompareTag("Player") && !riders.Contains(collision.collider))
+            {
+                riders.Add(collision.collider);
+            }
+        }
 
-            var controller = collision.collider.GetComponent<PlayerController2D>();
-            if (controller == null || !controller.IsGrounded) return;
+        private void OnCollisionExit2D(Collision2D collision)
+        {
+            riders.Remove(collision.collider);
+        }
+
+        /// <summary>
+        /// Girdi UPDATE'te okunuyor, carpisma geri cagrisinda DEGIL.
+        ///
+        /// Input.GetButtonDown sadece Update icinde guvenilir. Onceki surum
+        /// bunu OnCollisionStay2D icinde okuyordu; o ise fizik adiminda
+        /// calisiyor ve bir karede hic veya birden fazla kez calisabiliyor.
+        /// Sonuc: asagi inme istegi bazen kayboluyor, oyuncu "bazen
+        /// calismiyor" diyordu - tekrar uretmesi zor bir hata.
+        /// </summary>
+        private void Update()
+        {
+            if (riders.Count == 0) return;
 
             bool wantsDown = Input.GetAxisRaw("Vertical") <= downInputThreshold;
-            bool wantsJump = Input.GetButtonDown("Jump");
+            if (!wantsDown || !Input.GetButtonDown("Jump")) return;
 
-            if (wantsDown && wantsJump)
+            for (int i = riders.Count - 1; i >= 0; i--)
             {
-                StartCoroutine(DropThrough(collision.collider));
+                Collider2D rider = riders[i];
+                if (rider == null) { riders.RemoveAt(i); continue; }
+
+                var controller = rider.GetComponent<PlayerController2D>();
+                if (controller == null || !controller.IsGrounded) continue;
+
+                // Tamponlanmis ziplamayi iptal et. Yoksa oyuncu hem
+                // platformdan gecer HEM yukari ziplar - yukari cikip
+                // tekrar ustune duser, yani hicbir sey olmamis gibi
+                // gorunur. Niyeti inmekti.
+                controller.CancelBufferedJump();
+
+                StartCoroutine(DropThrough(rider));
             }
         }
 
         private IEnumerator DropThrough(Collider2D playerCollider)
         {
             Physics2D.IgnoreCollision(platformCollider, playerCollider, true);
+            riders.Remove(playerCollider);
+
             yield return new WaitForSeconds(dropThroughDuration);
 
             // Nesne yok edilmis olabilir (sahne degisimi) - null kontrolu sart
