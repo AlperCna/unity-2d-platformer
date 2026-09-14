@@ -23,6 +23,13 @@ namespace Platformer.EditorTools
         public static readonly Color GrassDark = Hex("#49A05F");
         public static readonly Color Dirt = Hex("#6B4F3A");
         public static readonly Color DirtDark = Hex("#543D2C");
+
+        /// <summary>
+        /// Karo setindeki dis kenar cizgisi. DirtDark'tan belirgin sekilde
+        /// koyu olmali - amaci silueti okunur kilmak (bulaniklik testi).
+        /// Ilk denemede DirtDark kullanildi ve kenarlar gorunmuyordu.
+        /// </summary>
+        public static readonly Color DirtEdge = Hex("#38291C");
         public static readonly Color PlayerBody = Hex("#F2B544");
         public static readonly Color PlayerDark = Hex("#D9952C");
         public static readonly Color CoinBody = Hex("#FFD75E");
@@ -281,7 +288,7 @@ namespace Platformer.EditorTools
         /// Kucuk bir piksel tuvali. Cizimi bitirince Save() ile PNG olarak
         /// diske yazar ve Unity'de Sprite olarak ice aktarilmasini ayarlar.
         /// </summary>
-        private class PixelCanvas
+        internal class PixelCanvas
         {
             private readonly int width;
             private readonly int height;
@@ -377,6 +384,17 @@ namespace Platformer.EditorTools
 
             public void Save(string spriteName)
             {
+                string path = WritePng(spriteName);
+                ConfigureImporter(path);
+            }
+
+            /// <summary>
+            /// PNG'yi diske yazar ama ice aktarma ayarini YAPMAZ.
+            /// Cok sprite'li sayfalar (tileset) kendi dilimlemesini
+            /// ayarlayacagi icin bu adimi kendileri yapar.
+            /// </summary>
+            public string WritePng(string spriteName)
+            {
                 string path = $"{ArtFolder}/{spriteName}.png";
 
                 var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -387,7 +405,7 @@ namespace Platformer.EditorTools
                 Object.DestroyImmediate(texture);
 
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-                ConfigureImporter(path);
+                return path;
             }
 
             private static void ConfigureImporter(string path)
