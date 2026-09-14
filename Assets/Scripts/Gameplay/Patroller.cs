@@ -1,17 +1,21 @@
 using UnityEngine;
 using Platformer.Core;
-using Platformer.Player;
 
 namespace Platformer.Gameplay
 {
     /// <summary>
-    /// Basit devriye dusmani. Ileri yurur; duvara carpinca veya platformun
-    /// kenarina gelince geri doner. Yandan dokunursa oldurur, ustune
-    /// basilirsa (stomp) olur ve karakteri ziplatir.
+    /// Devriye dusmani — sordugu soru: **"Zamanlamayi tutturabiliyor musun?"**
+    ///
+    /// Ileri yurur; duvara carpinca veya platformun kenarina gelince doner.
+    /// Hareketi tamamen ongorulebilir, o yuzden zorluk refleks degil
+    /// zamanlama.
+    ///
+    /// Temas, ezilme, olum ve sifirlama EnemyBase'de. Burada sadece hareket
+    /// var - bir dusman cesidinin tasimasi gereken tek sey bu olmali.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(Collider2D))]
-    public class Patroller : MonoBehaviour, IResettable
+    public class Patroller : EnemyBase
     {
         [Header("Hareket")]
         [SerializeField] private float moveSpeed = 2f;
@@ -32,82 +36,23 @@ namespace Platformer.Gameplay
         [Tooltip("Duvar kontrolu icin ileri isin uzunlugu.")]
         [SerializeField] private float wallCheckDistance = 0.55f;
 
-        [Header("Ustune Basilma (Stomp)")]
-        [Tooltip("Karakter bu yukseklik farkindan fazla yukarideyse stomp sayilir.")]
-        [SerializeField] private float stompHeightThreshold = 0.25f;
-
-        [Tooltip("Stomp sonrasi karakterin ziplama yuksekligi.")]
-        [SerializeField] private float stompBounceHeight = 2.6f;
-
-        [SerializeField] private int stompScoreReward = 2;
-
-        private Rigidbody2D rb;
-        private Collider2D bodyCollider;
-        private SpriteRenderer spriteRenderer;
         private int direction;
-        private bool isDead;
 
-        // Respawn'da geri donulecek baslangic durumu
-        private Vector3 initialPosition;
-        private Vector3 initialScale;
-        private Color initialColor = Color.white;
-
-        private void Awake()
+        protected override void OnAwake()
         {
-            rb = GetComponent<Rigidbody2D>();
-            bodyCollider = GetComponent<Collider2D>();
-            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
-            rb.freezeRotation = true;
             direction = startFacingRight ? 1 : -1;
             ApplyFacing();
-
-            // Respawn'da geri donebilmek icin baslangic durumunu sakla
-            initialPosition = transform.position;
-            initialScale = transform.localScale;
-            if (spriteRenderer != null) initialColor = spriteRenderer.color;
         }
 
-        /// <summary>
-        /// Respawn'da baslangic konumuna doner ve tekrar canlanir.
-        ///
-        /// Olurken SetActive(false) degil Destroy kullansaydik burada
-        /// geri getirecek nesne kalmazdi - o yuzden olum efekti nesneyi
-        /// yok etmiyor, sadece gizliyor.
-        /// </summary>
-        public void ResetToInitialState()
+        protected override void OnReset()
         {
-            // Devam eden ezilme animasyonunu durdur, yoksa sifirladigimiz
-            // olcegi ve rengi tekrar bozar
-            StopAllCoroutines();
-
-            isDead = false;
             direction = startFacingRight ? 1 : -1;
-
-            transform.position = initialPosition;
-            transform.localScale = initialScale;
-
-            bodyCollider.enabled = true;
-
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.color = initialColor;
-                spriteRenderer.enabled = true;
-            }
-
-            if (rb != null)
-            {
-                rb.bodyType = RigidbodyType2D.Dynamic;
-                rb.SetVelocity(Vector2.zero);
-            }
-
-            gameObject.SetActive(true);
             ApplyFacing();
         }
 
         private void FixedUpdate()
         {
-            if (isDead) return;
+            if (IsDead) return;
 
             if (ShouldTurnAround())
             {
@@ -126,104 +71,21 @@ namespace Platformer.Gameplay
             float halfHeight = bodyCollider.bounds.extents.y;
 
             // 1) Onunde ucurum var mi?
-            Vector2 edgeOrigin = center + new Vector2(direction * edgeCheckDistance, -halfHeight + 0.05f);
-            bool groundAhead = Physics2D.Raycast(edgeOrigin, Vector2.down, edgeCheckDepth, groundLayers);
+            Vector2 edgeOrigin = center + new Vector2(direction * edgeCheckDistance,
+                                                      -halfHeight + 0.05f);
+            bool groundAhead = Physics2D.Raycast(edgeOrigin, Vector2.down,
+                                                 edgeCheckDepth, groundLayers);
 
             if (!groundAhead) return true;
 
             // 2) Onunde duvar var mi?
-            bool wallAhead = Physics2D.Raycast(center, Vector2.right * direction, wallCheckDistance, groundLayers);
-
-            return wallAhead;
+            return Physics2D.Raycast(center, Vector2.right * direction,
+                                     wallCheckDistance, groundLayers);
         }
 
         private void ApplyFacing()
         {
             if (spriteRenderer != null) spriteRenderer.flipX = direction < 0;
-        }
-
-        private void OnCollisionEnter2D(Collision2D collision)
-        {
-            HandlePlayerContact(collision.collider);
-        }
-
-        private void OnCollisionStay2D(Collision2D collision)
-        {
-            // Karakter dusmanin ustune "oturursa" Enter tetiklenmeyebilir
-            HandlePlayerContact(collision.collider);
-        }
-
-        private void HandlePlayerContact(Collider2D other)
-        {
-            if (isDead || !other.CompareTag("Player")) return;
-
-            PlayerHealth health = other.GetComponent<PlayerHealth>();
-            PlayerController2D controller = other.GetComponent<PlayerController2D>();
-            if (health == null || health.IsDead) return;
-
-            bool fallingOnto = controller != null && controller.Velocity.y <= 0.01f;
-            bool aboveEnemy = other.bounds.min.y > bodyCollider.bounds.center.y + stompHeightThreshold;
-
-            if (fallingOnto && aboveEnemy)
-            {
-                Stomped(controller);
-            }
-            else
-            {
-                health.Kill(gameObject);
-            }
-        }
-
-        private void Stomped(PlayerController2D controller)
-        {
-            isDead = true;
-
-            if (controller != null) controller.LaunchUpward(stompBounceHeight);
-
-            if (GameManager.Instance != null && stompScoreReward > 0)
-            {
-                GameManager.Instance.AddScore(stompScoreReward);
-            }
-
-            // Artik kimseye zarar vermesin ve fizigi etkilemesin
-            bodyCollider.enabled = false;
-            rb.SetVelocity(Vector2.zero);
-            rb.bodyType = RigidbodyType2D.Kinematic;
-
-            StartCoroutine(SquashAndDisappear());
-        }
-
-        private System.Collections.IEnumerator SquashAndDisappear()
-        {
-            Vector3 baseScale = transform.localScale;
-            const float duration = 0.25f;
-
-            float t = 0f;
-            while (t < duration)
-            {
-                t += Time.deltaTime;
-                float k = t / duration;
-
-                // Ezilme efekti: yassilasip saydamlassin
-                transform.localScale = new Vector3(
-                    baseScale.x * Mathf.Lerp(1f, 1.25f, k),
-                    baseScale.y * Mathf.Lerp(1f, 0.1f, k),
-                    baseScale.z);
-
-                if (spriteRenderer != null)
-                {
-                    Color c = spriteRenderer.color;
-                    c.a = Mathf.Lerp(1f, 0f, k);
-                    spriteRenderer.color = c;
-                }
-
-                yield return null;
-            }
-
-            // Destroy DEGIL: respawn'da geri gelmesi lazim (IResettable).
-            // Destroy edilseydi GameManager'in onbellekteki referansi olu
-            // kalirdi ve dusman bir daha asla donmezdi.
-            gameObject.SetActive(false);
         }
 
         private void OnDrawGizmosSelected()
@@ -237,7 +99,8 @@ namespace Platformer.Gameplay
 
             // Kenar kontrolu isini
             Gizmos.color = Color.yellow;
-            Vector2 edgeOrigin = center + new Vector2(dir * edgeCheckDistance, -halfHeight + 0.05f);
+            Vector2 edgeOrigin = center + new Vector2(dir * edgeCheckDistance,
+                                                      -halfHeight + 0.05f);
             Gizmos.DrawLine(edgeOrigin, edgeOrigin + Vector2.down * edgeCheckDepth);
 
             // Duvar kontrolu isini

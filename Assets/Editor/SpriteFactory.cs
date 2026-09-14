@@ -65,6 +65,8 @@ namespace Platformer.EditorTools
                 ("coin",       CreateCoin),
                 ("spike",      CreateSpike),
                 ("enemy",      CreateEnemy),
+                ("shooter",    CreateShooter),
+                ("bullet",     CreateBullet),
                 ("checkpoint", CreateCheckpoint),
                 ("goal",       CreateGoalFlag),
             };
@@ -229,6 +231,53 @@ namespace Platformer.EditorTools
         }
 
         /// <summary>Checkpoint diregi. Rengi script tarafindan degistirilir.</summary>
+        /// <summary>
+        /// Mermi atan dusman. Devriyeden BELIRGIN sekilde farkli gorunmeli:
+        /// oyuncu bir bakista "bu ustune basilir mi, uzaktan mi tehlikeli"
+        /// ayrimini yapabilmeli.
+        ///
+        /// Devriye yuvarlak ve mor; bu koseli ve daha koyu, ustunde bir
+        /// namlu var.
+        /// </summary>
+        private static void CreateShooter()
+        {
+            var canvas = new PixelCanvas(32, 32);
+
+            // Koseli govde - devriyenin yuvarlakligina zit
+            canvas.FillRect(4, 2, 24, 22, EnemyDark);
+            canvas.FillRect(6, 4, 20, 18, EnemyBody);
+
+            // Namlu: hangi yone atacagini gosteriyor
+            canvas.FillRect(0, 10, 6, 6, Metal);
+            canvas.FillRect(0, 12, 4, 2, Ink);
+
+            // Tek buyuk goz - "seni goruyorum"
+            canvas.FillRect(14, 12, 8, 8, Ink);
+            canvas.FillRect(16, 15, 4, 4, Hex("#FF6B6B"));
+
+            // Ayaklar
+            canvas.FillRect(6, 0, 5, 3, EnemyDark);
+            canvas.FillRect(21, 0, 5, 3, EnemyDark);
+
+            canvas.Save("shooter");
+        }
+
+        /// <summary>
+        /// Mermi. Kucuk ama YUKSEK KONTRASTLI olmali - arka plan koyu mavi,
+        /// mermi parlak turuncu. Oyuncu onu kacirirsa oldugunu anlamaz,
+        /// "haksizlik" der.
+        /// </summary>
+        private static void CreateBullet()
+        {
+            var canvas = new PixelCanvas(16, 16);
+
+            canvas.FillCircle(8, 8, 6, Hex("#FF8A3D"));
+            canvas.FillCircle(8, 8, 4, Hex("#FFC46B"));
+            canvas.FillCircle(7, 9, 2, Hex("#FFF0C8"));
+
+            canvas.Save("bullet");
+        }
+
         private static void CreateCheckpoint()
         {
             var canvas = new PixelCanvas(16, 48);

@@ -30,6 +30,10 @@ namespace Platformer.EditorTools
         public const string Checkpoint = "Checkpoint";
         public const string LevelGoal = "LevelGoal";
         public const string Player = "Player";
+        public const string Projectile = "Projectile";
+        public const string EnemyPatroller = "Enemy_Patroller";
+        public const string EnemyShooter = "Enemy_Shooter";
+        public const string EnemyFlyer = "Enemy_Flyer";
 
         [MenuItem("Tools/2D Platformer/Prefablari Uret", false, 23)]
         public static void GenerateMenu()
@@ -51,6 +55,13 @@ namespace Platformer.EditorTools
             created += Ensure(Checkpoint, BuildCheckpoint) ? 1 : 0;
             created += Ensure(LevelGoal, BuildGoal) ? 1 : 0;
             created += Ensure(Player, BuildPlayer) ? 1 : 0;
+
+            // SIRA ONEMLI: Enemy_Shooter, Projectile prefab'ine referans
+            // tutuyor. Mermi once var olmali.
+            created += Ensure(Projectile, BuildProjectile) ? 1 : 0;
+            created += Ensure(EnemyPatroller, BuildPatroller) ? 1 : 0;
+            created += Ensure(EnemyShooter, BuildShooter) ? 1 : 0;
+            created += Ensure(EnemyFlyer, BuildFlyer) ? 1 : 0;
 
             if (verbose || created > 0)
             {
@@ -189,6 +200,109 @@ namespace Platformer.EditorTools
             go.AddComponent<Gameplay.LevelGoal>();
             return go;
         }
+
+        // ---------------------------------------------------------------
+        // Dusmanlar (Epic 06)
+        // ---------------------------------------------------------------
+
+        private static GameObject BuildProjectile()
+        {
+            var go = new GameObject(Projectile);
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("bullet");
+            renderer.sortingOrder = LevelBuilder.SortEnemy + 1;   // dusmanin onunde
+
+            var body = go.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+
+            var trigger = go.AddComponent<CircleCollider2D>();
+            trigger.isTrigger = true;
+            trigger.radius = 0.22f;      // gorselden kucuk: "degmedim ki" olmasin
+
+            var projectile = go.AddComponent<Gameplay.Projectile>();
+            var so = new SerializedObject(projectile);
+            so.FindProperty("blockerLayers").intValue = 1 << LevelBuilder.groundLayer;
+            so.ApplyModifiedProperties();
+
+            return go;
+        }
+
+        private static GameObject BuildPatroller()
+        {
+            var go = new GameObject(EnemyPatroller);
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("enemy");
+            renderer.sortingOrder = LevelBuilder.SortEnemy;
+
+            var body = go.AddComponent<Rigidbody2D>();
+            body.freezeRotation = true;
+
+            var box = go.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(0.8f, 0.8f);
+            box.sharedMaterial = new PhysicsMaterial2D("EnemyFrictionless")
+            {
+                friction = 0f,
+                bounciness = 0f,
+            };
+
+            var patroller = go.AddComponent<Gameplay.Patroller>();
+            var so = new SerializedObject(patroller);
+            so.FindProperty("groundLayers").intValue = 1 << LevelBuilder.groundLayer;
+            so.ApplyModifiedProperties();
+
+            return go;
+        }
+
+        private static GameObject BuildShooter()
+        {
+            var go = new GameObject(EnemyShooter);
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("shooter");
+            renderer.sortingOrder = LevelBuilder.SortEnemy;
+
+            // Kinematic: yerinden kimildamiyor ama oyuncu ustune basabilmeli,
+            // o yuzden fizik govdesi lazim.
+            var body = go.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+
+            var box = go.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(0.85f, 0.8f);
+
+            var shooter = go.AddComponent<Gameplay.ShooterEnemy>();
+            var so = new SerializedObject(shooter);
+            so.FindProperty("projectilePrefab").objectReferenceValue =
+                Load(Projectile)?.GetComponent<Gameplay.Projectile>();
+            so.ApplyModifiedProperties();
+
+            return go;
+        }
+
+        private static GameObject BuildFlyer()
+        {
+            var go = new GameObject(EnemyFlyer);
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("enemy");
+            renderer.color = new Color(0.62f, 0.85f, 1f);   // devriyeden ayirt edilsin
+            renderer.sortingOrder = LevelBuilder.SortEnemy;
+
+            var body = go.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+
+            var box = go.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(0.8f, 0.7f);
+
+            go.AddComponent<Gameplay.FlyerEnemy>();
+            return go;
+        }
+
+        // ---------------------------------------------------------------
 
         private static GameObject BuildPlayer()
         {

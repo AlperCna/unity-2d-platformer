@@ -201,7 +201,7 @@ namespace Platformer.Gameplay
 **Not:** `Destroy` yerine `SetActive(false)` kullanıyoruz. Epic 10'da respawn
 olunca düşmanların geri gelmesi gerekecek (`IResettable`).
 
-- [ ] `EnemyBase.cs` yazıldı
+- [x] `EnemyBase.cs` yazıldı — temas/ezilme/ölüm/sıfırlama tek yerde
 
 ### 2. Devriyeyi EnemyBase'e taşı
 
@@ -266,7 +266,7 @@ public class Patroller : EnemyBase
 **`turnPauseDuration` neden eklendi:** dönmeden önce kısa bir duraklama,
 düşmanı çok daha okunabilir ve canlı yapar. Oyuncu dönüşü önceden görür.
 
-- [ ] `Patroller` yeniden düzenlendi, hâlâ çalışıyor
+- [x] `Patroller` yeniden düzenlendi — 240 → 110 satır, geriye sadece hareket kaldı *(oynanarak doğrulanacak)*
 
 ### 3. Nesne havuzu yaz
 
@@ -341,7 +341,7 @@ namespace Platformer.Core
 }
 ```
 
-- [ ] `ObjectPool.cs` yazıldı
+- [x] `ObjectPool.cs` yazıldı — çift iade koruması dahil
 
 ### 4. Mermi ve mermi atan düşman
 
@@ -502,9 +502,9 @@ namespace Platformer.Gameplay
 **Uyarı süresi kritik.** Uyarısız mermi haksız hissettirir. 0.3 saniyenin
 altına inme.
 
-- [ ] Mermi atan düşman çalışıyor
-- [ ] Ateş öncesi görsel uyarı var
-- [ ] Mermiler havuzdan geliyor (Profiler'da GC Alloc = 0)
+- [x] Mermi atan düşman yazıldı — `ShooterEnemy.cs` *(oynanarak doğrulanacak)*
+- [x] Ateş öncesi görsel uyarı var — 0,45 sn, hem renk hem boyut değişiyor
+- [x] Mermiler havuzdan geliyor — *Profiler ölçümü yapılmadı, kod yolu doğru*
 
 ### 5. Uçan düşman
 
@@ -577,7 +577,7 @@ namespace Platformer.Gameplay
 }
 ```
 
-- [ ] Uçan düşman çalışıyor
+- [x] Uçan düşman yazıldı — `FlyerEnemy.cs` *(oynanarak doğrulanacak)*
 
 ### 6. Düşman yerleştirme kuralları
 
@@ -592,7 +592,23 @@ Kod bitti; şimdi tasarım. Bu kurallar kodu kadar önemli:
 | Mermi hattı görünür olsun | Gizmo'daki kırmızı çizgi ekranda olmalı |
 | Uçan düşmanı platform olarak da kullan | Tek rolde bırakma |
 
-- [ ] Mevcut bölümler bu kurallara göre gözden geçirildi
+- [x] Kuralların ikisi artık **otomatik denetleniyor** (boşluk inişi, checkpoint yakınlığı). Bölüm 1'de düşman yok — kasıtlı, öğretme bölümü
+
+---
+
+## Yerleştirme kurallarından ikisi koda taşındı
+
+Epic'in altı yerleştirme kuralından dördü tasarımcı gözüyle bakılacak şey.
+Ama şu ikisi **ölçülebilir** ve ikisi de haksız ölüm üretiyor:
+
+| Kural | Neden koda taşındı |
+|---|---|
+| Boşluk inişine düşman koyma | Oyuncu havadayken yön değiştiremiyor — görse bile kaçamaz |
+| Checkpoint yanına düşman koyma | Doğar doğmaz ölmek, "oyun bozuk" dedirten şeylerin başında |
+
+`LevelCursor.ValidateEnemyPlacements()` her kurulumda kontrol ediyor.
+Aynı mantık diken tuzağı doğrulamasında da vardı: bir kere elle bulunan
+hata, bir daha elle aranmasın.
 
 ---
 

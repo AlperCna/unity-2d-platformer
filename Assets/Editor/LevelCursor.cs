@@ -83,6 +83,15 @@ namespace Platformer.EditorTools
         /// <summary>Diken araliklari (x = sol, y = sag).</summary>
         private readonly List<Vector2> spikeSpans = new List<Vector2>();
 
+        /// <summary>Dusman konumlari ve adlari - yerlestirme kurallari icin.</summary>
+        private readonly List<(float x, string kind)> enemies = new List<(float, string)>();
+
+        /// <summary>Checkpoint konumlari.</summary>
+        private readonly List<float> checkpoints = new List<float>();
+
+        /// <summary>Bosluk araliklari (x = sol, y = sag).</summary>
+        private readonly List<Vector2> gapSpans = new List<Vector2>();
+
         private int issueCount;
         private int warningCount;
 
@@ -198,6 +207,7 @@ namespace Platformer.EditorTools
 
             if (coinArc > 0) PlaceCoinArc(X, width, coinArc);
 
+            gapSpans.Add(new Vector2(X, X + width));
             pendingGapWidth = width;
             X += width;
             return this;
@@ -216,6 +226,69 @@ namespace Platformer.EditorTools
             for (int i = 0; i < count; i++)
             {
                 PlaceCoin(new Vector2(startX + i * spacing, GroundTop + heightAboveGround));
+            }
+            return this;
+        }
+
+        // ---------------------------------------------------------------
+        // Dusmanlar (Epic 06)
+        // ---------------------------------------------------------------
+
+        /// <summary>Devriye dusmani - "ne zaman?" sorusunu sorar.</summary>
+        public LevelCursor Patroller(float offsetFromSegmentStart, bool facingRight = false)
+        {
+            float x = lastSegmentStart + offsetFromSegmentStart;
+            enemies.Add((x, "devriye"));
+
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.EnemyPatroller,
+                new Vector2(x, GroundTop + 0.45f), parent);
+
+            if (go != null && facingRight)
+            {
+                var so = new SerializedObject(go.GetComponent<Gameplay.Patroller>());
+                so.FindProperty("startFacingRight").boolValue = true;
+                so.ApplyModifiedProperties();
+            }
+            return this;
+        }
+
+        /// <summary>Mermi atan dusman - "nereden?" sorusunu sorar.</summary>
+        public LevelCursor Shooter(float offsetFromSegmentStart, bool fireLeft = true,
+                                   float heightAboveGround = 0.45f)
+        {
+            float x = lastSegmentStart + offsetFromSegmentStart;
+            enemies.Add((x, "atici"));
+
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.EnemyShooter,
+                new Vector2(x, GroundTop + heightAboveGround), parent);
+
+            if (go != null && !fireLeft)
+            {
+                var so = new SerializedObject(go.GetComponent<Gameplay.ShooterEnemy>());
+                so.FindProperty("fireLeft").boolValue = false;
+                so.ApplyModifiedProperties();
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Ucan dusman - "cesaret edebiliyor musun?" sorusunu sorar.
+        /// Bosluk uzerine konursa hem tehlike hem basamak olur.
+        /// </summary>
+        public LevelCursor Flyer(float offsetFromSegmentStart, float heightAboveGround,
+                                 float horizontalRange = 3f)
+        {
+            float x = lastSegmentStart + offsetFromSegmentStart;
+            enemies.Add((x, "ucan"));
+
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.EnemyFlyer,
+                new Vector2(x, GroundTop + heightAboveGround), parent);
+
+            if (go != null)
+            {
+                var so = new SerializedObject(go.GetComponent<Gameplay.FlyerEnemy>());
+                so.FindProperty("horizontalRange").floatValue = horizontalRange;
+                so.ApplyModifiedProperties();
             }
             return this;
         }
@@ -261,6 +334,8 @@ namespace Platformer.EditorTools
 
         public LevelCursor Checkpoint(float offsetFromSegmentStart = 1f)
         {
+            checkpoints.Add(lastSegmentStart + offsetFromSegmentStart);
+
             PrefabFactory.Spawn(PrefabFactory.Checkpoint,
                 new Vector2(lastSegmentStart + offsetFromSegmentStart, GroundTop + 0.75f),
                 parent);
@@ -428,6 +503,55 @@ namespace Platformer.EditorTools
             }
         }
 
+        /// <summary>
+        /// Epic 06 gorev 6 — dusman yerlestirme kurallarindan koddan
+        /// denetlenebilen ikisi.
+        ///
+        /// Ucu tasarimci gozuyle bakilacak sey ("kor noktada olmasin",
+        /// "mermi hatti gorunur olsun"); ama su ikisi olculebilir ve
+        /// ikisi de HAKSIZ OLUM uretiyor:
+        ///
+        /// 1. Boslugun inis bolgesinde dusman. Oyuncu havadayken yon
+        ///    degistiremiyor - gorse bile kacamaz.
+        /// 2. Checkpoint'in dibinde dusman. Dogar dogmaz olmek, oyuncuya
+        ///    "oyun bozuk" dedirten seylerin basinda geliyor.
+        /// </summary>
+        private void ValidateEnemyPlacements()
+        {
+            const float LandingReactionSpace = 2f;   // inisden sonra tepki payi
+            const float CheckpointSafeRadius = 3f;
+
+            foreach ((float x, string kind) in enemies)
+            {
+                foreach (Vector2 gap in gapSpans)
+                {
+                    // gap.y = boslugun bittigi yer = en erken inis noktasi
+                    if (x >= gap.y && x <= gap.y + LandingReactionSpace)
+                    {
+                        warningCount++;
+                        Debug.LogWarning(
+                            $"[{levelName}] x={x:0.0} - {kind} dusmani BOSLUK INISINDE.\n" +
+                            $"  {gap.x:0.0}-{gap.y:0.0} boslugunun inis bolgesi; oyuncu " +
+                            $"havadayken yon degistiremez, gorse bile kacamaz.\n" +
+                            $"  En az {gap.y + LandingReactionSpace:0.0} noktasina al.");
+                    }
+                }
+
+                foreach (float cp in checkpoints)
+                {
+                    if (Mathf.Abs(x - cp) <= CheckpointSafeRadius)
+                    {
+                        warningCount++;
+                        Debug.LogWarning(
+                            $"[{levelName}] x={x:0.0} - {kind} dusmani CHECKPOINT'IN DIBINDE " +
+                            $"(checkpoint x={cp:0.0}).\n" +
+                            $"  Dogar dogmaz olmek en kotu histir. " +
+                            $"En az {CheckpointSafeRadius:0.0} birim uzaga al.");
+                    }
+                }
+            }
+        }
+
         private bool IsSolidAt(float x)
         {
             foreach (Vector2 span in solidSpans)
@@ -441,6 +565,7 @@ namespace Platformer.EditorTools
         public void Report()
         {
             ValidateSpikeLandings();
+            ValidateEnemyPlacements();
 
             // 4,2 birim/saniye — OLCULEN deger, uc kosudan:
             //   v1,  83,0 birim / 19,58 sn = 4,24   (ilk kez oynaniyor)
