@@ -42,6 +42,9 @@ namespace Platformer.EditorTools
         public const string OneWayPlatform = "Platform_OneWay";
         public const string JumpPad = "JumpPad";
 
+        // Epic 08
+        public const string Gem = "Gem";
+
         [MenuItem("Tools/2D Platformer/Prefablari Uret", false, 23)]
         public static void GenerateMenu()
         {
@@ -75,6 +78,8 @@ namespace Platformer.EditorTools
             created += Ensure(FallingPlatform, BuildFallingPlatform) ? 1 : 0;
             created += Ensure(OneWayPlatform, BuildOneWayPlatform) ? 1 : 0;
             created += Ensure(JumpPad, BuildJumpPad) ? 1 : 0;
+
+            created += Ensure(Gem, BuildGem) ? 1 : 0;
 
             RepairWiring();
 
@@ -302,6 +307,32 @@ namespace Platformer.EditorTools
         // ---------------------------------------------------------------
         // Insa tarifleri — her biri eskiden LevelCursor/LevelBuilder icindeydi
         // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Mucevher. Paradan AYIRT EDILEBILIR olmali ve bu sadece renkle
+        /// yapilamaz - renk korlugu olan oyuncu farki goremez. O yuzden
+        /// hem daha BUYUK hem farkli renkte.
+        /// </summary>
+        private static GameObject BuildGem()
+        {
+            var gem = new GameObject(Gem);
+
+            var visual = new GameObject("Visual");
+            visual.transform.SetParent(gem.transform);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localScale = Vector3.one * 1.5f;      // paradan buyuk
+
+            var renderer = visual.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load("gem");
+            renderer.sortingOrder = LevelBuilder.SortItem;
+
+            var trigger = gem.AddComponent<CircleCollider2D>();
+            trigger.isTrigger = true;
+            trigger.radius = 0.6f;
+
+            gem.AddComponent<Gameplay.Gem>();
+            return gem;
+        }
 
         private static GameObject BuildCoin()
         {
