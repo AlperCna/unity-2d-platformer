@@ -161,6 +161,22 @@ namespace Platformer.Gameplay
         /// </summary>
         protected virtual bool IsStomp(Collider2D other, PlayerController2D controller)
         {
+            // 1) AYAKLAR DUSMANIN USTUNDE MI?
+            //
+            // Bu kontrol sonradan eklendi ve sebebi soyleydi: ucan dusmanin
+            // ustune basinca dusman olmuyor, OYUNCU oluyordu.
+            //
+            // Sebep asagidaki hiz kontrolu. Ucan dusman yukari asagi
+            // suzuluyor; yukari cikarken oyuncuya carpip onu ITIYOR, yani
+            // oyuncunun dikey hizi POZITIF oluyor. "Dusmuyor" sayiliyor ve
+            // yandan carpma muamelesi goruyordu.
+            //
+            // Oysa ayaklarin dusmanin tepesindeyse, nasil geldigin onemli
+            // degil - ustune basmissin demektir.
+            float enemyTop = bodyCollider.bounds.max.y;
+            if (other.bounds.min.y >= enemyTop - stompHeightThreshold) return true;
+
+            // 2) Klasik kontrol: dusuyor ve belirgin sekilde yukarida
             bool falling = controller != null && controller.Velocity.y <= 0.01f;
             bool above = other.bounds.min.y > bodyCollider.bounds.center.y + stompHeightThreshold;
             return falling && above;

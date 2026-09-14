@@ -281,28 +281,39 @@ namespace Platformer.EditorTools
         }
 
         /// <summary>
-        /// Alev sutunu. DIKEY OLARAK TEKRARLANABILIR olmali: FireJet
-        /// gorselin boyunu degistiriyor ve Tiled modda cizdiriyor, yani
-        /// ust ve alt kenarlar birbirine uymali. Bu yuzden desen dikeyde
-        /// sabit, sadece yatayda degisiyor.
+        /// Alev sutunu.
+        ///
+        /// IKI KURAL VAR:
+        ///
+        /// 1) DIKEYDE KUSURSUZ BIRLESMELI. FireJet gorseli Tiled modda
+        ///    cizdiriyor ve boyunu surekli degistiriyor; desen dikeyde
+        ///    tekrarlanacagi icin ust ve alt kenarlar uymali. O yuzden
+        ///    kenar dalgasinin periyodu 8 (32'yi tam boluyor).
+        ///
+        /// 2) TAM 32 PIKSEL GENIS OLMALI = 1 birim.
+        ///    Ilk surum 16 pikseldi (0,5 birim) ve alev 0,8 birim genis
+        ///    ciziliyordu -> 1,6 kopya YAN YANA geliyordu ve alev "iki ince
+        ///    cubuk" gibi gorunuyordu, ates gibi degil. Genislik tam bir
+        ///    karo olunca yatayda hic tekrar olmuyor.
         /// </summary>
         private static void CreateFlame()
         {
-            var canvas = new PixelCanvas(16, 16);
+            var canvas = new PixelCanvas(32, 32);
 
-            Color outer = Hex("#E05A1E");
+            Color outer = Hex("#D94E14");
             Color mid = Hex("#FF8A3D");
-            Color core = Hex("#FFD98A");
+            Color core = Hex("#FFC46B");
+            Color hot = Hex("#FFF6D6");
 
-            canvas.FillRect(2, 0, 12, 16, outer);
-            canvas.FillRect(4, 0, 8, 16, mid);
-            canvas.FillRect(6, 0, 4, 16, core);
-
-            // Kenarlara hafif tirtik - duz bir sutun gibi durmasin
-            for (int y = 0; y < 16; y += 4)
+            for (int y = 0; y < 32; y++)
             {
-                canvas.FillRect(1, y, 1, 2, outer);
-                canvas.FillRect(14, y + 2, 1, 2, outer);
+                // Kenar dalgasi - alevi duz bir dikdortgen olmaktan cikarir
+                int wobble = (y % 8 < 4) ? 0 : 1;
+
+                canvas.FillRect(2 + wobble, y, 28 - wobble * 2, 1, outer);
+                canvas.FillRect(6 + wobble, y, 20 - wobble * 2, 1, mid);
+                canvas.FillRect(10, y, 12, 1, core);
+                canvas.FillRect(14, y, 4, 1, hot);
             }
 
             canvas.Save("flame");
