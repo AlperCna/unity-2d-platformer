@@ -134,6 +134,12 @@ namespace Platformer.DevTools
             if (Input.GetKeyDown(KeyCode.Alpha4)) Apply(3);
             if (Input.GetKeyDown(KeyCode.Alpha0)) RestoreOriginal();
             if (Input.GetKeyDown(KeyCode.Tab)) showDetail = !showDetail;
+
+            // K: kamera sarsintisi testi (Epic 03 kabul kriteri)
+            if (Input.GetKeyDown(KeyCode.K)) TestShake();
+
+            // L: hit stop ILE sarsinti - timeScale = 0 iken sarsinti donmamali
+            if (Input.GetKeyDown(KeyCode.L)) StartCoroutine(TestShakeWithHitStop());
         }
 
         private void Apply(int index)
@@ -148,6 +154,36 @@ namespace Platformer.DevTools
                 $"[Ayar] {presets[index].name}  —  " +
                 $"havada {s.AirTime:F2} sn, mesafe {s.JumpDistance:F2} birim, " +
                 $"yukseklik {s.jumpHeight:F1} birim");
+        }
+
+        private void TestShake()
+        {
+            var cam = UnityEngine.Camera.main?.GetComponent<CameraRig.CameraFollow>();
+            if (cam == null) { UnityEngine.Debug.LogWarning("CameraFollow bulunamadi."); return; }
+
+            cam.Shake(0.25f, 0.4f);
+            UnityEngine.Debug.Log("[Test] Sarsinti — olum siddetinde (0.25 sn, 0.40)");
+        }
+
+        /// <summary>
+        /// timeScale = 0 iken sarsintinin devam ettigini dogrular.
+        /// Sarsinti Time.deltaTime kullansaydi hit stop sirasinda donar,
+        /// efekt kaybolurdu. unscaledDeltaTime kullaniyor.
+        /// </summary>
+        private System.Collections.IEnumerator TestShakeWithHitStop()
+        {
+            var cam = UnityEngine.Camera.main?.GetComponent<CameraRig.CameraFollow>();
+            if (cam == null) { UnityEngine.Debug.LogWarning("CameraFollow bulunamadi."); yield break; }
+
+            cam.Shake(0.4f, 0.45f);
+            UnityEngine.Debug.Log("[Test] Sarsinti + hit stop — ekran donarken sarsilmali");
+
+            float original = Time.timeScale;
+            Time.timeScale = 0f;
+            yield return new WaitForSecondsRealtime(0.25f);
+            Time.timeScale = original;
+
+            UnityEngine.Debug.Log($"[Test] Hit stop bitti, timeScale = {Time.timeScale}");
         }
 
         private void RestoreOriginal()
@@ -238,7 +274,7 @@ namespace Platformer.DevTools
             }
 
             GUI.Label(new Rect(cx, 12f + h - 24f, cw, 18f),
-                "1-4 tarz  ·  0 orijinal  ·  TAB detay", dim);
+                "1-4 tarz · 0 orijinal · TAB detay · K sarsinti · L sarsinti+donma", dim);
         }
     }
 }

@@ -311,6 +311,9 @@ namespace Platformer.EditorTools
             // Istege bagli; kullanmak istemezsen bileseni kapatabilirsin.
             go.AddComponent<FeelTuner>();
 
+            // Bosluga dusunce basa don - Play'i yeniden baslatmaya gerek kalmasin
+            go.AddComponent<TestRoomRespawn>();
+
             return go;
         }
 
@@ -331,7 +334,11 @@ namespace Platformer.EditorTools
             var follow = go.AddComponent<CameraFollow>();
             var so = new SerializedObject(follow);
             so.FindProperty("target").objectReferenceValue = target;
-            so.FindProperty("minBounds").vector2Value = new Vector2(-34f, -6f);
+            // Alt siniri cok asagi aliyoruz: bosluga dusunce kamera takip edebilsin.
+            // Test odasinin icerigi sadece ~7 birim yuksek; kamera ise 16 birim
+            // goruyor. Sinirlari icerige gore daraltirsak kamera dikeyde hic
+            // hareket edemez (kod ortalayip sabitler).
+            so.FindProperty("minBounds").vector2Value = new Vector2(-34f, -26f);
             so.FindProperty("maxBounds").vector2Value = new Vector2(100f, 20f);
             so.ApplyModifiedProperties();
         }

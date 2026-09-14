@@ -321,6 +321,26 @@ Ayrıca: efektler için **Force To Mono** ✔ — dosya boyutu yarıya iner ve
 
 ## Tuzaklar
 
+**Ses modülü `manifest.json`'da yoksa hiçbir şey çalışmaz.** Bu projede
+bir kez yaşandı: `Packages/manifest.json` minimal tutulmuştu ve
+`com.unity.modules.audio` listede yoktu. Belirti şuydu:
+
+```
+AudioListener component deleted: Component belongs to a disabled built-in package.
+```
+
+`AudioSource` eklenemez, ses çalmaz, ama **derleme hatası da vermez** — sadece
+sessizce çalışmaz. Kontrol: `Packages/manifest.json` içinde şunlar olmalı:
+
+```
+com.unity.modules.audio            ← ses
+com.unity.modules.animation        ← Animator (Epic 12)
+com.unity.modules.particlesystem   ← parçacık (Epic 14)
+com.unity.modules.imageconversion  ← EncodeToPNG (SpriteFactory)
+```
+
+`imageconversion` özellikle sinsi: Editor'de çalışır, **build'de patlar**.
+
 **`Log10(0) = -Infinity`.** Slider'ı sıfıra çekince ses sistemi bozulur.
 `Mathf.Max(value, 0.0001f)` kullan. **En sık yapılan ses hatası budur.**
 

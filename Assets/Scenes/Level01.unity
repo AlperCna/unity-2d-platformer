@@ -2512,6 +2512,11 @@ MonoBehaviour:
   extraJumps: 0
   coyoteTime: 0.1
   jumpBufferTime: 0.12
+  dashSpeed: 18
+  dashDuration: 0.16
+  dashCooldown: 0.35
+  dashEndSpeedMultiplier: 0.55
+  allowDiagonalDash: 0
   groundLayers:
     serializedVersion: 2
     m_Bits: 256
@@ -4580,7 +4585,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 64
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -8471,13 +8476,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 595253306}
   offset: {x: 0, y: 1.2}
-  smoothTime: 0.18
-  deadZone: {x: 1.4, y: 1}
+  horizontalSmoothTime: 0.18
+  horizontalDeadZone: 1.6
   lookAheadDistance: 2.2
   lookAheadSmoothTime: 0.5
+  followGroundedHeight: 1
+  verticalSmoothTime: 0.28
+  fastFallThreshold: -9
+  fastFallSmoothTime: 0.12
+  maxVerticalDrift: 4.5
   useBounds: 1
-  minBounds: {x: -4, y: -6}
-  maxBounds: {x: 114, y: 20}
+  minBounds: {x: -4, y: -13}
+  maxBounds: {x: 110, y: 13.506579}
+  shakeDecay: 2.5
 --- !u!81 &2111506559
 AudioListener:
   m_ObjectHideFlags: 0
