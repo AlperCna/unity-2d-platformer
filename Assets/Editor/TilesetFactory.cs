@@ -38,6 +38,28 @@ namespace Platformer.EditorTools
         public const string SheetName = "tileset";
         public const string SheetPath = "Assets/Art/tileset.png";
 
+        /// <summary>
+        /// Karolar arasindaki dolgu (piksel).
+        ///
+        /// NEDEN VAR: dolgusuz atlasta mask 0'in (ic karo, hep toprak)
+        /// son sutunu, mask 1'in (yuzey karosu) CIMEN sutununa piksel
+        /// komsusu oluyordu. Kamera tam sayi piksele oturmadigi anda
+        /// ornekleme bir texel tasiyor ve toprak karonun kenarinda YESIL
+        /// cikiyordu. Ayni sebep zeminde dikey ek yeri cizgileri de
+        /// yapiyordu.
+        ///
+        /// Cozum: her karonun cevresine 2 piksel dolgu, icine karonun kendi
+        /// kenar pikselleri kopyalanir. Tasan ornekleme artik komsu karoyu
+        /// degil, karonun kendi rengini buluyor.
+        ///
+        /// Filter Mode Point oldugu icin "olmaz" sanilir; olur - tasma
+        /// filtrelemeden degil, texel sinirindan kaynaklaniyor.
+        /// </summary>
+        private const int Padding = 2;
+
+        /// <summary>Bir karonun sayfada kapladigi toplam yer: sanat + iki yan dolgu.</summary>
+        private const int CellStride = TileSize + Padding * 2;
+
         /// <summary>Kenar serit kalinligi (piksel).</summary>
         private const int EdgeThickness = 3;
 
@@ -53,25 +75,48 @@ namespace Platformer.EditorTools
             GenerateInternal();
 
             Debug.Log($"Karo seti uretildi: {SheetPath}\n" +
-                      $"  {Columns}x{Rows} = {Columns * Rows} karo, {TileSize}x{TileSize} piksel\n" +
+                      $"  {Columns}x{Rows} = {Columns * Rows} karo, {TileSize}x{TileSize} piksel (+{Padding} dolgu)\n" +
                       $"  indeks = ust(1) | alt(2) | sol(4) | sag(8), bit set ise o yon BOS");
         }
 
-        /// <summary>Menusuz cagri - bolum kurucular kullanir.</summary>
-        internal static void GenerateIfMissing()
+        /// <summary>
+        /// Menusuz cagri - bolum kurucular kullanir.
+        /// Yeniden uretti ise true doner.
+        ///
+        /// Sadece "dosya var mi" bakmak yetmiyor: dolgu eklendiginde sayfa
+        /// 128x128'den 144x144'e buyudu ve eski dosya yerinde kalsaydi
+        /// bolum bayat atlasla kurulurdu. Boyut beklenenden farkliysa
+        /// dosya eskidir, yenilenir.
+        /// </summary>
+        internal static bool EnsureUpToDate()
         {
-            if (AssetDatabase.LoadAssetAtPath<Texture2D>(SheetPath) != null) return;
+            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(SheetPath);
+            int expected = Columns * CellStride;
+
+            if (existing != null && existing.width == expected && existing.height == expected)
+            {
+                return false;
+            }
+
+            if (existing != null)
+            {
+                Debug.Log($"Karo seti eski duzende ({existing.width}x{existing.height}, " +
+                          $"beklenen {expected}x{expected}) - yeniden uretiliyor.");
+            }
+
             GenerateInternal();
+            return true;
         }
 
         private static void GenerateInternal()
         {
-            var canvas = new SpriteFactory.PixelCanvas(Columns * TileSize, Rows * TileSize);
+            var canvas = new SpriteFactory.PixelCanvas(Columns * CellStride, Rows * CellStride);
 
             for (int mask = 0; mask < Columns * Rows; mask++)
             {
                 GetCell(mask, out int ox, out int oy);
                 DrawTile(canvas, ox, oy, mask);
+                Extrude(canvas, ox, oy);
             }
 
             string path = canvas.WritePng(SheetName);
@@ -82,13 +127,51 @@ namespace Platformer.EditorTools
         // Yerlesim
         // ---------------------------------------------------------------
 
-        /// <summary>Maskenin sayfadaki piksel konumu (sol-alt kose).</summary>
+        /// <summary>
+        /// Maskenin SANAT alaninin sol-alt kosesi (dolgu haric).
+        /// Sprite dilimi de tam olarak burasi.
+        /// </summary>
         private static void GetCell(int mask, out int x, out int y)
         {
             int col = mask % Columns;
             int row = mask / Columns;
-            x = col * TileSize;
-            y = row * TileSize;       // PixelCanvas'ta y=0 ALTTIR
+            x = col * CellStride + Padding;
+            y = row * CellStride + Padding;   // PixelCanvas'ta y=0 ALTTIR
+        }
+
+        /// <summary>
+        /// Karonun kenar piksellerini dolgu alanina kopyalar (clamp).
+        /// Koseler de dolduruluyor, yoksa capraz ornekleme bos piksel bulur.
+        /// </summary>
+        private static void Extrude(SpriteFactory.PixelCanvas c, int ox, int oy)
+        {
+            for (int p = 1; p <= Padding; p++)
+            {
+                for (int i = 0; i < TileSize; i++)
+                {
+                    // sol / sag
+                    c.SetPixel(ox - p,            oy + i, c.GetPixel(ox,                oy + i));
+                    c.SetPixel(ox + TileSize - 1 + p, oy + i, c.GetPixel(ox + TileSize - 1, oy + i));
+                    // alt / ust
+                    c.SetPixel(ox + i, oy - p,            c.GetPixel(ox + i, oy));
+                    c.SetPixel(ox + i, oy + TileSize - 1 + p, c.GetPixel(ox + i, oy + TileSize - 1));
+                }
+            }
+
+            // Dort kose
+            for (int px = 1; px <= Padding; px++)
+            {
+                for (int py = 1; py <= Padding; py++)
+                {
+                    c.SetPixel(ox - px, oy - py, c.GetPixel(ox, oy));
+                    c.SetPixel(ox + TileSize - 1 + px, oy - py,
+                               c.GetPixel(ox + TileSize - 1, oy));
+                    c.SetPixel(ox - px, oy + TileSize - 1 + py,
+                               c.GetPixel(ox, oy + TileSize - 1));
+                    c.SetPixel(ox + TileSize - 1 + px, oy + TileSize - 1 + py,
+                               c.GetPixel(ox + TileSize - 1, oy + TileSize - 1));
+                }
+            }
         }
 
         public static string TileName(int mask) => $"{SheetName}_{mask:00}";

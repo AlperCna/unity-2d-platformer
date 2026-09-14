@@ -314,6 +314,12 @@ namespace Platformer.EditorTools
                 pixels[y * width + x] = color;
             }
 
+            public Color GetPixel(int x, int y)
+            {
+                if (x < 0 || x >= width || y < 0 || y >= height) return Color.clear;
+                return pixels[y * width + x];
+            }
+
             public void FillRect(int x, int y, int w, int h, Color color)
             {
                 for (int py = y; py < y + h; py++)
