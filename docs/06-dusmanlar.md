@@ -607,20 +607,35 @@ Ama şu ikisi **ölçülebilir** ve ikisi de haksız ölüm üretiyor:
 | Checkpoint yanına düşman koyma | Doğar doğmaz ölmek, "oyun bozuk" dedirten şeylerin başında |
 
 `LevelCursor.ValidateEnemyPlacements()` her kurulumda kontrol ediyor.
-Aynı mantık diken tuzağı doğrulamasında da vardı: bir kere elle bulunan
-hata, bir daha elle aranmasın.
+
+### İlk sürümü yetersizdi — oynayınca çıktı
+
+Kontrol düşmanın **başlangıç konumuna** bakıyordu. Devriye düşmanı
+checkpoint'ten 6 birim uzakta başlıyor, kontrolü geçiyor, sonra yürüyüp
+checkpoint'e geliyor. Test odasında **iki dakikada 24 ölüm**.
+
+Artık **ulaşabildiği aralığa** bakıyor:
+
+| Düşman | Tehlike aralığı |
+|---|---|
+| Devriye | Bulunduğu kesintisiz ve aynı kottaki zeminin tamamı — boşluk ve basamak onun için duvar, ikisinde de dönüyor |
+| Atıcı | Ateş menzili (16 birim), ateş ettiği yönde |
+| Uçan | Yatay gidiş geliş aralığı |
+
+Aynı dersi diken tuzağında da almıştık: **durağan bir kontrol, hareketli
+bir tehlike için yeterli değil.**
 
 ---
 
 ## Kabul kriteri
 
-- [ ] 2–3 düşman çeşidi var, her biri farklı soru soruyor
-- [ ] Hepsi `EnemyBase`'den türüyor
-- [ ] Mermi atan düşmanın ateş öncesi uyarısı var (≥0.3 sn)
-- [ ] Mermiler havuzdan geliyor, GC Alloc yok
-- [ ] Hiçbir düşman kör noktadan gelmiyor
-- [ ] Düşman ezmek tatmin edici
-- [ ] Ölen düşman `SetActive(false)` oluyor (Destroy değil)
+- [x] 3 düşman çeşidi var, her biri farklı soru soruyor
+- [x] Hepsi `EnemyBase`'den türüyor
+- [x] Mermi atan düşmanın ateş öncesi uyarısı var — 0,45 sn, renk **ve** boyut
+- [x] Mermiler havuzdan geliyor — *Profiler ölçümü yapılmadı; kod yolunda Instantiate/Destroy yok*
+- [x] Hiçbir düşman kör noktadan gelmiyor — test odasında oynanarak doğrulandı
+- [x] Düşman ezmek tatmin edici — oynanarak onaylandı
+- [x] Ölen düşman `SetActive(false)` oluyor — checkpoint'ten dönünce geri geliyor
 
 ---
 
