@@ -15,6 +15,10 @@ namespace Platformer.Core
         [Tooltip("0'dan baslayan bolum numarasi. Kayit sistemi bunu kullanir.")]
         [SerializeField] private int levelIndex = 0;
 
+        [Tooltip("Bolum yeniden tasarlaninca ARTIR. Eski rekorlar sifirlanir, " +
+                 "cunku farkli uzunluktaki bir bolumun suresiyle karsilastirilamaz.")]
+        [SerializeField] private int levelDesignVersion = 1;
+
         [Header("Olum")]
         [Tooltip("Oldukten sonra yeniden dogana kadar gecen sure. " +
                  "0.6'nin uzerine CIKMA - 30 kez olecek oyuncu icin her 0.1 sn 3 sn demek.")]
@@ -206,7 +210,8 @@ namespace Platformer.Core
                 levelIndex, Score, TotalCoins,
                 secret: false,
                 time: LevelTime,
-                deaths: DeathCount);
+                deaths: DeathCount,
+                designVersion: levelDesignVersion);
 
             OnLevelCompleted?.Invoke();
         }

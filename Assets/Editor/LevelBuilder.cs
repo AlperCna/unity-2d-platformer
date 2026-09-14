@@ -689,13 +689,15 @@ namespace Platformer.EditorTools
 
         // --- GameManager ----------------------------------------------
 
-        internal static void CreateGameManager()
+        internal static void CreateGameManager(int levelIndex = 0, int designVersion = 1)
         {
             var managerObject = new GameObject("GameManager");
             var manager = managerObject.AddComponent<GameManager>();
 
             var so = new SerializedObject(manager);
             so.FindProperty("killPlaneY").floatValue = -12f;
+            so.FindProperty("levelIndex").intValue = levelIndex;
+            so.FindProperty("levelDesignVersion").intValue = designVersion;
             so.ApplyModifiedProperties();
 
             // Kalici yoneticiler AYRI nesnelerde: DontDestroyOnLoad ile sahneler

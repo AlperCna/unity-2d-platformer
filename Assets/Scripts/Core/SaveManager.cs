@@ -142,9 +142,26 @@ namespace Platformer.Core
 
         /// <summary>Bolum bitince cagrilir. En iyi degerleri korur.</summary>
         public void CompleteLevel(int index, int coins, int totalCoins,
-                                  bool secret, float time, int deaths)
+                                  bool secret, float time, int deaths,
+                                  int designVersion = 1)
         {
             LevelProgress p = Data.GetLevel(index);
+
+            // Bolum yeniden tasarlandiysa eski rekorlar gecersiz.
+            // Yeni duzen daha uzunsa eski sure ASLA kirilamaz ve kayitta
+            // ulasilamaz bir sayi olarak kalir; para sayisi da tutmaz.
+            if (p.completed && p.designVersion != designVersion)
+            {
+                Debug.Log($"Bolum {index} yeniden tasarlanmis " +
+                          $"(surum {p.designVersion} -> {designVersion}). " +
+                          $"Eski rekor {p.bestTime:0.00} sn ve {p.coinsCollected} " +
+                          $"para sifirlandi - artik ayni bolum degil.");
+
+                p.bestTime = -1f;
+                p.coinsCollected = 0;
+                p.secretFound = false;
+            }
+            p.designVersion = designVersion;
 
             p.completed = true;
             p.totalCoins = totalCoins;
