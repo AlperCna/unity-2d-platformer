@@ -403,10 +403,18 @@ namespace Platformer.EditorTools
         {
             ValidateSpikeLandings();
 
-            // 4,2 birim/saniye: Bolum 1 v1'in OLCULEN degeri (83 birim / 19,58 sn,
-            // kayit dosyasindan). Onceki tahmin moveSpeed'i (8) kullaniyordu -
-            // yani oyuncunun hic ziplamadigini, duraksamadigini, para toplamadigini
-            // varsayiyordu. Bolum sureleri iki kat kisa gorunuyordu.
+            // 4,2 birim/saniye — OLCULEN deger, uc kosudan:
+            //   v1,  83,0 birim / 19,58 sn = 4,24   (ilk kez oynaniyor)
+            //   v2, 124,1 birim / 28,86 sn = 4,30   (ilk kez oynaniyor)
+            //   v2, 124,1 birim / 22,24 sn = 5,58   (bolum artik BILINIYOR)
+            //
+            // Ucuncu sayi %30 daha hizli: ayni bolum, ayni oyuncu, sadece
+            // ezberlenmis. O yuzden tahmin ILK OYNANIS hizini kullaniyor -
+            // "30-90 sn" hedefi de ilk oynanis icin anlamli, tekrar icin degil.
+            //
+            // Onceki tahmin moveSpeed'i (8) kullaniyordu: oyuncunun hic
+            // ziplamadigini, duraksamadigini, para toplamadigini varsayiyordu.
+            // Bolum sureleri iki kat kisa gorunuyordu.
             const float MeasuredUnitsPerSecond = 4.2f;
             float estimate = X / MeasuredUnitsPerSecond;
 
