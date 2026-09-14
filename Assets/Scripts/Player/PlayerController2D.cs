@@ -314,6 +314,19 @@ namespace Platformer.Player
             if (dashCooldownLeft > 0f) dashCooldownLeft -= Time.deltaTime;
         }
 
+        /// <summary>
+        /// Tamponlanmis zipla istegini iptal eder.
+        ///
+        /// Tek yonlu platformdan ASAGI inerken gerekiyor: oyuncu ASAGI+ZIPLA
+        /// basiyor, ama niyeti ziplamak degil INMEK. Iptal edilmezse hem
+        /// platformdan gecer hem yukari ziplar - yani yukari cikip tekrar
+        /// ustune duser.
+        /// </summary>
+        public void CancelBufferedJump()
+        {
+            jumpBufferCounter = 0f;
+        }
+
         private void CheckGround()
         {
             Vector2 origin = (Vector2)transform.position + groundCheckOffset;
