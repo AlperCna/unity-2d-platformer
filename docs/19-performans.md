@@ -8,6 +8,17 @@
 
 ---
 
+## Neden bu epic var
+
+Takılan bir oyun, yavaş bir oyundan daha kötüdür. Sabit 30 FPS oynanabilir;
+60 FPS'te saniyede bir takılan oyun oynanamaz — çünkü takılma tam zıplama
+anında gelirse oyuncu ölür ve bunu kendi hatası sanmaz.
+
+Asıl hedef yüksek FPS değil, **düzgün FPS**.
+
+---
+
+
 ## Önce bir uyarı
 
 **2D platform oyununda muhtemelen performans sorunun olmayacak.** Senin oyunun

@@ -178,7 +178,15 @@ anlıyor musun?
 "şuraya zıplamalıyım" diye düşünmez — sadece paraları takip eder ve doğru
 yeri bulur.
 
-`LevelBuilder.CreateCoinRow()` tam bunun için var.
+[`LevelCursor`](../Assets/Editor/LevelCursor.cs) bunu iki şekilde yapıyor:
+
+```csharp
+c.Gap(4f, coinArc: 5);   // boşluğun üstüne zıplama yayı çizer
+c.Coins(3);              // son zemin parçasının üstüne yatay dizi
+```
+
+`coinArc` parabolü kendisi hesaplıyor ve tepesini zıplama yüksekliğinin
+%80'iyle sınırlıyor — ulaşılamayacak yere para koymuyor.
 
 ```
 Örnek: 4 birimlik boşluğu para yayıyla işaretlemek

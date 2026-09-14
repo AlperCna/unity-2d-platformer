@@ -22,6 +22,12 @@ kaldığı yerden devam edebilmesi.
 
 ---
 
+## Görevler
+
+İki ayrı problem, iki ayrı bölüm. Sırayla yap — checkpoint olmadan
+kalıcı kaydın test edilecek bir ilerlemesi olmaz.
+
+
 ## Bölüm 1: Checkpoint
 
 ### 1. Yerleşim kuralları

@@ -292,6 +292,21 @@ ve bir sonrakini daha iyi yapabilecek olmak.
 
 ---
 
+## v1'de yapma
+
+- Steam sayfası, Steamworks entegrasyonu
+- Konsol sürümleri (Switch, Xbox, PlayStation)
+- macOS / Linux derlemesi (Windows'u bitir önce)
+- Demo sürümü / erken erişim
+- Basın kiti, fragman videosu
+- Discord sunucusu, topluluk yönetimi
+- Yayıncı arayışı
+
+Hepsi ikinci oyunun veya bu oyunun 2.0'ının işi. İlk hedef: **yayınlanmış olmak.**
+
+---
+
+
 ## Bu plan bittiğinde
 
 Yayınlanmış bir oyunun olacak.

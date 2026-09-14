@@ -57,8 +57,9 @@ listesinde bir numaradır.
 
 **Nasıl karar verilir:** karakterin **2–3 zıplama yüksekliği** görünmeli.
 
-Epic 02'de ölçtüğün maksimum zıplama yüksekliği 3.2 birimse:
-`3.2 × 3 = 9.6` → Size ≈ 5 yeterli, ama düşme mesafesi için biraz pay bırak → **6–7**.
+Bu projede ölçülen maksimum zıplama yüksekliği **3,03 birim**:
+`3,03 × 3 = 9,1` → Size ≈ 5 yeterli, ama düşüş mesafesi ve önünü görmek için
+pay bırak → **7** seçildi (14 birim görüş = 4,6 × zıplama yüksekliği).
 
 | Sorun | Belirti |
 |---|---|
@@ -111,17 +112,17 @@ büyük ve düzenli bir hareket yok.
 
 **Ölçüt:** tam hızda koşarken, önünde ineceğin platformu görebiliyor musun?
 
-Hesap: koşarak zıplama mesafen 5.2 birimse ve ekran genişliği ~25 birimse,
-karakteri merkezden 2–3 birim geriye almak, önünde 15 birim görüş bırakır.
-Bu bir zıplamalık mesafeyi rahat kapsar.
+Hesap: ölçülen koşarak zıplama mesafesi **5,31**, ekran genişliği ~24,9 birim.
+Karakteri merkezden 2,2 birim geriye almak önünde ~14,6 birim görüş bırakıyor —
+dash'li en uzun zıplamayı (7,62) bile rahat kapsıyor.
 
-| Değer | Öneri |
-|---|---|
-| `Look Ahead Distance` | 2.0 – 3.0 |
-| `Look Ahead Smooth Time` | 0.4 – 0.6 |
+| Değer | Bu projede | Aralık |
+|---|---|---|
+| `Look Ahead Distance` | **2,2** (mesafenin ~%41'i) | 2,0 – 3,0 |
+| `Look Ahead Smooth Time` | **0,5** | 0,4 – 0,6 |
 
-`Smooth Time` çok düşükse, her yön değiştirdiğinde kamera savrulur ve
-oyuncu rahatsız olur. 0.3'ün altına inme.
+`Look Ahead Smooth Time` çok düşükse her yön değiştirdiğinde kamera savrulur.
+0,3'ün altına inme.
 
 - [ ] İleri bakış ayarlandı
 
@@ -164,70 +165,33 @@ hiç hareket edemez (kod ortalayıp sabitler). Test odasında bu yaşandı: içe
 
 Epic 14'te (juice) kullanacaksın, ama altyapıyı şimdi kur.
 
-`CameraFollow.cs` içine:
+**Uygulandı:** [`CameraFollow.Shake(duration, magnitude)`](../Assets/Scripts/Camera/CameraFollow.cs)
 
 ```csharp
-[Header("Sarsinti")]
-[Tooltip("Sarsintinin sonme hizi. Buyuk = daha cabuk biter.")]
-[SerializeField] private float shakeDecay = 2.5f;
-
-private float shakeTimeLeft;
-private float shakeDuration;
-private float shakeMagnitude;
-private Vector3 shakeOffset;
-
-/// <summary>Disaridan cagir: CameraFollow.Shake(0.15f, 0.3f)</summary>
-public void Shake(float duration, float magnitude)
-{
-    // Daha siddetli bir sarsinti gelirse onu uygula, zayifi ezme
-    if (magnitude < shakeMagnitude && shakeTimeLeft > 0f) return;
-
-    shakeDuration = duration;
-    shakeTimeLeft = duration;
-    shakeMagnitude = magnitude;
-}
-
-private Vector3 UpdateShake()
-{
-    if (shakeTimeLeft <= 0f)
-    {
-        shakeOffset = Vector3.zero;
-        shakeMagnitude = 0f;
-        return Vector3.zero;
-    }
-
-    shakeTimeLeft -= Time.unscaledDeltaTime;   // hit stop sirasinda da calissin
-
-    // Sonerek azalan siddet
-    float progress = 1f - (shakeTimeLeft / shakeDuration);
-    float current = shakeMagnitude * Mathf.Exp(-shakeDecay * progress);
-
-    shakeOffset = new Vector3(
-        Random.Range(-1f, 1f) * current,
-        Random.Range(-1f, 1f) * current,
-        0f);
-
-    return shakeOffset;
-}
+var cam = UnityEngine.Camera.main?.GetComponent<CameraFollow>();
+cam?.Shake(0.25f, 0.4f);
 ```
 
-`LateUpdate()` sonunda, `transform.position` atamasını şöyle değiştir:
+Üç tasarım kararı, üçü de gerekçeli:
+
+**1. `Time.unscaledDeltaTime` kullanılıyor, `deltaTime` değil.**
+Hit stop sırasında (`timeScale = 0`) sarsıntı donmamalı. Aksi halde
+Epic 09'da ölüm anına sarsıntı bağladığında efekt hiç görünmez —
+çünkü tam o anda oyun donuyor.
+
+**2. Şiddetli sarsıntı zayıfı ezmez.** Aynı anda iki çağrı gelirse
+büyük olan kazanır; küçük olan devam eden efekti kesmez.
+
+**3. `ScreenShakeEnabled` statik anahtarı var.** Bazı oyuncular için
+ekran sarsıntısı erişilebilirlik meselesi — Epic 15'te ayarlara bağlanacak.
 
 ```csharp
-Vector3 smoothed = Vector3.SmoothDamp(transform.position, desired, ref velocity, smoothTime);
-transform.position = ClampToBounds(smoothed) + UpdateShake();
+public static bool ScreenShakeEnabled = true;
 ```
 
-**`Time.unscaledDeltaTime` kullanmak önemli:** hit stop sırasında (`timeScale = 0`)
-sarsıntının donmaması gerekir, yoksa efekt kaybolur.
-
-Test için geçici bir tuş:
-
-```csharp
-#if UNITY_EDITOR
-if (Input.GetKeyDown(KeyCode.F9)) Shake(0.2f, 0.35f);
-#endif
-```
+**Test:** test odasında Play → **`K`** (sarsıntı) ve **`L`** (sarsıntı +
+ekran donması). İkincisi kritik: donma sırasında sarsıntının devam ettiğini
+doğrular. [`FeelTuner.cs`](../Assets/Scripts/DevTools/FeelTuner.cs) içinde.
 
 - [ ] `Shake()` çalışıyor ve test edildi
 

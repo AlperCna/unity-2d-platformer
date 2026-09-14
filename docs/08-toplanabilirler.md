@@ -27,7 +27,16 @@ izler. Bu, oyun tasarımının en zarif araçlarından biridir ve bedavadır.
 - Toplanınca büyüyüp saydamlaşma efekti
 - `GameManager` üzerinden skor
 
-`LevelBuilder.CreateCoinRow()` — sıra halinde para yerleştirme.
+[`LevelCursor`](../Assets/Editor/LevelCursor.cs) (Epic 04) para yerleştirmeyi
+hallediyor:
+
+| Çağrı | Ne yapar |
+|---|---|
+| `c.Coins(3)` | Son zemin parçasının üstüne yatay dizi |
+| `c.Gap(4f, coinArc: 5)` | Boşluğun üstüne zıplama yayı — parabol otomatik |
+
+Yayın tepesi zıplama yüksekliğinin %80'iyle sınırlı; ulaşılamayacak yere
+para konmuyor.
 
 ---
 

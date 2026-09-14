@@ -9,6 +9,17 @@
 
 ---
 
+## Neden bu epic var
+
+Menüsü olmayan bir şey oyun değil, demodur. Oyuncu oyununu açtığında
+karşısına doğrudan oynanış çıkarsa ne olduğunu anlamaz; duraklatamıyorsa
+telefonu çaldığında oyunu kapatır; sesi kısamıyorsa gece oynayamaz.
+
+Bunlar "ekstra" değil, oyunun **kullanılabilir** olmasının şartı.
+
+---
+
+
 ## Elindeki altyapı
 
 `Assets/Scripts/UI/HudController.cs` — skor, can, mesaj gösteriyor;
