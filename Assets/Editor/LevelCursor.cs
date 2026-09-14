@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine.Tilemaps;
 using UnityEngine;
 
 namespace Platformer.EditorTools
@@ -48,7 +49,14 @@ namespace Platformer.EditorTools
 
         private readonly Transform parent;
         private readonly int groundLayer;
+        private readonly TilemapRig rig;
         private readonly string levelName;
+
+        /// <summary>Dolu hucreler. Karo maskeleri Paint()'te bundan hesaplanir.</summary>
+        private readonly HashSet<Vector3Int> solidCells = new HashSet<Vector3Int>();
+
+        /// <summary>Diken hucreleri.</summary>
+        private readonly HashSet<Vector3Int> hazardCells = new HashSet<Vector3Int>();
 
         /// <summary>Imlecin su anki sag kenari.</summary>
         public float X { get; private set; }
@@ -78,16 +86,53 @@ namespace Platformer.EditorTools
         private int issueCount;
         private int warningCount;
 
-        private const float GroundThickness = 1f;
+        /// <summary>
+        /// Zeminin yuzeyden asagi kac hucre devam ettigi.
+        ///
+        /// Oynanisi hic etkilemez - sadece gorseldir. 1 hucre ince bir
+        /// tahta gibi duruyordu; 4 hucre toprak kutlesi gibi duruyor ve
+        /// bosluklar "ucurum" olarak okunuyor.
+        /// </summary>
+        private const int GroundDepth = 4;
 
-        public LevelCursor(Transform parent, int groundLayer, string levelName = "Bolum",
+        public LevelCursor(Transform parent, int groundLayer, TilemapRig rig,
+                           string levelName = "Bolum",
                            float startX = 0f, float startGroundTop = 0f)
         {
             this.parent = parent;
             this.groundLayer = groundLayer;
+            this.rig = rig;
             this.levelName = levelName;
             X = startX;
             GroundTop = startGroundTop;
+        }
+
+        // ---------------------------------------------------------------
+        // Izgaraya hizalama
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Tilemap TAM SAYI hucrelere basar. Kesirli bir genislik verilirse
+        /// sessizce yuvarlanmaz - yuvarlanir ve SOYLENIR.
+        ///
+        /// Sessiz yuvarlama en kotusu olurdu: dokumanda 2,5 yazar, oyunda 3
+        /// olur, zorluk yuzdesi tutmaz ve kimse farketmez.
+        /// </summary>
+        private float Snap(float value, string what)
+        {
+            int snapped = Mathf.RoundToInt(value);
+
+            if (!Mathf.Approximately(value, snapped))
+            {
+                warningCount++;
+                Debug.LogWarning(
+                    $"[{levelName}] x={X:0.0} - {what} {value:0.00} -> {snapped} " +
+                    $"hucreye yuvarlandi.\n" +
+                    $"  1 birim = 1 hucre; kesirli deger basilamaz. " +
+                    $"Tasarima tam sayi yaz ki dokuman ile oyun ayni sey olsun.");
+            }
+
+            return snapped;
         }
 
         // ---------------------------------------------------------------
@@ -98,6 +143,7 @@ namespace Platformer.EditorTools
         public LevelCursor Ground(float width, string name = null)
         {
             pendingGapWidth = 0f;
+            width = Snap(width, "zemin genisligi");
             Place(name ?? $"Zemin_{X:0}", X, width, GroundTop);
             lastSegmentStart = X;
             lastSegmentWidth = width;
@@ -111,6 +157,9 @@ namespace Platformer.EditorTools
         /// </summary>
         public LevelCursor Step(float height, float width, string name = null)
         {
+            height = Snap(height, "basamak yuksekligi");
+            width = Snap(width, "basamak genisligi");
+
             ValidateHeight(height);
             if (pendingGapWidth > 0f) ValidateGapWithRise(pendingGapWidth, height);
             pendingGapWidth = 0f;
@@ -127,6 +176,8 @@ namespace Platformer.EditorTools
         public LevelCursor Drop(float height, float width, string name = null)
         {
             pendingGapWidth = 0f;
+            height = Snap(height, "inis yuksekligi");
+            width = Snap(width, "inis genisligi");
             GroundTop -= height;
             Place(name ?? $"Inis_{height:0.0}", X, width, GroundTop);
             lastSegmentStart = X;
@@ -142,6 +193,7 @@ namespace Platformer.EditorTools
         /// </summary>
         public LevelCursor Gap(float width, int coinArc = 0)
         {
+            width = Snap(width, "bosluk genisligi");
             ValidateGap(width);
 
             if (coinArc > 0) PlaceCoinArc(X, width, coinArc);
@@ -177,6 +229,18 @@ namespace Platformer.EditorTools
 
             spikeSpans.Add(new Vector2(startX, startX + count));
 
+            // NEDEN TILEMAP DEGIL:
+            // Epic 05 tehlikeleri Hazards Tilemap'ine koymayi istiyor ve iskelet
+            // hazir. Ama Tilemap collider'i hucrenin TAMAMINI kaplar; asagidaki
+            // ayarlanmis collider ise gorselin sadece alt yarisini kapliyor.
+            //
+            // Bu fark bilincli bir oyun hissi karari (Epic 07/09): oyuncu
+            // dikenin ucunu siyirip kurtulabilmeli, "degmedim ki" dememeli.
+            // Nesne sayisini azaltmak icin bunu feda etmiyoruz - zaten bolumde
+            // 4 diken grubu var, kazanc yok.
+            //
+            // Hazards katmani, hucre boyu collider'in sorun olmadigi
+            // tehlikeler (lav, su) icin hazir bekliyor.
             var go = new GameObject($"Diken_{count}");
             go.transform.position = new Vector3(startX + count * 0.5f, GroundTop + 0.5f, 0f);
             go.transform.SetParent(parent);
@@ -401,6 +465,7 @@ namespace Platformer.EditorTools
         /// <summary>Insa bitince cagir: ozet ve sorun sayisi.</summary>
         public void Report()
         {
+            Paint();
             ValidateSpikeLandings();
 
             // 4,2 birim/saniye — OLCULEN deger, uc kosudan:
@@ -443,27 +508,67 @@ namespace Platformer.EditorTools
         // Ic yardimcilar
         // ---------------------------------------------------------------
 
+        /// <summary>
+        /// Zemin parcasini HUCRE olarak kaydeder. Karoyu hemen basmaz -
+        /// bir karonun hangi sprite'i alacagi sag komsusuna da bagli ve
+        /// o henuz yerlestirilmemis olabilir. Boyama Paint()'te, her sey
+        /// bilindikten sonra tek seferde yapiliyor.
+        /// </summary>
         private void Place(string name, float xLeft, float width, float top)
         {
             solidSpans.Add(new Vector2(xLeft, xLeft + width));
             MaxGroundTop = Mathf.Max(MaxGroundTop, top);
             MinGroundTop = Mathf.Min(MinGroundTop, top);
 
-            var go = new GameObject(name);
-            go.transform.position = new Vector3(
-                xLeft + width * 0.5f, top - GroundThickness * 0.5f, 0f);
-            go.transform.SetParent(parent);
-            go.layer = groundLayer;
+            int x0 = Mathf.RoundToInt(xLeft);
+            int x1 = Mathf.RoundToInt(xLeft + width) - 1;   // son hucre dahil
+            int yTop = Mathf.RoundToInt(top) - 1;           // yuzey karosu
 
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteFactory.Load("ground");
-            renderer.drawMode = SpriteDrawMode.Tiled;
-            renderer.tileMode = SpriteTileMode.Continuous;
-            renderer.size = new Vector2(width, GroundThickness);
-            renderer.sortingOrder = 0;
+            for (int x = x0; x <= x1; x++)
+            {
+                for (int d = 0; d < GroundDepth; d++)
+                {
+                    solidCells.Add(new Vector3Int(x, yTop - d, 0));
+                }
+            }
+        }
 
-            var collider = go.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(width, GroundThickness);
+        /// <summary>
+        /// Butun hucreleri Tilemap'e basar.
+        ///
+        /// Her hucrenin karosu dort komsusundan hesaplaniyor - Rule Tile'in
+        /// yaptigi isin aynisi, ama tahminsiz: bolum koddan uretildigi icin
+        /// hangi hucrenin dolu oldugunu kesin biliyoruz.
+        /// </summary>
+        private void Paint()
+        {
+            if (rig == null) return;
+
+            var tiles = new Dictionary<int, TileBase>();
+            var positions = new List<Vector3Int>(solidCells.Count);
+            var chosen = new List<TileBase>(solidCells.Count);
+
+            foreach (Vector3Int cell in solidCells)
+            {
+                int mask = TileAssetFactory.MaskFor(solidCells.Contains, cell);
+
+                if (!tiles.TryGetValue(mask, out TileBase tile))
+                {
+                    tile = TileAssetFactory.Load(mask);
+                    tiles[mask] = tile;
+                }
+
+                if (tile == null) continue;
+
+                positions.Add(cell);
+                chosen.Add(tile);
+            }
+
+            // Tek tek SetTile yerine toplu basim: 500+ karoda gozle gorulur fark
+            rig.Ground.SetTiles(positions.ToArray(), chosen.ToArray());
+
+            Debug.Log($"[{levelName}] {positions.Count} karo basildi " +
+                      $"({tiles.Count} farkli karo tipi kullanildi)");
         }
 
         private void PlaceCoin(Vector2 position)
