@@ -370,6 +370,9 @@ namespace Platformer.EditorTools
         /// </summary>
         public LevelCursor Falling(float atX, float heightAboveGround, float width = 2f)
         {
+            // Platform 1 birim kalin, merkezden konumlaniyor -> ust yuzey +0,5
+            ValidatePlatformReach(heightAboveGround + 0.5f, "dusen platform");
+
             GameObject go = PrefabFactory.Spawn(PrefabFactory.FallingPlatform,
                 new Vector2(atX, GroundTop + heightAboveGround), parent);
             if (go == null) return this;
@@ -382,6 +385,9 @@ namespace Platformer.EditorTools
         /// <summary>Tek yonlu platform: alttan gec, ustune bas.</summary>
         public LevelCursor OneWay(float atX, float heightAboveGround, float width = 3f)
         {
+            // Platform 0,5 birim kalin, merkezden konumlaniyor -> ust yuzey +0,25
+            ValidatePlatformReach(heightAboveGround + 0.25f, "tek yonlu platform");
+
             GameObject go = PrefabFactory.Spawn(PrefabFactory.OneWayPlatform,
                 new Vector2(atX, GroundTop + heightAboveGround), parent);
             if (go == null) return this;
@@ -747,6 +753,42 @@ namespace Platformer.EditorTools
             }
 
             return new Vector2(left, right);
+        }
+
+        /// <summary>
+        /// Uzerine BASILACAK bir platformun ust yuzeyine ulasilabiliyor mu?
+        ///
+        /// Bu kontrol, tehlike test odasinda tek yonlu platformu
+        /// ULASILAMAZ yukseklige koydugum icin eklendi. Merkezi 3 birime
+        /// koymustum; platform 0,5 kalin oldugu icin UST YUZEYI 3,25'e
+        /// cikiyordu ve oyuncu en fazla 3,03'e ulasabiliyor. 0,22 birimlik
+        /// fark.
+        ///
+        /// Ders: platformun MERKEZINI degil, BASILACAK YUZEYINI olc.
+        /// Kalinligi unutmak kolay ve sonucu "neden ziplayamiyorum" oluyor.
+        /// </summary>
+        private void ValidatePlatformReach(float topSurfaceAboveGround, string what)
+        {
+            if (topSurfaceAboveGround > MaxJumpHeight)
+            {
+                issueCount++;
+                Debug.LogError(
+                    $"[{levelName}] x={X:0.0} - {what} ULASILAMAZ.\n" +
+                    $"  Ust yuzeyi zeminden {topSurfaceAboveGround:0.00} birim yukarida, " +
+                    $"oyuncu en fazla {MaxJumpHeight:0.00} birime cikabiliyor.\n" +
+                    $"  Platformun KALINLIGINI unutma: merkez degil yuzey onemli.");
+                return;
+            }
+
+            float ratio = topSurfaceAboveGround / MaxJumpHeight;
+            if (ratio > 0.88f)
+            {
+                warningCount++;
+                Debug.LogWarning(
+                    $"[{levelName}] x={X:0.0} - {what} yuksekliginin %{ratio * 100f:0}'i " +
+                    $"kullaniliyor ({topSurfaceAboveGround:0.00}/{MaxJumpHeight:0.00}). " +
+                    "Teknik olarak cikilir ama neredeyse kusursuz zipla gerekiyor.");
+            }
         }
 
         private bool IsSolidAt(float x)
