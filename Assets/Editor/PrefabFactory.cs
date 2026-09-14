@@ -134,6 +134,10 @@ namespace Platformer.EditorTools
                                           1 << GroundLayer,
                                           typeof(Gameplay.Projectile));
             fixedCount += RepairShooterReference();
+            fixedCount += RepairChildReference(RetractingSpikes, "spikeVisual", "Visual",
+                                               typeof(Gameplay.RetractingSpikes));
+            fixedCount += RepairChildReference(FireJet, "flameVisual", "Flame",
+                                               typeof(Gameplay.FireJet));
 
             if (fixedCount > 0)
             {
@@ -216,6 +220,38 @@ namespace Platformer.EditorTools
             EditorUtility.SetDirty(shooter);
 
             Debug.LogWarning("Enemy_Shooter.prefab mermi referansi bostu, baglandi.");
+            return 1;
+        }
+
+        /// <summary>
+        /// Bir bilesenin cocuk nesne referansi bos kalmissa baglar.
+        ///
+        /// Bu da "makinenin sahip oldugu" alanlardan: kullanicinin bu
+        /// referansi bosaltmak icin bir sebebi yok ve bos oldugunda oyun
+        /// her karede hata basiyor.
+        /// </summary>
+        private static int RepairChildReference(string prefabName, string field,
+                                                string childName, System.Type componentType)
+        {
+            GameObject prefab = Load(prefabName);
+            if (prefab == null) return 0;
+
+            var component = prefab.GetComponent(componentType);
+            if (component == null) return 0;
+
+            var so = new SerializedObject(component);
+            SerializedProperty prop = so.FindProperty(field);
+            if (prop == null || prop.objectReferenceValue != null) return 0;
+
+            Transform child = prefab.transform.Find(childName);
+            if (child == null) return 0;
+
+            prop.objectReferenceValue = child;
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(prefab);
+
+            Debug.LogWarning($"{prefabName}.prefab '{field}' bostu, " +
+                             $"'{childName}' cocuguna baglandi.");
             return 1;
         }
 
@@ -366,7 +402,15 @@ namespace Platformer.EditorTools
 
             var renderer = visual.AddComponent<SpriteRenderer>();
             renderer.sprite = SpriteFactory.Load("spike");
-            renderer.sortingOrder = LevelBuilder.SortPlatform + 1;
+
+            // ZEMININ ARKASINDA (-1). Zemin tilemap'i 0'da; diken onun
+            // onunde olsaydi gizli haldeyken topragin icinden gorunurdu -
+            // ilk denemede oyle oldu.
+            //
+            // Arkada olmasi yukselmeyi bozmuyor: yuzeyin USTUNDE zaten karo
+            // yok, gizleyecek bir sey de yok. Yani diken topraktan cikiyormus
+            // gibi gorunuyor, ki dogrusu bu.
+            renderer.sortingOrder = LevelBuilder.SortPlatform - 1;
 
             // Collider gorselden kucuk - "degmedim ki" olmasin
             var trigger = go.AddComponent<BoxCollider2D>();
@@ -374,7 +418,10 @@ namespace Platformer.EditorTools
             trigger.size = new Vector2(0.75f, 0.55f);
             trigger.offset = new Vector2(0f, 0.28f);
 
-            go.AddComponent<Gameplay.RetractingSpikes>();
+            var spikes = go.AddComponent<Gameplay.RetractingSpikes>();
+            var spikesSo = new SerializedObject(spikes);
+            spikesSo.FindProperty("spikeVisual").objectReferenceValue = visual.transform;
+            spikesSo.ApplyModifiedProperties();
             return go;
         }
 
@@ -408,7 +455,12 @@ namespace Platformer.EditorTools
             trigger.isTrigger = true;
             trigger.size = new Vector2(0.6f, 0.01f);
 
-            go.AddComponent<Gameplay.FireJet>();
+            // Referansi ACIKCA bagliyoruz. Otomatik aramaya birakmak, cocuk
+            // sirasi degistiginde sessizce yanlis nesneyi bulmak demek.
+            var jet = go.AddComponent<Gameplay.FireJet>();
+            var jetSo = new SerializedObject(jet);
+            jetSo.FindProperty("flameVisual").objectReferenceValue = visual.transform;
+            jetSo.ApplyModifiedProperties();
             return go;
         }
 
