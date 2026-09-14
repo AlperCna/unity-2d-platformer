@@ -300,7 +300,7 @@ namespace Platformer.Gameplay
 
 `ResetPlatform()` public — Epic 10'daki `IResettable` bunu çağıracak.
 
-- [x] Düşen platform yazıldı *(oynanarak denenmedi)*
+- [x] Düşen platform çalışıyor — titriyor, düşüyor, geri geliyor
 
 ### 3. Tek yönlü platform
 
@@ -346,8 +346,8 @@ private System.Collections.IEnumerator DropThrough(PlatformEffector2D effector)
 }
 ```
 
-- [x] Tek yönlü platform yazıldı *(oynanarak denenmedi)*
-- [ ] ↓ + Zıpla ile aşağı inilebiliyor — **oynanarak doğrulanacak**
+- [x] Tek yönlü platform çalışıyor — hem yukarı hem aşağı
+- [x] ↓ + Zıpla ile aşağı inilebiliyor — **oynanarak doğrulandı** (üçüncü denemede)
 
 ### 4. Zıplama pedi
 
@@ -401,7 +401,7 @@ namespace Platformer.Gameplay
 }
 ```
 
-- [x] Zıplama pedi yazıldı *(oynanarak denenmedi)*
+- [x] Zıplama pedi çalışıyor — ulaşılamayan paraya eriştiriyor
 
 ### 5. Statik tehlikeleri gözden geçir
 
@@ -454,14 +454,48 @@ Tüm tehlikeler için:
 
 ---
 
+## Aşağı + zıpla: üç deneme, iki ders
+
+Bu tek mekanik üç kez yazıldı. Her seferinde aynı kökten yanlıştı:
+**platform, üstünde kimin durduğunu takip etmeye çalışıyordu.**
+
+| Deneme | Nasıl | Neden tutmadı |
+|---|---|---|
+| 1 | Girdiyi `OnCollisionStay2D`'de oku | Fizik adımında çalışır; bir karede hiç veya birden fazla kez. `GetButtonDown` kayboluyor |
+| 2 | `Update`'te oku, üsttekileri çarpışma olaylarıyla takip et | `PlatformEffector2D` çarpışmayı sürekli açıp kapatıyor, liste güvenilmez. Ayrıca iki script arasındaki `Update` sırası tanımsız |
+| 3 | **Kararı karaktere ver** | Çalıştı |
+
+Karakter altında ne olduğunu **zaten kesin biliyor** — zemin kontrolü için
+her karede oraya bakıyor. Aynı `OverlapBox`'ın bulduğu collider'da
+`OneWayPlatform` var mı diye bakmak yeterliydi. Platform artık karar
+vermiyor, sadece `DropThrough(collider)` hizmeti veriyor.
+
+### İkinci ders: IgnoreCollision sorguları etkilemiyor
+
+Üçüncü denemede bile çalışmadı, ve sebebi şuydu:
+
+> `Physics2D.IgnoreCollision` sadece **çarpışmayı** kapatır, **sorguları**
+> değil.
+
+Zemin kontrolü `OverlapBox` ile yapılıyor ve platformu görmeye devam
+ediyordu. Karakter "yerdeyim" sanıyor, `ApplyGravity` dikey hızı −1'e
+sabitliyor ve karakter **saniyede 1 birimle sızıyor**. 0,5 birimlik
+platformu geçemeden süre doluyor, çarpışma geri geliyor, hiçbir şey
+olmamış gibi duruyor.
+
+Çözüm: inişi başlatırken zemin algısı 0,2 sn kapatılıyor ve aşağı bir
+itme veriliyor.
+
+---
+
 ## Kabul kriteri
 
 - [x] 5 farklı tehlike/engel çeşidi var (+ diken duvar/tavan varyantları)
 - [x] Her ritimli tehlikenin görünür uyarısı var
 - [x] Faz kaydırma çalışıyor — **oynanarak doğrulandı**, üç diken farklı anlarda kalkıyor
-- [ ] Tek yönlü platform hem yukarı hem aşağı çalışıyor — **oynanarak doğrulanacak**
-- [ ] Düşen platform titreyip düşüyor ve geri geliyor — **oynanarak doğrulanacak**
-- [ ] Hiçbir tehlike "haksız" hissettirmiyor — **oynanarak doğrulanacak**
+- [x] Tek yönlü platform hem yukarı hem aşağı çalışıyor
+- [x] Düşen platform titreyip düşüyor ve geri geliyor
+- [~] Hiçbir tehlike "haksız" hissettirmiyor — *ilk oynanışta şikâyet yok; oynadıkça bakılacak*
 - [x] Collider'lar görselden küçük — denetim aracı ölçüyor
 
 ---
