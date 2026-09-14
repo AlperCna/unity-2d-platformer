@@ -327,6 +327,108 @@ namespace Platformer.EditorTools
         }
 
         // ---------------------------------------------------------------
+        // Toplanabilirler (Epic 08)
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Mucevher — paradan farki SAYIDA degil YERDE.
+        ///
+        /// Hep bir riskin ardinda durmali: dikenin ustunde, zor bir
+        /// ziplamanin sonunda. Oyuncu her gordugunde "riske girer miyim"
+        /// diye sormali. Rastgele serpilirse o soru kaybolur ve mucevher
+        /// sadece buyuk bir para olur.
+        /// </summary>
+        public LevelCursor Gem(float offsetFromSegmentStart, float heightAboveGround)
+        {
+            PrefabFactory.Spawn(PrefabFactory.Gem,
+                new Vector2(lastSegmentStart + offsetFromSegmentStart,
+                            GroundTop + heightAboveGround), parent);
+            return this;
+        }
+
+        /// <summary>
+        /// Gizli oda — BOSLUGUN ALTINA oyulur.
+        ///
+        /// TASARIM: oyuncu bosluk gorunce ustunden atlar, cunku boslugun
+        /// altinda olum vardir. Burada yok: dibinde bir oda var ve onunu
+        /// TOPRAK GIBI GORUNEN ama gecilebilen bir perde kapatiyor.
+        ///
+        /// Yani sir "gizli bir para" degil, BIR KARAR: "buraya dusersem
+        /// olur muyum?" Cevabi bir kez ogrenince oyuncu butun bosluklara
+        /// baska gozle bakmaya baslar - Epic 08'in istedigi sey tam bu.
+        ///
+        /// Gap()'ten HEMEN SONRA cagrilmali.
+        /// </summary>
+        public LevelCursor Secret(string hint, float depth = 4f, int gemCount = 1)
+        {
+            if (gapSpans.Count == 0)
+            {
+                Debug.LogError($"[{levelName}] Secret() bir Gap()'ten sonra cagrilmali.");
+                return this;
+            }
+
+            Vector2 gap = gapSpans[gapSpans.Count - 1];
+            depth = Mathf.Max(Mathf.Round(depth), 2f);
+
+            int x0 = Mathf.RoundToInt(gap.x);
+            int x1 = Mathf.RoundToInt(gap.y) - 1;
+            int floorY = Mathf.RoundToInt(GroundTop - depth);
+
+            // Odanin zemini ve yan duvarlari - bosluk zaten bos oldugu icin
+            // oyma degil EKLEME yapiyoruz
+            for (int x = x0; x <= x1; x++)
+            {
+                for (int d = 0; d < GroundDepth; d++)
+                {
+                    solidCells.Add(new Vector3Int(x, floorY - 1 - d, 0));
+                }
+            }
+
+            float centerX = (gap.x + gap.y) * 0.5f;
+            float chamberFloor = floorY;
+
+            // Perde: topraga benziyor ama collider'i YOK
+            var veil = new GameObject("SirPerdesi");
+            veil.transform.position = new Vector3(centerX, GroundTop - depth * 0.5f, 0f);
+            veil.transform.SetParent(parent);
+
+            var veilRenderer = veil.AddComponent<SpriteRenderer>();
+            veilRenderer.sprite = TilesetFactory.LoadTile(0);      // ic karo: duz toprak
+            veilRenderer.drawMode = SpriteDrawMode.Tiled;
+            veilRenderer.tileMode = SpriteTileMode.Continuous;
+            veilRenderer.size = new Vector2(gap.y - gap.x, depth);
+            veilRenderer.sortingOrder = LevelBuilder.SortItem + 1;  // oyuncunun ONUNDE
+
+            // Sir tetikleyicisi odanin icinde
+            var area = new GameObject("SirAlani");
+            area.transform.position = new Vector3(centerX, chamberFloor + 1f, 0f);
+            area.transform.SetParent(parent);
+
+            var trigger = area.AddComponent<BoxCollider2D>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector2(gap.y - gap.x, 2f);
+
+            var secret = area.AddComponent<Gameplay.SecretArea>();
+            var so = new SerializedObject(secret);
+            so.FindProperty("hint").stringValue = hint;
+            SerializedProperty list = so.FindProperty("concealers");
+            list.arraySize = 1;
+            list.GetArrayElementAtIndex(0).objectReferenceValue = veilRenderer;
+            so.ApplyModifiedProperties();
+
+            // Odul
+            for (int i = 0; i < gemCount; i++)
+            {
+                float gx = centerX + (i - (gemCount - 1) * 0.5f) * 1.2f;
+                PrefabFactory.Spawn(PrefabFactory.Gem,
+                    new Vector2(gx, chamberFloor + 0.9f), parent);
+            }
+
+            MinGroundTop = Mathf.Min(MinGroundTop, chamberFloor);
+            return this;
+        }
+
+        // ---------------------------------------------------------------
         // Tehlikeler ve engeller (Epic 07)
         // ---------------------------------------------------------------
 

@@ -73,9 +73,15 @@ namespace Platformer.UI
             }
         }
 
-        private void HandleScoreChanged(int score, int total)
+        /// <summary>
+        /// Para SAYISINI gosterir, skoru degil.
+        ///
+        /// Bir sure skor gosteriliyordu ve dusman ezmek +2 puan verdigi
+        /// icin ekranda "Para: 13 / 7" gibi imkansiz seyler cikiyordu.
+        /// </summary>
+        private void HandleScoreChanged(int coins, int totalCoins)
         {
-            if (scoreText != null) scoreText.text = $"Para: {score} / {total}";
+            if (scoreText != null) scoreText.text = $"Para: {coins} / {totalCoins}";
         }
 
         private void HandleDeathCountChanged(int deaths)
@@ -88,10 +94,22 @@ namespace Platformer.UI
             if (messageText == null) return;
 
             GameManager gm = GameManager.Instance;
+
+            // Mucevher ve sir sadece VARSA gosteriliyor. Bolum 1'de
+            // ikisi de yok; "Mucevher 0 / 0" satiri sadece gurultu olurdu.
+            string gems = gm.TotalGems > 0
+                ? $"Mucevher   {gm.GemsCollected} / {gm.TotalGems}\n"
+                : "";
+
+            string secret = gm.HasSecret
+                ? (gm.SecretFound ? "Sir   BULUNDU\n" : "Sir   bulunamadi\n")
+                : "";
+
             messageText.text =
                 $"{levelCompleteMessage}\n\n" +
                 $"Sure   {GameManager.FormatTime(gm.LevelTime)}\n" +
-                $"Para   {gm.Score} / {gm.TotalCoins}\n" +
+                $"Para   {gm.CoinsCollected} / {gm.TotalCoins}\n" +
+                gems + secret +
                 $"Olum   {gm.DeathCount}\n\n" +
                 "Yeniden baslamak icin R";
         }

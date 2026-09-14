@@ -12,6 +12,10 @@ namespace Platformer.Core
 
         public int coinsCollected;
         public int totalCoins;
+
+        public int gemsCollected;
+        public int totalGems;
+
         public bool secretFound;
 
         /// <summary>En iyi sure. -1 = hic bitirilmedi.</summary>

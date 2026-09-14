@@ -63,6 +63,7 @@ namespace Platformer.EditorTools
                 ("ground",     CreateGroundTile),
                 ("player",     CreatePlayer),
                 ("coin",       CreateCoin),
+                ("gem",        CreateGem),
                 ("spike",      CreateSpike),
                 ("enemy",      CreateEnemy),
                 ("shooter",    CreateShooter),
@@ -189,6 +190,47 @@ namespace Platformer.EditorTools
         }
 
         /// <summary>Dikenler: yan yana uc ucgen.</summary>
+        /// <summary>
+        /// Mucevher. Paradan AYIRT EDILEBILIR olmasi sart ve bu sadece
+        /// renkle yapilamaz - renk korlugu olan oyuncu sari ile mor'u
+        /// ayirt edemeyebilir.
+        ///
+        /// O yuzden SEKIL de farkli: para yuvarlak, mucevher kosegen
+        /// (elmas). Siluetten bile ayirt ediliyor - Epic 07'nin
+        /// bulaniklik testinden gecmesi icin sart.
+        /// </summary>
+        private static void CreateGem()
+        {
+            var canvas = new PixelCanvas(32, 32);
+
+            Color body = Hex("#5AC8FF");
+            Color light = Hex("#B8ECFF");
+            Color dark = Hex("#2E8BC0");
+
+            // Elmas: ortadan yukari ve asagi daralan bir eskenar dortgen
+            for (int y = 0; y < 32; y++)
+            {
+                int half = 15 - Mathf.Abs(y - 16);
+                if (half <= 0) continue;
+
+                canvas.FillRect(16 - half, y, half * 2, 1, body);
+            }
+
+            // Alt yari biraz koyu - hacim hissi
+            for (int y = 0; y < 16; y++)
+            {
+                int half = Mathf.Max(15 - Mathf.Abs(y - 16) - 3, 0);
+                if (half <= 0) continue;
+                canvas.FillRect(16 - half, y, half * 2, 1, dark);
+            }
+
+            // Parlama
+            canvas.FillRect(12, 18, 3, 6, light);
+            canvas.FillRect(15, 22, 2, 3, light);
+
+            canvas.Save("gem");
+        }
+
         private static void CreateSpike()
         {
             var canvas = new PixelCanvas(32, 32);

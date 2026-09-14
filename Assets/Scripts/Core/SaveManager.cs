@@ -143,7 +143,8 @@ namespace Platformer.Core
         /// <summary>Bolum bitince cagrilir. En iyi degerleri korur.</summary>
         public void CompleteLevel(int index, int coins, int totalCoins,
                                   bool secret, float time, int deaths,
-                                  int designVersion = 1)
+                                  int designVersion = 1,
+                                  int gems = 0, int totalGems = 0)
         {
             LevelProgress p = Data.GetLevel(index);
 
@@ -159,6 +160,7 @@ namespace Platformer.Core
 
                 p.bestTime = -1f;
                 p.coinsCollected = 0;
+                p.gemsCollected = 0;
                 p.secretFound = false;
             }
             p.designVersion = designVersion;
@@ -168,6 +170,8 @@ namespace Platformer.Core
 
             // En iyisini sakla - sonraki deneme daha kotuyse ilerleme geri gitmesin
             p.coinsCollected = Mathf.Max(p.coinsCollected, coins);
+            p.gemsCollected = Mathf.Max(p.gemsCollected, gems);
+            p.totalGems = totalGems;
             p.secretFound = p.secretFound || secret;
             if (p.bestTime < 0f || time < p.bestTime) p.bestTime = time;
 

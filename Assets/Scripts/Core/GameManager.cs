@@ -32,8 +32,35 @@ namespace Platformer.Core
         [SerializeField] private float deathHitStop = 0.08f;
 
         // --- Durum ---
+
+        /// <summary>
+        /// Toplam puan. Para, mucevher ve dusman ezme hepsi buraya girer.
+        ///
+        /// PARA SAYISI ILE AYNI SEY DEGIL - bir sure oyle sanildi ve HUD
+        /// "Para: 13 / 7" gibi imkansiz seyler gosterdi. Dusman ezmek +2
+        /// puan veriyor ve o da skora giriyordu.
+        /// </summary>
         public int Score { get; private set; }
+
+        /// <summary>Toplanan para ADEDI. HUD bunu gosteriyor.</summary>
+        public int CoinsCollected { get; private set; }
         public int TotalCoins { get; private set; }
+
+        /// <summary>Toplanan mucevher adedi.</summary>
+        public int GemsCollected { get; private set; }
+        public int TotalGems { get; private set; }
+
+        /// <summary>Bu bolumdeki sir bulundu mu?</summary>
+        public bool SecretFound { get; private set; }
+
+        /// <summary>
+        /// Bu bolumde sir VAR MI?
+        ///
+        /// "Bulundu mu" ile ayni sey degil. Bolum sonu ozeti sir satirini
+        /// sadece sir varsa gostermeli; Bolum 1'de sir yok ve "Sir:
+        /// bulunamadi" yazmak oyuncuya olmayan bir sey aratirdi.
+        /// </summary>
+        public bool HasSecret { get; private set; }
         public bool LevelCompleted { get; private set; }
         public float RespawnDelay => respawnDelay;
         public float DeathHitStop => deathHitStop;
@@ -90,16 +117,18 @@ namespace Platformer.Core
                 Debug.LogWarning("GameManager: 'Player' tag'li bir nesne bulunamadi.");
             }
 
-            // Sahnedeki tum paralari say ki UI "3 / 12" gosterebilsin
+            // Sahnedeki toplanabilirleri say ki UI "3 / 12" gosterebilsin
 #if UNITY_2023_1_OR_NEWER
             TotalCoins = FindObjectsByType<Gameplay.Coin>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length;
+            TotalGems = FindObjectsByType<Gameplay.Gem>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length;
 #else
             TotalCoins = FindObjectsOfType<Gameplay.Coin>(true).Length;
+            TotalGems = FindObjectsOfType<Gameplay.Gem>(true).Length;
 #endif
 
             CacheResettables();
 
-            OnScoreChanged?.Invoke(Score, TotalCoins);
+            OnScoreChanged?.Invoke(CoinsCollected, TotalCoins);
             OnDeathCountChanged?.Invoke(DeathCount);
         }
 
@@ -129,7 +158,80 @@ namespace Platformer.Core
         public void AddScore(int amount)
         {
             Score += amount;
-            OnScoreChanged?.Invoke(Score, TotalCoins);
+            OnScoreChanged?.Invoke(CoinsCollected, TotalCoins);
+        }
+
+        // ---------------------------------------------------------------
+        // Toplama (Epic 08)
+        // ---------------------------------------------------------------
+
+        public void CollectCoin(int scoreValue)
+        {
+            CoinsCollected++;
+            RegisterCombo();
+            AddScore(scoreValue);
+            OnCollected?.Invoke(CollectCombo);
+        }
+
+        public void CollectGem(int scoreValue)
+        {
+            GemsCollected++;
+            RegisterCombo();
+            AddScore(scoreValue);
+            OnCollected?.Invoke(CollectCombo);
+        }
+
+        /// <summary>SecretArea kendini Awake'te kaydeder.</summary>
+        public void RegisterSecret()
+        {
+            HasSecret = true;
+        }
+
+        /// <summary>Sir alani bulundugunda cagrilir.</summary>
+        public void FindSecret(int scoreValue)
+        {
+            if (SecretFound) return;
+
+            SecretFound = true;
+            AddScore(scoreValue);
+            OnSecretFound?.Invoke();
+        }
+
+        // ---------------------------------------------------------------
+        // Combo
+        //
+        // Art arda toplamak, tek tek toplamaktan daha iyi hissettirmeli.
+        // Ses perdesi Epic 13'te bu sayaca baglanacak: her toplamada bir
+        // nota yukari cikar, ara verince basa doner.
+        //
+        // NEDEN SIMDI YAZILIYOR: sayacin dogru yeri burasi ve sonradan
+        // eklemek, toplama kodunun her yerine dokunmak demek olurdu.
+        // ---------------------------------------------------------------
+
+        [Header("Combo")]
+        [Tooltip("Iki toplama arasinda bu sureden fazla gecerse combo sifirlanir.")]
+        [SerializeField] private float comboWindow = 1.2f;
+
+        [Tooltip("Combo'nun cikabilecegi en yuksek kademe. Ses perdesi " +
+                 "bunun otesine gitmemeli, yoksa ciyaklamaya baslar.")]
+        [SerializeField] private int maxCombo = 8;
+
+        /// <summary>Su anki ardisik toplama sayisi (1'den baslar).</summary>
+        public int CollectCombo { get; private set; }
+
+        /// <summary>Ses perdesi icin hazir carpan. Epic 13 bunu kullanacak.</summary>
+        public float ComboPitch => 1f + (CollectCombo - 1) * 0.06f;
+
+        private float lastCollectTime = -999f;
+
+        public System.Action<int> OnCollected;      // (combo)
+        public System.Action OnSecretFound;
+
+        private void RegisterCombo()
+        {
+            bool inWindow = Time.time - lastCollectTime <= comboWindow;
+            CollectCombo = inWindow ? Mathf.Min(CollectCombo + 1, maxCombo) : 1;
+            lastCollectTime = Time.time;
         }
 
         /// <summary>Checkpoint'ler burayi cagirir.</summary>
@@ -207,11 +309,13 @@ namespace Platformer.Core
 
             // Kalici kayit. Sir sistemi Epic 08'de gelecek, simdilik false.
             SaveManager.Instance?.CompleteLevel(
-                levelIndex, Score, TotalCoins,
-                secret: false,
+                levelIndex, CoinsCollected, TotalCoins,
+                secret: SecretFound,
                 time: LevelTime,
                 deaths: DeathCount,
-                designVersion: levelDesignVersion);
+                designVersion: levelDesignVersion,
+                gems: GemsCollected,
+                totalGems: TotalGems);
 
             OnLevelCompleted?.Invoke();
         }

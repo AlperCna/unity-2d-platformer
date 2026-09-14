@@ -22,7 +22,7 @@ namespace Platformer.EditorTools
     ///
     /// Acik sahneyi tarar - koddan uretilmis de olsa elle boyanmis da olsa.
     ///
-    /// Menu: Tools > 2D Platformer > Tehlikeleri Denetle
+    /// Menu: Tools > 2D Platformer > Bolumu Denetle
     /// </summary>
     public static class HazardAudit
     {
@@ -32,7 +32,7 @@ namespace Platformer.EditorTools
         /// <summary>Bundan hizli dongu, desenin ogrenilmesine izin vermiyor.</summary>
         private const float MinLearnableCycle = 1.5f;
 
-        [MenuItem("Tools/2D Platformer/Tehlikeleri Denetle", false, 40)]
+        [MenuItem("Tools/2D Platformer/Bolumu Denetle", false, 40)]
         public static void Run()
         {
             var report = new StringBuilder();
@@ -41,7 +41,7 @@ namespace Platformer.EditorTools
 
             List<Vector2> checkpoints = FindCheckpoints();
 
-            report.AppendLine("TEHLIKE OKUNABILIRLIK DENETIMI");
+            report.AppendLine("BOLUM DENETIMI");
             report.AppendLine("--------------------------------------------------");
 
             // --- Ritimli tehlikeler ---
@@ -58,8 +58,20 @@ namespace Platformer.EditorTools
                 problems += AuditStatic(hazard, checkpoints, report);
             }
 
+            // --- Toplanabilirler (Epic 08) ---
+            report.AppendLine();
+            report.AppendLine("TOPLANABILIRLER");
+
+            foreach (Gameplay.Collectible item in FindAll<Gameplay.Collectible>())
+            {
+                checkedCount++;
+                problems += AuditCollectible(item, report);
+            }
+
+            problems += AuditSecrets(report);
+
             report.AppendLine("--------------------------------------------------");
-            report.AppendLine($"{checkedCount} tehlike denetlendi, {problems} sorun bulundu.");
+            report.AppendLine($"{checkedCount} oge denetlendi, {problems} sorun bulundu.");
             report.AppendLine();
             report.AppendLine("ELLE BAKILACAK IKI MADDE (otomatiklestirilemez):");
             report.AppendLine("  - Tehlike oldugu BAKAR BAKMAZ anlasiliyor mu?");
@@ -136,6 +148,97 @@ namespace Platformer.EditorTools
         /// maddesi. Oyuncu "degmedim ki!" der ve haklidir. Her zaman
         /// oyuncu lehine comert ol.
         /// </summary>
+        /// <summary>
+        /// Toplanabilir ULASILABILIR mi?
+        ///
+        /// Epic 08'in kabul kriteri "hicbir para ulasilamaz yerde degil
+        /// (kendin test ettin)" diyor. Elle test etmek demek, bir bolumde
+        /// gozden kacirmak demek - 30 parayi tek tek denemez kimse.
+        ///
+        /// Altina isin atip zemini buluyoruz. Zeminden yukseklik, oyuncunun
+        /// erisebilecegi en yuksek noktayi asiyorsa sorun var.
+        ///
+        /// Erisim hesabi: zipla yuksekligi 3,03 + oyuncunun yari boyu 0,48
+        /// + toplama yaricapi 0,45 = 3,96. Pay birakip 3,9 kullaniyoruz.
+        /// </summary>
+        private const float MaxCollectibleHeight = 3.9f;
+
+        private static int AuditCollectible(Gameplay.Collectible item, StringBuilder report)
+        {
+            Vector2 origin = item.transform.position;
+
+            // Toplanabilirin KENDI collider'i isini engellemesin
+            var self = item.GetComponent<Collider2D>();
+            bool wasEnabled = self != null && self.enabled;
+            if (self != null) self.enabled = false;
+
+            RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down, 30f,
+                                                 LayerMask.GetMask("Ground"));
+
+            if (self != null) self.enabled = wasEnabled;
+
+            if (hit.collider == null)
+            {
+                report.AppendLine($"  [ZEMIN YOK] {Path(item.transform)}: altinda 30 birim " +
+                                  "boyunca zemin yok. Dipsiz bosluk uzerinde duruyor.");
+                return 1;
+            }
+
+            float height = origin.y - hit.point.y;
+
+            if (height <= MaxCollectibleHeight)
+            {
+                report.AppendLine($"  [tamam] {Path(item.transform)}: zeminden {height:0.00} " +
+                                  $"birim (en fazla {MaxCollectibleHeight}).");
+                return 0;
+            }
+
+            report.AppendLine($"  [ULASILAMAZ] {Path(item.transform)}: zeminden {height:0.00} " +
+                              $"birim yukarida, oyuncu en fazla {MaxCollectibleHeight} " +
+                              "birime uzanabiliyor.");
+            return 1;
+        }
+
+        /// <summary>
+        /// Her sirrin IPUCUSU var mi?
+        ///
+        /// Ipucusuz sir, sir degil rastlantidir - oyuncuyu degil sansi
+        /// odullendirir. Epic 08 bunu acikca sart kosuyor.
+        /// </summary>
+        private static int AuditSecrets(StringBuilder report)
+        {
+            int problems = 0;
+            var secrets = FindAll<Gameplay.SecretArea>();
+
+            if (secrets.Length == 0) return 0;
+
+            report.AppendLine();
+            report.AppendLine("SIRLAR");
+
+            foreach (Gameplay.SecretArea secret in secrets)
+            {
+                if (string.IsNullOrWhiteSpace(secret.Hint))
+                {
+                    problems++;
+                    report.AppendLine($"  [IPUCU YOK] {Path(secret.transform)}: " +
+                                      "ipucusuz sir, sansi odullendirir.");
+                }
+                else
+                {
+                    report.AppendLine($"  [tamam] {Path(secret.transform)}: \"{secret.Hint}\"");
+                }
+            }
+
+            if (secrets.Length > 1)
+            {
+                problems++;
+                report.AppendLine($"  [COK SIR] Bolumde {secrets.Length} sir var. " +
+                                  "Epic 08: bolum basina BIR tane - ikincisi ilkini degersizlestirir.");
+            }
+
+            return problems;
+        }
+
         private static int CheckColliderSmallerThanVisual(GameObject go, StringBuilder report)
         {
             var renderer = go.GetComponentInChildren<SpriteRenderer>();

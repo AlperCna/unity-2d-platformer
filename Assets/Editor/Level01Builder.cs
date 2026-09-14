@@ -40,9 +40,9 @@ namespace Platformer.EditorTools
             LevelScaffold.Level level = LevelScaffold.Create(
                 "Bolum 1",
                 levelIndex: 0,
-                // designVersion 3 = izgaraya tasinmis tasarim. Bolum yeniden
+                // designVersion 4 = mucevher + sir eklendi (Epic 08). Bolum yeniden
                 // tasarlandiginda ARTIR: eski rekor otomatik sifirlanir.
-                designVersion: 3,
+                designVersion: 4,
                 playerSpawn: new Vector2(1.5f, 1.5f));
 
             LevelCursor c = BuildLayout(level.Entities, level.Rig);
@@ -122,6 +122,13 @@ namespace Platformer.EditorTools
             c.Spikes(2, offsetFromSegmentStart: 3f);
             c.Coins(3, heightAboveGround: 2.8f, spacing: 1.1f);
 
+            // MUCEVHER — Epic 08. Dikenin tam ustunde, paralardan yukarida.
+            // Almak icin koridoru gecerken tam guc ziplamak gerekiyor;
+            // alcak zipla yeter ama mucevheri kacirir.
+            //
+            // Yani mucevher bir odul degil, bir SORU: "riske girer misin?"
+            c.Gem(offsetFromSegmentStart: 4f, heightAboveGround: 3.4f);
+
             // --- 10. INIS + CHECKPOINT ----------------------------------
             c.Drop(3f, 7f, "Inis");
             c.Coins(3);
@@ -140,6 +147,21 @@ namespace Platformer.EditorTools
             // Bolumun tepesi: 4 birim bosluk + 1 birim yukselis.
             // Duz olsaydi %75 olurdu - onceki bosluktan farksiz.
             c.Gap(4f, coinArc: 5);
+
+            // SIR — Epic 08. Bolumun en genis boslugunun DIBINDE bir oda.
+            //
+            // Oyuncu butun bolum boyunca "bosluk = olum" ogrendi. Burada
+            // degil: dibinde toprak gibi gorunen ama gecilebilen bir perde
+            // ve arkasinda mucevherler var.
+            //
+            // Ipucu: para yayinin son parcasi digerlerinden ALCAKTA duruyor.
+            // Onu almak icin asagi uzanmak gerekiyor ve o an oyuncu "burasi
+            // neden bu kadar asagida" diye soruyor.
+            c.Secret(hint: "Final boslugunun para yayindaki son para, " +
+                           "digerlerinden belirgin sekilde alcakta duruyor. " +
+                           "Onu almaya calisan oyuncu perdeye degiyor.",
+                     depth: 5f, gemCount: 2);
+
             c.Step(1f, 6f, "Zemin_Final");
             c.Coins(3);
 

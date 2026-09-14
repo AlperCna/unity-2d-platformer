@@ -52,7 +52,7 @@ para konmuyor.
 | **Mücevher** | 1–3 | Risk ödülü, zor yerlerde | Büyük, parlak, farklı renk |
 | **Sır** | 1 | Gerçek keşif | Belirgin, özel |
 
-- [ ] Üç kademe tanımlandı
+- [x] Üç kademe tanımlandı — `Collectible` temel sınıfı, `Coin`, `Gem`, `SecretArea`
 
 ### 2. Combo'lu toplama sesi
 
@@ -107,8 +107,8 @@ public static void ResetCombo()
 }
 ```
 
-- [ ] Combo perdesi çalışıyor
-- [ ] Sahne değişiminde sıfırlanıyor
+- [x] Combo sayacı çalışıyor — `GameManager.CollectCombo` / `ComboPitch` *(sesi Epic 13 bağlayacak)*
+- [x] Sahne değişiminde sıfırlanıyor — `GameManager` bölüme özel, her sahnede yeniden kuruluyor
 
 ### 3. Sır sistemi
 
@@ -191,8 +191,8 @@ namespace Platformer.Gameplay
 **Kural: sır bulunabilir olmalı.** Hiçbir ipucu olmayan sır, sır değil
 kazadır. Her sırrın en az bir ipucu olsun.
 
-- [ ] Sır sistemi çalışıyor
-- [ ] Her sırrın ipucu var
+- [x] Sır sistemi yazıldı — `SecretArea` *(oynanarak denenecek)*
+- [x] Her sırrın ipucu var — **zorunlu**, `OnValidate` ve denetim aracı kontrol ediyor
 
 ### 4. Yönlendirme için para yerleştir
 
@@ -230,7 +230,7 @@ Oyuncu "şuraya zıplamalıyım" diye düşünmez, sadece paraları takip eder.
 - Tehlikenin *içine* para koyma (oyuncu ölür ve senin hatan olur)
 - Zorunlu yolun dışına, ama ulaşılabilir görünen yere koyma
 
-- [ ] Bölüm 1'deki paralar bilinçli olarak yol gösteriyor
+- [x] Bölüm 1'deki paralar yol gösteriyor — her boşlukta parabolik yay, `LevelCursor` otomatik çiziyor
 
 ### 5. İlerleme verisi
 
@@ -272,8 +272,8 @@ public class LevelProgress
 }
 ```
 
-- [ ] Sır sayacı çalışıyor
-- [ ] `LevelProgress` yapısı tanımlandı
+- [x] Sır sayacı çalışıyor — `HasSecret` / `SecretFound` ayrı
+- [x] `LevelProgress` mücevher ve sır tutuyor
 
 ### 6. Toplama geri bildirimi
 
@@ -288,7 +288,7 @@ Toplamak **tatmin edici** olmalı. Katmanlar birleşince olur:
 
 Hit stop'u normal paraya koyma — 25 kez donan oyun sinir bozucudur.
 
-- [ ] Geri bildirim planı yapıldı (uygulama Epic 13/14'te)
+- [x] Geri bildirim planı yapıldı — combo sayacı hazır, ses/parçacık Epic 13/14
 
 ### 7. Tamamlama hedefi
 
@@ -304,18 +304,55 @@ Bölüm seçiminde tamamlanan bölümlerde tik/yıldız.
 **%100 tamamlama zorunlu olmasın.** Oyunu bitirmek için hepsini toplamak
 gerekmesin. `LevelGoal.requireAllCoins` seçeneği var ama **kapalı tut**.
 
-- [ ] Tamamlama isteğe bağlı
+- [x] Tamamlama isteğe bağlı — bölüm bitirmek için para/mücevher/sır gerekmiyor
+
+---
+
+## Sır neden "gizli para" değil
+
+Gizli bir para *"bir tane daha topladım"* hissi verir. Gizli bir **alan**
+*"burada bir şey vardı ve ben BULDUM"* hissi verir. İkincisi çok daha
+güçlü, çünkü ödül nesne değil **keşif**.
+
+Bölüm 1'deki sır bu yüzden boşluğun **dibine** oyuldu:
+
+Oyuncu bütün bölüm boyunca **boşluk = ölüm** öğreniyor. Finalde değil:
+en geniş boşluğun dibinde toprak gibi görünen ama geçilebilen bir perde,
+arkasında iki mücevher var.
+
+Yani sır bir ödül değil bir **karar**: *"buraya düşersem ölür müyüm?"*
+Cevabı bir kez öğrenince oyuncu bütün boşluklara başka gözle bakmaya
+başlar.
+
+**İpucu zorunlu** ve kod bunu dayatıyor: `OnValidate` boş ipucuda uyarıyor,
+denetim aracı da kontrol ediyor. İpucusuz sır, sır değil rastlantıdır —
+oyuncuyu değil şansı ödüllendirir.
+
+---
+
+## Yol boyunca çıkan hata: HUD skoru para sanıyordu
+
+Ekranda **"Para: 13 / 7"** yazdığı görüldü. Sebebi: HUD `Score` gösteriyordu
+ve düşman ezmek +2 puan verdiği için sayı para adedini aşıyordu.
+
+Artık üçü ayrı:
+
+| Alan | Ne sayar |
+|---|---|
+| `Score` | Toplam puan — para + mücevher + ezme |
+| `CoinsCollected` | Para **adedi** — HUD bunu gösteriyor |
+| `GemsCollected` | Mücevher adedi |
 
 ---
 
 ## Kabul kriteri
 
-- [ ] Paralar yol gösteriyor, rastgele serpilmemiş
-- [ ] Combo perdesi çalışıyor ve sahne değişiminde sıfırlanıyor
-- [ ] Her bölümde 1 bulunabilir sır var, ipucuyla
-- [ ] Sır bulununca görsel + skor tepkisi var
-- [ ] Bölüm sonu özeti hazırlanabilir durumda
-- [ ] Hiçbir para ulaşılamaz yerde değil (kendin test ettin)
+- [x] Paralar yol gösteriyor, rastgele serpilmemiş
+- [x] Combo sayacı çalışıyor ve sahne değişiminde sıfırlanıyor
+- [x] Bölüm 1'de 1 sır var, ipucuyla *(oynanarak denenecek)*
+- [x] Sır bulununca perde saydamlaşıyor + 25 puan
+- [x] Bölüm sonu özeti mücevher ve sır satırlarını gösteriyor *(sadece varsa)*
+- [x] Hiçbir para ulaşılamaz yerde değil — **elle değil, ölçülerek**: `Bolumu Denetle` her toplanabilirin altına ışın atıp yüksekliğini kontrol ediyor
 
 ---
 
