@@ -6,27 +6,26 @@ using Platformer.CameraRig;
 namespace Platformer.EditorTools
 {
     /// <summary>
-    /// Epic 03 - Gorev 6: sahnedeki her seyi olcup kamera sinirlarini yazar.
-    ///
-    /// Neden gerekli: her bolumde Min/Max Bounds elle girilmezse kamera bolumun
-    /// disindaki bosluga bakar. Unutulmasi cok kolay ve cok amatorce gorunur.
+    /// Epic 03 — kamera sinirlarini bolumun gercek olculerinden hesaplar.
     ///
     /// Menu: Tools > 2D Platformer > Kamera Sinirlarini Hesapla
+    ///
+    /// Level01Builder de ayni hesabi kullanir - tek uygulama, iki cagiran.
     /// </summary>
     public static class CameraBoundsTool
     {
-        /// <summary>Sinirlarin disina birakilacak pay.</summary>
         private const float Padding = 2f;
 
-        /// <summary>Bu adlarla baslayan nesneler hesaba KATILMAZ (paralaks arka plan).</summary>
+        /// <summary>Paralaks arka planlar olcume katilmaz - bolumden cok genisler.</summary>
         private static readonly string[] IgnorePrefixes = { "Hills_", "Arkaplan", "Background" };
+
+        // ===============================================================
+        // Menu
+        // ===============================================================
 
         [MenuItem("Tools/2D Platformer/Kamera Sinirlarini Hesapla", false, 30)]
         public static void Calculate()
         {
-            // Play modunda sahne degistirilemez: MarkSceneDirty
-            // "InvalidOperationException: This cannot be used during play mode" atar.
-            // Ustelik Play'den cikinca degisiklikler zaten geri alinirdi.
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 EditorUtility.DisplayDialog(
@@ -49,72 +48,22 @@ namespace Platformer.EditorTools
                 return;
             }
 
-            if (!TryMeasureScene(out Bounds total, out int counted))
+            if (!TryMeasureScene(out Bounds content, out int counted))
             {
                 EditorUtility.DisplayDialog("Olculecek nesne yok",
                     "Sahnede sinir hesabina girecek Renderer bulunamadi.", "Tamam");
                 return;
             }
 
-            // Ust pay ziplama yuksekligini kapsamali: oyuncu en yuksek platformdan
-            // zipladiginda tepe noktasi gorunur olmali. Sabit bir pay verirsek
-            // (eskiden 2 birimdi) bu ancak tesaduf eseri yeterli olur.
-            float topPadding = Padding;
-            string topPaddingNote = $"ust pay {Padding:F1} (sabit)";
-
-            if (TryGetJumpHeight(out float jumpHeight))
-            {
-                topPadding = Mathf.Max(Padding, jumpHeight + 1f);
-                topPaddingNote = $"ust pay {topPadding:F1} (zipla {jumpHeight:F2} + 1)";
-            }
-
-            var min = new Vector2(total.min.x - Padding, total.min.y - Padding);
-            var max = new Vector2(total.max.x + Padding, total.max.y + topPadding);
-
-            // --- Alt siniri olum cizgisine kadar indir ---
-            //
-            // Oyuncu bosluga duserken NEREYE dustugunu gormeli. Alt siniri sadece
-            // zeminin altina koyarsak kamera orada takilir ve karakter ekrandan
-            // kaybolur. Olum cizgisinin altinda gorulecek bir sey yok - oyuncu
-            // zaten oldu - ama o noktaya kadar takip etmeli.
-            string killPlaneNote = "GameManager yok — varsayilan pay kullanildi";
-            float killPlaneY;
-
-            if (TryGetKillPlane(out killPlaneY))
-            {
-                min.y = Mathf.Min(min.y, killPlaneY - 1f);
-                killPlaneNote = $"olum cizgisi {killPlaneY:F1} — alt sinir oraya indirildi";
-            }
-            else
-            {
-                // GameManager yoksa (test sahnesi) yine de dusmeyi gorunur kil
-                min.y = Mathf.Min(min.y, total.min.y - 14f);
-            }
-
-            // --- Kamera bu sinirlara sigiyor mu? ---
-            var cam = follow.GetComponent<UnityEngine.Camera>();
-            string fitNote = "";
-            if (cam != null && cam.orthographic)
-            {
-                float neededHeight = cam.orthographicSize * 2f;
-                float availableHeight = max.y - min.y;
-
-                if (availableHeight < neededHeight)
-                {
-                    fitNote =
-                        $"\n  UYARI: bolum {availableHeight:F1} birim yuksek ama kamera " +
-                        $"{neededHeight:F1} birim goruyor.\n" +
-                        $"  Kamera dikeyde hic hareket edemeyecek (ortalanacak).\n" +
-                        $"  Cozum: Orthographic Size'i {(availableHeight / 2f):F1} veya altina indir.";
-                }
-            }
-
-            Undo.RecordObject(follow, "Kamera Sinirlarini Hesapla");
-
             var so = new SerializedObject(follow);
-            so.FindProperty("useBounds").boolValue = true;
             Vector2 previousMin = so.FindProperty("minBounds").vector2Value;
             Vector2 previousMax = so.FindProperty("maxBounds").vector2Value;
+
+            Compute(follow, content, content.min.y, content.max.y,
+                    out Vector2 min, out Vector2 max, out string note);
+
+            Undo.RecordObject(follow, "Kamera Sinirlarini Hesapla");
+            so.FindProperty("useBounds").boolValue = true;
             so.FindProperty("minBounds").vector2Value = min;
             so.FindProperty("maxBounds").vector2Value = max;
             so.ApplyModifiedProperties();
@@ -125,21 +74,16 @@ namespace Platformer.EditorTools
 
             Debug.Log(
                 $"Kamera sinirlari guncellendi ({counted} nesne olculdu)\n" +
-                $"  ONCE : min({previousMin.x:F1}, {previousMin.y:F1})  " +
-                $"max({previousMax.x:F1}, {previousMax.y:F1})\n" +
+                $"  ONCE : min({previousMin.x:F1}, {previousMin.y:F1})  max({previousMax.x:F1}, {previousMax.y:F1})\n" +
                 $"  SONRA: min({min.x:F1}, {min.y:F1})  max({max.x:F1}, {max.y:F1})\n" +
-                $"  bolum olcusu: {(max.x - min.x):F1} x {(max.y - min.y):F1} birim\n" +
-                $"  {killPlaneNote}\n" +
-                $"  {topPaddingNote}" + fitNote);
+                note);
 
-            // Kaydetmeyi hatirlat - yoksa degisiklik bellekte kalir
             bool save = EditorUtility.DisplayDialog(
                 "Kamera sinirlari guncellendi",
                 $"ONCE\n  min ({previousMin.x:F1}, {previousMin.y:F1})\n" +
                 $"  max ({previousMax.x:F1}, {previousMax.y:F1})\n\n" +
                 $"SONRA\n  min ({min.x:F1}, {min.y:F1})\n" +
-                $"  max ({max.x:F1}, {max.y:F1})\n\n" +
-                $"{killPlaneNote}\n{topPaddingNote}{fitNote}\n\n" +
+                $"  max ({max.x:F1}, {max.y:F1})\n\n{note}\n\n" +
                 "Sahneyi simdi kaydedeyim mi?",
                 "Kaydet", "Simdilik kaydetme");
 
@@ -150,11 +94,145 @@ namespace Platformer.EditorTools
             }
         }
 
+        // ===============================================================
+        // Hesap — tek uygulama
+        // ===============================================================
+
         /// <summary>
-        /// Oyuncunun GERCEK zipla yuksekligini okur.
-        /// RealJumpHeight, ayrik fizik kaybini hesaba katiyor - ayardaki
-        /// jumpHeight degil, oyunda ulasilan yukseklik.
+        /// Kamera sinirlarini hesaplar.
+        ///
+        /// Iki ayri sart var ve ikisi de saglanmali:
+        ///
+        /// 1) BOSLUK GOSTERME — sinirlar icerigi kapsamali, disinda bosluk
+        ///    gorunmemeli. Ust tarafa zipla yuksekligi kadar pay birakilir.
+        ///
+        /// 2) KAMERA YERINE ULASABILMELI — kamera "zemin + kayma" konumuna
+        ///    gitmek istiyor. Sinir bunu engellerse kamera surekli kirpilir
+        ///    ve HIC HAREKET ETMEZ. Bolum dikeyde kisaysa bu sart 1'den
+        ///    daha genis sinir gerektirir; o zaman biraz bosluk gormek
+        ///    kameranin donmasindan iyidir.
+        ///
+        /// Alt sinir ayrica olum cizgisine kadar iner - oyuncu nereye
+        /// dustugunu gormeli.
         /// </summary>
+        internal static void Compute(
+            CameraFollow follow, Bounds content,
+            float lowestGroundTop, float highestGroundTop,
+            out Vector2 min, out Vector2 max, out string note)
+        {
+            var lines = new List<string>();
+
+            float jumpHeight = TryGetJumpHeight(out float jh) ? jh : 3f;
+            float topPadding = Mathf.Max(Padding, jumpHeight + 1f);
+            lines.Add($"  ust pay {topPadding:F1} (zipla {jumpHeight:F2} + 1)");
+
+            // --- Sart 1: icerigi kapsa ---
+            min = new Vector2(content.min.x - Padding, content.min.y - Padding);
+            max = new Vector2(content.max.x + Padding, content.max.y + topPadding);
+
+            // --- Olum cizgisi: asagi dusus gorunur olsun ---
+            if (TryGetKillPlane(out float killPlaneY))
+            {
+                min.y = Mathf.Min(min.y, killPlaneY - 1f);
+                lines.Add($"  olum cizgisi {killPlaneY:F1} — alt sinir oraya indirildi");
+            }
+
+            // --- Sart 2: kamera dogal konumuna ulasabilsin ---
+            var cam = follow.GetComponent<UnityEngine.Camera>();
+            if (cam != null && cam.orthographic)
+            {
+                float half = cam.orthographicSize;
+                float offsetY = GetCameraOffsetY(follow);
+
+                // En yuksek zeminde kameranin gitmek istedigi yer
+                float highestDesired = highestGroundTop + offsetY;
+                float neededMax = highestDesired + half;
+
+                // En alcak zeminde
+                float lowestDesired = lowestGroundTop + offsetY;
+                float neededMin = lowestDesired - half;
+
+                if (neededMax > max.y)
+                {
+                    lines.Add($"  ust sinir {max.y:F1} -> {neededMax:F1} " +
+                              $"(kamera en yuksek katta {highestDesired:F1}'e ulasabilsin)");
+                    max.y = neededMax;
+                }
+
+                if (neededMin < min.y)
+                {
+                    lines.Add($"  alt sinir {min.y:F1} -> {neededMin:F1}");
+                    min.y = neededMin;
+                }
+
+                // Yataydaki ayni sart
+                float neededMaxX = content.max.x - half * cam.aspect;
+                float neededMinX = content.min.x + half * cam.aspect;
+                if (neededMinX > neededMaxX)
+                {
+                    lines.Add($"  NOT: bolum kameradan dar ({content.size.x:F1} birim), " +
+                              "kamera yatayda ortalanacak");
+                }
+            }
+
+            note = string.Join("\n", lines);
+        }
+
+        // ===============================================================
+        // Olcum
+        // ===============================================================
+
+        private static bool TryMeasureScene(out Bounds total, out int counted)
+        {
+            total = new Bounds();
+            counted = 0;
+
+#if UNITY_2023_1_OR_NEWER
+            Renderer[] renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+#else
+            Renderer[] renderers = Object.FindObjectsOfType<Renderer>();
+#endif
+
+            var included = new List<Renderer>();
+            foreach (Renderer r in renderers)
+            {
+                if (r == null || !r.enabled) continue;
+                if (ShouldIgnore(r.transform)) continue;
+                included.Add(r);
+            }
+
+            if (included.Count == 0) return false;
+
+            total = included[0].bounds;
+            foreach (Renderer r in included) total.Encapsulate(r.bounds);
+
+            counted = included.Count;
+            return true;
+        }
+
+        private static bool ShouldIgnore(Transform t)
+        {
+            while (t != null)
+            {
+                foreach (string prefix in IgnorePrefixes)
+                {
+                    if (t.name.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                t = t.parent;
+            }
+            return false;
+        }
+
+        /// <summary>CameraFollow'un dikey kaymasini okur (private SerializeField).</summary>
+        private static float GetCameraOffsetY(CameraFollow follow)
+        {
+            var so = new SerializedObject(follow);
+            SerializedProperty prop = so.FindProperty("offset");
+            return prop != null ? prop.vector2Value.y : 1.2f;
+        }
+
+        /// <summary>Oyuncunun GERCEK zipla yuksekligi (ayrik fizik kaybi dahil).</summary>
         private static bool TryGetJumpHeight(out float jumpHeight)
         {
             jumpHeight = 0f;
@@ -187,54 +265,6 @@ namespace Platformer.EditorTools
 
             killPlaneY = prop.floatValue;
             return true;
-        }
-
-        /// <summary>
-        /// Sahnedeki tum Renderer'larin kapladigi toplam alani olcer.
-        /// Paralaks arka planlar haric tutulur - onlar bolumden cok daha genis
-        /// olduklari icin siniri anlamsiz sekilde buyuturler.
-        /// </summary>
-        private static bool TryMeasureScene(out Bounds total, out int counted)
-        {
-            total = new Bounds();
-            counted = 0;
-
-#if UNITY_2023_1_OR_NEWER
-            Renderer[] renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
-#else
-            Renderer[] renderers = Object.FindObjectsOfType<Renderer>();
-#endif
-
-            var included = new List<Renderer>();
-            foreach (Renderer r in renderers)
-            {
-                if (r == null || !r.enabled) continue;
-                if (ShouldIgnore(r.transform)) continue;
-                included.Add(r);
-            }
-
-            if (included.Count == 0) return false;
-
-            total = included[0].bounds;
-            foreach (Renderer r in included) total.Encapsulate(r.bounds);
-
-            counted = included.Count;
-            return true;
-        }
-
-        /// <summary>Nesne veya ust nesnelerinden biri disarida birakilmis mi?</summary>
-        private static bool ShouldIgnore(Transform t)
-        {
-            while (t != null)
-            {
-                foreach (string prefix in IgnorePrefixes)
-                {
-                    if (t.name.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase))
-                        return true;
-                }
-                t = t.parent;
-            }
-            return false;
         }
     }
 }
