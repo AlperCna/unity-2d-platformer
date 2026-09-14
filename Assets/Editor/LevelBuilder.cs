@@ -29,8 +29,8 @@ namespace Platformer.EditorTools
         private const int SortEnemy = 8;
         private const int SortPlayer = 10;
 
-        private static int groundLayer;
-        private static int playerLayer;
+        internal static int groundLayer;
+        internal static int playerLayer;
 
         // ===============================================================
         // Menu girisleri
@@ -76,8 +76,17 @@ namespace Platformer.EditorTools
         [MenuItem("Tools/2D Platformer/Sadece Grafikleri Uret", false, 20)]
         public static void GenerateArtOnly()
         {
-            SpriteFactory.GenerateAll();
-            Debug.Log("2D Platformer: grafikler Assets/Art altinda uretildi.");
+            // Bu menu bilincli bir istek: var olanlarin uzerine YAZAR.
+            bool ok = EditorUtility.DisplayDialog(
+                "Grafikleri Yeniden Uret",
+                "Assets/Art altindaki 8 PNG YENIDEN uretilecek.\n\n" +
+                "Kendi cizimlerini koyduysan UZERINE YAZILIR.\n\nDevam edilsin mi?",
+                "Yeniden uret", "Vazgec");
+
+            if (!ok) return;
+
+            SpriteFactory.GenerateAll(force: true);
+            Debug.Log("2D Platformer: grafikler Assets/Art altinda yeniden uretildi.");
         }
 
         [MenuItem("Tools/2D Platformer/Sadece Proje Ayarlarini Uygula", false, 21)]
@@ -91,7 +100,7 @@ namespace Platformer.EditorTools
         // Proje ayarlari
         // ===============================================================
 
-        private static void ConfigureProject()
+        internal static void ConfigureProject()
         {
             groundLayer = EnsureLayer("Ground");
             playerLayer = EnsureLayer("Player");
@@ -227,7 +236,7 @@ namespace Platformer.EditorTools
 
         // --- Kamera ---------------------------------------------------
 
-        private static void CreateCamera(Transform target)
+        internal static void CreateCamera(Transform target)
         {
             var cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
@@ -251,7 +260,7 @@ namespace Platformer.EditorTools
 
         // --- Karakter -------------------------------------------------
 
-        private static GameObject CreatePlayer(Vector2 position)
+        internal static GameObject CreatePlayer(Vector2 position)
         {
             var playerObject = new GameObject("Player");
             playerObject.tag = "Player";
@@ -302,7 +311,7 @@ namespace Platformer.EditorTools
 
         // --- Arka plan ------------------------------------------------
 
-        private static void CreateBackground()
+        internal static void CreateBackground()
         {
             var root = new GameObject("Background");
 
@@ -573,7 +582,7 @@ namespace Platformer.EditorTools
 
         // --- UI -------------------------------------------------------
 
-        private static void CreateUI()
+        internal static void CreateUI()
         {
             var canvasObject = new GameObject("HUD Canvas");
             var canvas = canvasObject.AddComponent<Canvas>();
@@ -666,7 +675,7 @@ namespace Platformer.EditorTools
 
         // --- GameManager ----------------------------------------------
 
-        private static void CreateGameManager()
+        internal static void CreateGameManager()
         {
             var managerObject = new GameObject("GameManager");
             var manager = managerObject.AddComponent<GameManager>();

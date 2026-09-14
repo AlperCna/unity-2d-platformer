@@ -1,5 +1,12 @@
 # Epic 04 — Seviye Tasarımı Prensipleri
 
+> ✅ **TAMAMLANDI — 14 Eylül 2026.** Tasarım: [BOLUM-01.md](BOLUM-01.md)
+> Bölüm 1 kuruldu ve doğrulayıcıdan temiz geçti (en geniş boşluk 4,0 = maks.ın %75'i).
+>
+> ⏳ **AÇIK MADDE: başkasına oynatma.** M1 kapısına ertelendi — şu an test
+> edilirse ölüm hissi (Epic 09) ve checkpoint (Epic 10) eksik olduğu için
+> geri bildirim yanıltıcı olur. Tasarım hatası mı, eksik sistem mi ayırt edilemez.
+
 **Amaç:** Bölüm yapmayı öğrenmek. Bu epic'te az bölüm yapacaksın — asıl iş
 nasıl yapıldığını anlamak.
 
@@ -21,35 +28,30 @@ sıkıcı, ya da haksız ve sinir bozucu.
 
 ## Ölçü birimin: zıplama
 
-Epic 02'de ölçtüğün sayılar bölüm tasarımının birimidir. Örnek değerlerle:
+Epic 02'de **ölçülen** değerler (tahmin değil, oyundan alındı):
 
-- Maksimum zıplama yüksekliği: **3.2 birim**
-- Koşarak zıplama mesafesi: **5.2 birim**
-
-Bundan türeyen zorluk tablosu:
-
-| Boşluk | Oran (maks.) | Zorluk | Nerede kullanılır |
-|---|---|---|---|
-| 2.0 – 2.6 birim | %40–50 | Çok kolay | Bölüm 1–2, öğretme |
-| 3.0 – 3.6 birim | %58–70 | Kolay | Her yerde, ritim |
-| 4.0 – 4.4 birim | %77–85 | Normal | Orta bölümler |
-| 4.6 – 4.9 birim | %88–94 | Zor | Geç bölümler |
-| 5.0 – 5.2 birim | %96–100 | Maksimum | Sadece final, çok seyrek |
-| 5.3+ birim | >%100 | **İmkânsız** | **Asla** |
-
-**Asla maksimumun üstüne çıkma.** Oyuncu deneyip deneyip başaramazsa oyunun
-bozuk olduğunu düşünür — ve haklıdır.
-
-Aynı tabloyu yükseklik için de çıkar:
-
-| Yükseklik | Zorluk |
+| Ölçüm | Değer |
 |---|---|
-| 1.0 – 1.8 birim | Kolay basamak |
-| 2.0 – 2.6 birim | Normal |
-| 2.8 – 3.1 birim | Zor — tam zamanlama |
-| 3.2+ birim | İmkânsız |
+| Maksimum zıplama yüksekliği | **3,03** birim |
+| Minimum zıplama (hızlı dokunuş) | **~1,5** birim |
+| Koşarak zıplama mesafesi | **5,31** birim |
+| Koşarak + dash | **7,62** birim |
 
-- [ ] Kendi ölçülerinle bu iki tabloyu doldur
+Tam zorluk cetveli: **[AYARLAR.md → Zorluk Cetveli](AYARLAR.md#zorluk-cetveli)**
+
+İki kural buradan çıkıyor:
+
+**1. Asla maksimumun üstüne çıkma.** Oyuncu deneyip deneyip başaramazsa
+oyunun bozuk olduğunu düşünür — ve haklıdır.
+
+**2. 5,4 birimlik boşluk kullanma.** Dash'siz imkânsız (5,31), dash'li bedava.
+Oyuncuya hiçbir şey öğretmez, sadece "Shift'e bas" der.
+
+Bu iki kural `LevelCursor` içinde **kod olarak** uygulanıyor: geçilemez bir
+boşluk yazarsan konsol hata verir, belirsiz bölgeye yazarsan uyarır.
+Oyunu oynayıp fark etmene gerek kalmıyor.
+
+- [x] Zorluk cetveli çıkarıldı (AYARLAR.md)
 
 ---
 

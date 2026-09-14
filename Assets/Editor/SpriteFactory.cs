@@ -34,21 +34,54 @@ namespace Platformer.EditorTools
         public static readonly Color Metal = Hex("#8A94A6");
         public static readonly Color Ink = Hex("#1A1A22");
 
-        /// <summary>Tum sprite'lari (eksik olanlari) uretir.</summary>
-        public static void GenerateAll()
+        /// <summary>
+        /// Eksik sprite'lari uretir.
+        ///
+        /// Var olanlari ATLAR. Onceden her cagrida 8 PNG'yi bastan yazip
+        /// zorla yeniden import ettiriyordu; sprite'lar ayni olmasina ragmen.
+        /// Bu hem gereksiz yavasti hem de Unity'nin kendi onbellek dosyasiyla
+        /// cakisma penceresi yaratiyordu (bir kez Editor'u kapattirdi:
+        /// "Opening file VirtualArtifacts/...: Erisim engellendi").
+        ///
+        /// force = true sadece gercekten yeniden uretmek istedigin zaman.
+        /// DIKKAT: kendi cizimlerinin uzerine yazar.
+        /// </summary>
+        public static void GenerateAll(bool force = false)
         {
             EnsureFolder();
 
-            CreateSquare();
-            CreateGroundTile();
-            CreatePlayer();
-            CreateCoin();
-            CreateSpike();
-            CreateEnemy();
-            CreateCheckpoint();
-            CreateGoalFlag();
+            var creators = new (string name, System.Action create)[]
+            {
+                ("square",     CreateSquare),
+                ("ground",     CreateGroundTile),
+                ("player",     CreatePlayer),
+                ("coin",       CreateCoin),
+                ("spike",      CreateSpike),
+                ("enemy",      CreateEnemy),
+                ("checkpoint", CreateCheckpoint),
+                ("goal",       CreateGoalFlag),
+            };
 
-            AssetDatabase.Refresh();
+            int created = 0;
+            foreach ((string name, System.Action create) in creators)
+            {
+                if (!force && Exists(name)) continue;
+
+                create();
+                created++;
+            }
+
+            if (created > 0)
+            {
+                AssetDatabase.Refresh();
+                Debug.Log($"SpriteFactory: {created} sprite uretildi, " +
+                          $"{creators.Length - created} tanesi zaten vardi.");
+            }
+        }
+
+        private static bool Exists(string spriteName)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>($"{ArtFolder}/{spriteName}.png") != null;
         }
 
         public static Sprite Load(string spriteName)
