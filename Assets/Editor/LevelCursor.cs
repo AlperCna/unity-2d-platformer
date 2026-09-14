@@ -187,6 +187,30 @@ namespace Platformer.EditorTools
             return this;
         }
 
+        /// <summary>
+        /// Son zemin parcasinin uzerine TAVAN basar.
+        ///
+        /// Neden gerekti: tavan dikeni yerlestirebilmek icin once tavan
+        /// olmali. Cetvel simdiye kadar sadece basilan zemin uretiyordu.
+        ///
+        /// Imleci ILERLETMEZ ve "son parca" bilgisini degistirmez - tavan
+        /// zeminin uzerine eklenen bir sey, yeni bir bolum degil. Yoksa
+        /// tavandan sonra konan paralar tavanin uzerine giderdi.
+        /// </summary>
+        public LevelCursor Ceiling(float clearance, float thickness = 2f, float width = 0f)
+        {
+            // Kamera sinirlari icin: tavan bolumun en yuksek noktasi olabilir
+            clearance = Snap(clearance, "tavan yuksekligi");
+            thickness = Snap(thickness, "tavan kalinligi");
+
+            float w = width > 0f ? Snap(width, "tavan genisligi") : lastSegmentWidth;
+            float top = GroundTop + clearance + thickness;
+
+            AddSolidBlock(lastSegmentStart, w, top, Mathf.RoundToInt(thickness));
+            MaxGroundTop = Mathf.Max(MaxGroundTop, top);
+            return this;
+        }
+
         /// <summary>Asagi inen kat. Dususte sinir yok, sadece olum cizgisi var.</summary>
         public LevelCursor Drop(float height, float width, string name = null)
         {
@@ -380,8 +404,34 @@ namespace Platformer.EditorTools
             return this;
         }
 
-        /// <summary>Son zemin parcasinin uzerine diken.</summary>
-        public LevelCursor Spikes(int count, float offsetFromSegmentStart = -1f)
+        /// <summary>Dikenin hangi yuzeye monte edildigi.</summary>
+        public enum SpikeFacing
+        {
+            /// <summary>Zeminde, yukari bakar.</summary>
+            Floor,
+
+            /// <summary>Tavanda, asagi bakar. Once Ceiling() cagirmis olmalisin.</summary>
+            Ceiling,
+
+            /// <summary>Soldaki duvarda, saga bakar.</summary>
+            WallLeft,
+
+            /// <summary>Sagdaki duvarda, sola bakar.</summary>
+            WallRight,
+        }
+
+        /// <summary>
+        /// Son zemin parcasinin uzerine diken.
+        ///
+        /// facing ile duvara ve tavana da monte edilebilir. Prefab tek;
+        /// dondurulerek kullaniliyor. Collider da nesneyle birlikte
+        /// donduğu icin comert hitbox her yonde korunuyor - ayri prefab
+        /// yapsaydik dordunu ayri ayri ayarlamak gerekirdi ve biri
+        /// kacinilmaz olarak digerlerinden farkli kalirdi.
+        /// </summary>
+        public LevelCursor Spikes(int count, float offsetFromSegmentStart = -1f,
+                                  SpikeFacing facing = SpikeFacing.Floor,
+                                  float surfaceOffset = 0f)
         {
             float startX = offsetFromSegmentStart >= 0f
                 ? lastSegmentStart + offsetFromSegmentStart
@@ -401,11 +451,25 @@ namespace Platformer.EditorTools
             //
             // Hazards katmani, hucre boyu collider'in sorun olmadigi
             // tehlikeler (lav, su) icin hazir bekliyor.
-            GameObject go = PrefabFactory.Spawn(PrefabFactory.Spikes,
-                new Vector2(startX + count * 0.5f, GroundTop + 0.5f), parent);
+            // Konum ve donus, monte edildigi yuzeye gore
+            (Vector2 position, float angle) = facing switch
+            {
+                SpikeFacing.Ceiling => (new Vector2(startX + count * 0.5f,
+                                                    GroundTop + surfaceOffset - 0.5f), 180f),
+                SpikeFacing.WallLeft => (new Vector2(startX + 0.5f,
+                                                     GroundTop + surfaceOffset), -90f),
+                SpikeFacing.WallRight => (new Vector2(startX - 0.5f,
+                                                      GroundTop + surfaceOffset), 90f),
+                _ => (new Vector2(startX + count * 0.5f, GroundTop + 0.5f), 0f),
+            };
+
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.Spikes, position, parent);
             if (go == null) return this;
 
-            go.name = $"Diken_{count}";
+            go.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+            go.name = facing == SpikeFacing.Floor
+                ? $"Diken_{count}"
+                : $"Diken_{count}_{facing}";
 
             // Prefab tek birimlik; kac birim olacagini burada ayarliyoruz.
             // Bunlar prefab USTUNDE degisiklik (override) olarak duruyor -
@@ -752,13 +816,19 @@ namespace Platformer.EditorTools
             MaxGroundTop = Mathf.Max(MaxGroundTop, top);
             MinGroundTop = Mathf.Min(MinGroundTop, top);
 
+            AddSolidBlock(xLeft, width, top, GroundDepth);
+        }
+
+        /// <summary>Hucreleri dolu olarak isaretler. Zemin de tavan da bunu kullanir.</summary>
+        private void AddSolidBlock(float xLeft, float width, float top, int depth)
+        {
             int x0 = Mathf.RoundToInt(xLeft);
             int x1 = Mathf.RoundToInt(xLeft + width) - 1;   // son hucre dahil
             int yTop = Mathf.RoundToInt(top) - 1;           // yuzey karosu
 
             for (int x = x0; x <= x1; x++)
             {
-                for (int d = 0; d < GroundDepth; d++)
+                for (int d = 0; d < Mathf.Max(depth, 1); d++)
                 {
                     solidCells.Add(new Vector3Int(x, yTop - d, 0));
                 }

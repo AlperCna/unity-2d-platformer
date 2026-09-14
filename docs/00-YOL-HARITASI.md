@@ -298,8 +298,8 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 | — | — | **M1 KAPISI: Bölüm 1'i birine oynat** | | ⬜ | *açık — kod tarafı bitti* |
 | 7 | 05 | Tilemap | M2 | ✅ | 14.09.2026 |
 | 8 | 06 | Düşmanlar | M2 | ✅ | 14.09.2026 |
-| 9 | 07 | Tehlikeler | M2 | ⬜ | **sıradaki** |
-| 10 | 08 | Toplanabilirler | M2 | ⬜ | |
+| 9 | 07 | Tehlikeler | M2 | 🔧 | kod bitti, oynanış testi bekliyor |
+| 10 | 08 | Toplanabilirler | M2 | ⬜ | **sıradaki** |
 | 11 | 17 | Zorluk | M2 | ⬜ | |
 | 12 | 11 | Sanat | M3 | ⬜ | |
 | 13 | 12 | Animasyon | M3 | ⬜ | |
