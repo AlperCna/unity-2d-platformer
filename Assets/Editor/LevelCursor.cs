@@ -302,6 +302,84 @@ namespace Platformer.EditorTools
             return this;
         }
 
+        // ---------------------------------------------------------------
+        // Tehlikeler ve engeller (Epic 07)
+        // ---------------------------------------------------------------
+
+        /// <summary>
+        /// Yerden cikip inen diken. phaseOffset ile yan yana duranlari
+        /// senkrondan cikar (0 / 0,33 / 0,66 -> dalga).
+        /// </summary>
+        public LevelCursor TimedSpikes(float offsetFromSegmentStart, float phaseOffset = 0f,
+                                       float cycleDuration = 2.2f)
+        {
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.RetractingSpikes,
+                new Vector2(lastSegmentStart + offsetFromSegmentStart, GroundTop), parent);
+            if (go == null) return this;
+
+            var so = new SerializedObject(go.GetComponent<Gameplay.RetractingSpikes>());
+            so.FindProperty("phaseOffset").floatValue = phaseOffset;
+            so.FindProperty("cycleDuration").floatValue = cycleDuration;
+            so.ApplyModifiedProperties();
+            return this;
+        }
+
+        /// <summary>Aralikli ates puskurtucu. Varsayilan olarak yukari atar.</summary>
+        public LevelCursor Fire(float offsetFromSegmentStart, float phaseOffset = 0f,
+                                float length = 3f, float cycleDuration = 2.6f)
+        {
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.FireJet,
+                new Vector2(lastSegmentStart + offsetFromSegmentStart, GroundTop), parent);
+            if (go == null) return this;
+
+            var so = new SerializedObject(go.GetComponent<Gameplay.FireJet>());
+            so.FindProperty("phaseOffset").floatValue = phaseOffset;
+            so.FindProperty("cycleDuration").floatValue = cycleDuration;
+            so.FindProperty("length").floatValue = length;
+            so.ApplyModifiedProperties();
+            return this;
+        }
+
+        /// <summary>
+        /// Dusen platform. Bosluk uzerine konur - zeminin yerini tutar ama
+        /// gecici olarak.
+        /// </summary>
+        public LevelCursor Falling(float atX, float heightAboveGround, float width = 2f)
+        {
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.FallingPlatform,
+                new Vector2(atX, GroundTop + heightAboveGround), parent);
+            if (go == null) return this;
+
+            go.GetComponent<SpriteRenderer>().size = new Vector2(width, 1f);
+            go.GetComponent<BoxCollider2D>().size = new Vector2(width, 1f);
+            return this;
+        }
+
+        /// <summary>Tek yonlu platform: alttan gec, ustune bas.</summary>
+        public LevelCursor OneWay(float atX, float heightAboveGround, float width = 3f)
+        {
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.OneWayPlatform,
+                new Vector2(atX, GroundTop + heightAboveGround), parent);
+            if (go == null) return this;
+
+            go.GetComponent<SpriteRenderer>().size = new Vector2(width, 0.5f);
+            go.GetComponent<BoxCollider2D>().size = new Vector2(width, 0.5f);
+            return this;
+        }
+
+        /// <summary>Zipla pedi.</summary>
+        public LevelCursor Pad(float offsetFromSegmentStart, float launchHeight = 6f)
+        {
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.JumpPad,
+                new Vector2(lastSegmentStart + offsetFromSegmentStart, GroundTop), parent);
+            if (go == null) return this;
+
+            var so = new SerializedObject(go.GetComponent<Gameplay.JumpPad>());
+            so.FindProperty("launchHeight").floatValue = launchHeight;
+            so.ApplyModifiedProperties();
+            return this;
+        }
+
         /// <summary>Son zemin parcasinin uzerine diken.</summary>
         public LevelCursor Spikes(int count, float offsetFromSegmentStart = -1f)
         {
