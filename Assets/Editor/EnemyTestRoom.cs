@@ -38,8 +38,12 @@ namespace Platformer.EditorTools
                 return;
             }
 
+            // levelIndex 99: test odasi BOLUM 1'IN KAYIT YUVASINI KULLANMAMALI.
+            // 0 verilseydi, burayi bitirmek Bolum 1'in rekorunu ve para
+            // sayisini ezerdi - hem de designVersion farkli oldugu icin
+            // "yeniden tasarlanmis" sayilip sifirlardi.
             LevelScaffold.Level level = LevelScaffold.Create(
-                "Dusman Testi", levelIndex: 0, designVersion: 1,
+                "Dusman Testi", levelIndex: 99, designVersion: 1,
                 playerSpawn: new Vector2(2f, 2.5f));
 
             var c = new LevelCursor(level.Entities, LevelBuilder.groundLayer,
@@ -54,6 +58,12 @@ namespace Platformer.EditorTools
             c.Patroller(10f, facingRight: true);
 
             // --- Nefes -------------------------------------------------
+            // BOSLUK SART. Ilk surumde devriye alani ile checkpoint bitisikti
+            // ve oynarken cikan sonuc: devriye yuruyup checkpoint'e geliyor,
+            // oyuncu her dogdugunda oluyor. Iki dakikada 24 olum.
+            //
+            // Devriye bosluk gorunce doniyor, yani bosluk onun icin duvar.
+            c.Gap(2f);
             c.Ground(6f, "Nefes_1");
             c.Checkpoint(2f);
 
@@ -61,13 +71,15 @@ namespace Platformer.EditorTools
             // Atici koridorun SONUNDA, sola atiyor. Oyuncu koridoru
             // gecerken mermilerin arasindan gecmek zorunda.
             //
-            // Checkpoint'ten 8 birim uzakta: cetvel 3 birimden yakini
-            // uyari veriyor ve hakli - dogar dogmaz mermi yemek berbat.
-            c.Ground(16f, "Atici_Alani");
-            c.Shooter(13f, fireLeft: true);
+            // Atici, checkpoint'ten en az 16 birim uzakta olmali - menzili
+            // o kadar. Daha yakin olsaydi oyuncu checkpoint'te dogar dogmaz
+            // mermi yerdi.
+            c.Ground(20f, "Atici_Alani");
+            c.Shooter(18f, fireLeft: true);
             c.Coins(3, heightAboveGround: 2.2f);
 
             // --- Nefes -------------------------------------------------
+            c.Gap(2f);
             c.Ground(6f, "Nefes_2");
             c.Checkpoint(2f);
 
@@ -99,12 +111,12 @@ namespace Platformer.EditorTools
                 "   - Yandan dokun -> olmelisin\n" +
                 "   - Ustune bas   -> o olmeli, sen ziplamalisin\n" +
                 "   - Kenara gelince donmeli, asagi dusmemeli\n\n" +
-                "2) ATICI (x=30..46)    \"nereden?\"\n" +
+                "2) ATICI (x=32..52)    \"nereden?\"\n" +
                 "   - ATES ONCESI kirmizilasip buyumeli (en az 0,3 sn)\n" +
                 "   - Uyariyi gorup kacabiliyor musun? Goremiyorsan sure kisa\n" +
                 "   - Ustune basilabiliyor mu?\n" +
                 "   - Menzil disina cikinca ates kesmeli\n\n" +
-                "3) UCAN (x=52..76)     \"cesaret edebiliyor musun?\"\n" +
+                "3) UCAN (x=60..84)     \"cesaret edebiliyor musun?\"\n" +
                 "   - 4 birimlik boslugu ziplayarak gec (gecilebilmeli)\n" +
                 "   - Sonra ucan dusmanin ustune basarak gec - daha kolay mi?\n" +
                 "   - Ustune basmak iyi hissettiriyor mu?\n\n" +

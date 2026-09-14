@@ -77,14 +77,20 @@ namespace Platformer.EditorTools
         /// <summary>Hemen onceki islem bosluksa genisligi; degilse 0.</summary>
         private float pendingGapWidth;
 
-        /// <summary>Basilabilir zemin araliklari (x = sol, y = sag).</summary>
-        private readonly List<Vector2> solidSpans = new List<Vector2>();
+        /// <summary>Basilabilir zemin araliklari (x = sol, y = sag, z = ust yuzey).</summary>
+        private readonly List<Vector3> solidSpans = new List<Vector3>();
 
         /// <summary>Diken araliklari (x = sol, y = sag).</summary>
         private readonly List<Vector2> spikeSpans = new List<Vector2>();
 
-        /// <summary>Dusman konumlari ve adlari - yerlestirme kurallari icin.</summary>
-        private readonly List<(float x, string kind)> enemies = new List<(float, string)>();
+        /// <summary>
+        /// Dusmanlar: konum, tur ve TEHLIKE ARALIGI.
+        ///
+        /// Aralik onemli - dusmanin durdugu yer degil, ULASABILECEGI yer.
+        /// Devriye dusmani basladigi platformun tamamini gezer.
+        /// </summary>
+        private readonly List<(float x, string kind, Vector2 reach)> enemies =
+            new List<(float, string, Vector2)>();
 
         /// <summary>Checkpoint konumlari.</summary>
         private readonly List<float> checkpoints = new List<float>();
@@ -238,7 +244,7 @@ namespace Platformer.EditorTools
         public LevelCursor Patroller(float offsetFromSegmentStart, bool facingRight = false)
         {
             float x = lastSegmentStart + offsetFromSegmentStart;
-            enemies.Add((x, "devriye"));
+            enemies.Add((x, "devriye", WalkableSpanAt(x)));
 
             GameObject go = PrefabFactory.Spawn(PrefabFactory.EnemyPatroller,
                 new Vector2(x, GroundTop + 0.45f), parent);
@@ -257,7 +263,10 @@ namespace Platformer.EditorTools
                                    float heightAboveGround = 0.45f)
         {
             float x = lastSegmentStart + offsetFromSegmentStart;
-            enemies.Add((x, "atici"));
+            // Merminin menzili degil, dusmanin ATES ETMEYE BASLADIGI menzil:
+            // oyuncu 16 birimden uzaktayken ates edilmiyor.
+            enemies.Add((x, "atici", fireLeft ? new Vector2(x - 16f, x)
+                                              : new Vector2(x, x + 16f)));
 
             GameObject go = PrefabFactory.Spawn(PrefabFactory.EnemyShooter,
                 new Vector2(x, GroundTop + heightAboveGround), parent);
@@ -279,7 +288,7 @@ namespace Platformer.EditorTools
                                  float horizontalRange = 3f)
         {
             float x = lastSegmentStart + offsetFromSegmentStart;
-            enemies.Add((x, "ucan"));
+            enemies.Add((x, "ucan", new Vector2(x - horizontalRange, x + horizontalRange)));
 
             GameObject go = PrefabFactory.Spawn(PrefabFactory.EnemyFlyer,
                 new Vector2(x, GroundTop + heightAboveGround), parent);
@@ -521,7 +530,7 @@ namespace Platformer.EditorTools
             const float LandingReactionSpace = 2f;   // inisden sonra tepki payi
             const float CheckpointSafeRadius = 3f;
 
-            foreach ((float x, string kind) in enemies)
+            foreach ((float x, string kind, Vector2 reach) in enemies)
             {
                 foreach (Vector2 gap in gapSpans)
                 {
@@ -539,22 +548,68 @@ namespace Platformer.EditorTools
 
                 foreach (float cp in checkpoints)
                 {
-                    if (Mathf.Abs(x - cp) <= CheckpointSafeRadius)
-                    {
-                        warningCount++;
-                        Debug.LogWarning(
-                            $"[{levelName}] x={x:0.0} - {kind} dusmani CHECKPOINT'IN DIBINDE " +
-                            $"(checkpoint x={cp:0.0}).\n" +
-                            $"  Dogar dogmaz olmek en kotu histir. " +
-                            $"En az {CheckpointSafeRadius:0.0} birim uzaga al.");
-                    }
+                    // ULASABILDIGI yere bakiyoruz, durdugu yere degil.
+                    //
+                    // Bu kontrol once sadece dusmanin baslangic konumuna
+                    // bakiyordu ve TEST ODASINDA OYNARKEN yetersiz oldugu
+                    // gorundu: devriye dusmani 6 birim uzakta basliyordu,
+                    // kontrolu geciyordu, sonra yuruyup checkpoint'e geliyor
+                    // ve oyuncu her dogduğunda oluyordu. 2 dakikada 24 olum.
+                    //
+                    // Durağan bir kontrol, hareketli bir dusman icin yeterli
+                    // degil - dikenlerde de ayni dersi almistik.
+                    bool inReach = cp >= reach.x - CheckpointSafeRadius &&
+                                   cp <= reach.y + CheckpointSafeRadius;
+
+                    if (!inReach) continue;
+
+                    warningCount++;
+                    Debug.LogWarning(
+                        $"[{levelName}] {kind} dusmani CHECKPOINT'E ULASABILIYOR " +
+                        $"(dusman x={x:0.0}, checkpoint x={cp:0.0}).\n" +
+                        $"  Ulasabildigi aralik: {reach.x:0.0} - {reach.y:0.0}.\n" +
+                        $"  Oyuncu dogar dogmaz olur ve sonsuz doenguye girer. " +
+                        $"Aralarina bosluk veya basamak koy - devriye ikisinde de doner.");
                 }
             }
         }
 
+        /// <summary>
+        /// Bir noktadaki KESINTISIZ VE AYNI SEVIYEDEKI zeminin sinirlari.
+        ///
+        /// Devriye dusmaninin gezebilecegi alan budur: bosluk gorunce doner,
+        /// basamak gorunce (onunde duvar var) doner. Yani ayni kottaki
+        /// bitisik zemin parcalari onun dunyasi.
+        /// </summary>
+        private Vector2 WalkableSpanAt(float x)
+        {
+            int index = solidSpans.FindIndex(sp => x >= sp.x - 0.01f && x <= sp.y + 0.01f);
+            if (index < 0) return new Vector2(x, x);
+
+            float top = solidSpans[index].z;
+            float left = solidSpans[index].x;
+            float right = solidSpans[index].y;
+
+            for (int i = index - 1; i >= 0; i--)
+            {
+                if (Mathf.Abs(solidSpans[i].y - left) > 0.01f) break;   // bosluk var
+                if (Mathf.Abs(solidSpans[i].z - top) > 0.01f) break;    // kot farki = duvar
+                left = solidSpans[i].x;
+            }
+
+            for (int i = index + 1; i < solidSpans.Count; i++)
+            {
+                if (Mathf.Abs(solidSpans[i].x - right) > 0.01f) break;
+                if (Mathf.Abs(solidSpans[i].z - top) > 0.01f) break;
+                right = solidSpans[i].y;
+            }
+
+            return new Vector2(left, right);
+        }
+
         private bool IsSolidAt(float x)
         {
-            foreach (Vector2 span in solidSpans)
+            foreach (Vector3 span in solidSpans)
             {
                 if (x >= span.x - 0.01f && x <= span.y + 0.01f) return true;
             }
@@ -615,7 +670,7 @@ namespace Platformer.EditorTools
         /// </summary>
         private void Place(string name, float xLeft, float width, float top)
         {
-            solidSpans.Add(new Vector2(xLeft, xLeft + width));
+            solidSpans.Add(new Vector3(xLeft, xLeft + width, top));
             MaxGroundTop = Mathf.Max(MaxGroundTop, top);
             MinGroundTop = Mathf.Min(MinGroundTop, top);
 

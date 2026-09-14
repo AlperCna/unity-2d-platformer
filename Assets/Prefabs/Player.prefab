@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7793037670248305154}
   - component: {fileID: 5543948529808098733}
   - component: {fileID: 5424635173782783194}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -186,7 +186,7 @@ MonoBehaviour:
   allowDiagonalDash: 0
   groundLayers:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 256
   groundCheckSize: {x: 0.72, y: 0.12}
   groundCheckOffset: {x: 0, y: -0.52}
 --- !u!114 &5424635173782783194
