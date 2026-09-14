@@ -145,41 +145,55 @@ Hangi epic'in hangisinden önce gelmesi gerektiği. Ok yönü "önce bu bitmeli"
 
 ## Epic listesi
 
-### Faz 1 — Temel
-| # | Epic | Neden önce | Süre |
+> ⚠️ **Epic numaraları sıra değil, konu numarasıdır.** Kilometre taşları
+> onları konuya göre değil **amaca göre** grupluyor, o yüzden sıra
+> atlamalı ilerliyor: 01 → 02 → 03 → 04 → **09 → 10** → 05 → 06...
+>
+> Sebep: M1'in işi "tek bölüm ama bitmiş gibi". Bunun için ölüm (09) ve
+> checkpoint (10) şart; tilemap (05) ve düşman çeşitliliği (06) değil.
+> Onlar 12 bölüm yaparken lazım olacak.
+>
+> **Takip edeceğin sıra: kilometre taşları.**
+
+### M1 — Dikey Dilim · tek bölüm, bitmiş gibi
+
+| Sıra | # | Epic | Neden bu taşta | Süre |
+|---|---|---|---|---|
+| 1 | [01](01-oyun-vizyonu.md) | Oyun vizyonu ve kapsam | Ne yaptığını bilmeden kod yazılmaz | 2–3 saat |
+| 2 | [02](02-karakter-hissiyati.md) | Karakter hissiyatı | Platformcunun %70'i budur | 1 hafta |
+| 3 | [03](03-kamera.md) | Kamera | Kötü kamera iyi kontrolü mahveder | 2–3 gün |
+| 4 | [04](04-seviye-tasarimi-prensipleri.md) | Seviye tasarımı | Bölüm yapmadan önce nasıl yapılır öğren | 3–4 gün |
+| 5 | [09](09-can-hasar-olum.md) | Can, hasar, ölüm | Bölüm ölümsüz test edilemez | 3–4 gün |
+| 6 | [10](10-checkpoint-ve-kayit.md) | Checkpoint ve kayıt | Checkpoint'siz bölüm bitirilemez | 4–5 gün |
+
+### M2 — İçerik · 10–12 bölüme çıkar
+
+| Sıra | # | Epic | Neden bu taşta | Süre |
+|---|---|---|---|---|
+| 7 | [05](05-tilemap.md) | Tilemap ile bölüm inşası | 12 bölümü elle dizemezsin | 4–5 gün |
+| 8 | [06](06-dusmanlar.md) | Düşmanlar | Çeşitlilik 12 bölümde gerekir | 1 hafta |
+| 9 | [07](07-tehlikeler-ve-engeller.md) | Tehlikeler ve engeller | Aynı sebep | 5–6 gün |
+| 10 | [08](08-toplanabilirler.md) | Toplanabilirler ve sırlar | Aynı sebep | 3–4 gün |
+| 11 | [17](17-zorluk-ve-dengeleme.md) | Zorluk eğrisi | 12 bölüm olmadan eğri çizilemez | 1 hafta |
+
+### M3 — Sunum · iyi görünsün ve duyulsun
+
+| Sıra | # | Epic | Süre |
 |---|---|---|---|
-| [01](01-oyun-vizyonu.md) | Oyun vizyonu ve kapsam | Ne yaptığını bilmeden kod yazılmaz | 2–3 saat |
-| [02](02-karakter-hissiyati.md) | Karakter hissiyatı | Platformcunun %70'i budur | 1 hafta |
-| [03](03-kamera.md) | Kamera | Kötü kamera iyi kontrolü mahveder | 2–3 gün |
-| [04](04-seviye-tasarimi-prensipleri.md) | Seviye tasarımı prensipleri | Bölüm yapmadan önce nasıl yapılır öğren | 3–4 gün |
+| 12 | [11](11-sanat-ve-sprite.md) | Sanat ve sprite üretimi | 1–2 hafta |
+| 13 | [12](12-animasyon.md) | Animasyon | 1 hafta |
+| 14 | [13](13-ses-ve-muzik.md) | Ses ve müzik | 4–5 gün |
+| 15 | [14](14-juice.md) | Juice | 4–5 gün |
 
-### Faz 2 — İçerik sistemleri
-| # | Epic | Süre |
-|---|---|---|
-| [05](05-tilemap.md) | Tilemap ile bölüm inşası | 4–5 gün |
-| [06](06-dusmanlar.md) | Düşmanlar ve davranışlar | 1 hafta |
-| [07](07-tehlikeler-ve-engeller.md) | Tehlikeler, tuzaklar, hareketli parçalar | 5–6 gün |
-| [08](08-toplanabilirler.md) | Toplanabilirler ve sırlar | 3–4 gün |
-| [09](09-can-hasar-olum.md) | Can, hasar, ölüm | 3–4 gün |
-| [10](10-checkpoint-ve-kayit.md) | Checkpoint ve kayıt sistemi | 4–5 gün |
+### M4 — Paketleme ve Yayın
 
-### Faz 3 — Sunum
-| # | Epic | Süre |
-|---|---|---|
-| [11](11-sanat-ve-sprite.md) | Sanat ve sprite üretimi | 1–2 hafta |
-| [12](12-animasyon.md) | Animasyon | 1 hafta |
-| [13](13-ses-ve-muzik.md) | Ses ve müzik | 4–5 gün |
-| [14](14-juice.md) | Juice — his veren küçük efektler | 4–5 gün |
-
-### Faz 4 — Oyun haline getirme
-| # | Epic | Süre |
-|---|---|---|
-| [15](15-ui-ve-menuler.md) | UI ve menüler | 1 hafta |
-| [16](16-sahne-akisi.md) | Sahne akışı ve ilerleme | 4–5 gün |
-| [17](17-zorluk-ve-dengeleme.md) | Zorluk eğrisi ve dengeleme | 1 hafta |
-| [18](18-test-ve-hata-ayiklama.md) | Test ve hata ayıklama | 5–6 gün |
-| [19](19-performans.md) | Performans | 2–3 gün |
-| [20](20-build-ve-yayinlama.md) | Build ve yayınlama | 3–4 gün |
+| Sıra | # | Epic | Süre |
+|---|---|---|---|
+| 16 | [15](15-ui-ve-menuler.md) | UI ve menüler | 1 hafta |
+| 17 | [16](16-sahne-akisi.md) | Sahne akışı ve ilerleme | 4–5 gün |
+| 18 | [18](18-test-ve-hata-ayiklama.md) | Test ve hata ayıklama | 5–6 gün |
+| 19 | [19](19-performans.md) | Performans | 2–3 gün |
+| 20 | [20](20-build-ve-yayinlama.md) | Build ve yayınlama | 3–4 gün |
 
 ---
 
@@ -271,30 +285,31 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 
 ## İlerleme takibi
 
-Bu tabloyu doldur, her epic bitince işaretle:
+**Yapılış sırasına göre** — epic numarasına göre değil.
 
-| # | Epic | Durum | Bitiş tarihi | Not |
-|---|---|---|---|---|
-| 01 | Vizyon | ✅ | 14.09.2026 | Dash + dengeli/klasik. [VIZYON.md](VIZYON.md) |
-| 02 | Hissiyat | ✅ | 14.09.2026 | Ölçüldü: 3,03 / 5,31 / 7,62. [AYARLAR.md](AYARLAR.md) |
-| 03 | Kamera | ✅ | 14.09.2026 | Dikey takip + sarsıntı + otomatik sınır aracı |
-| 04 | Seviye tasarımı | ✅ | 14.09.2026 | Bölüm 1 kuruldu. Playtest M1 kapısına ertelendi |
-| 05 | Tilemap | ☐ | | |
-| 06 | Düşmanlar | ☐ | | |
-| 07 | Tehlikeler | ☐ | | |
-| 08 | Toplanabilirler | ☐ | | |
-| 09 | Can/Ölüm | ✅ | 14.09.2026 | 0,45 sn ölüm, hit stop, sınırsız deneme |
-| 10 | Checkpoint/Kayıt | ☐ | | |
-| 11 | Sanat | ☐ | | |
-| 12 | Animasyon | ☐ | | |
-| 13 | Ses | ☐ | | |
-| 14 | Juice | ☐ | | |
-| 15 | UI | ☐ | | |
-| 16 | Sahne akışı | ☐ | | |
-| 17 | Zorluk | ☐ | | |
-| 18 | Test | ☐ | | |
-| 19 | Performans | ☐ | | |
-| 20 | Yayın | ☐ | | |
+| Sıra | # | Epic | Taş | Durum | Tarih |
+|---|---|---|---|---|---|
+| 1 | 01 | Vizyon | M1 | ✅ | 14.09.2026 |
+| 2 | 02 | Hissiyat | M1 | ✅ | 14.09.2026 |
+| 3 | 03 | Kamera | M1 | ✅ | 14.09.2026 |
+| 4 | 04 | Seviye tasarımı | M1 | ✅ | 14.09.2026 |
+| 5 | 09 | Can/Ölüm | M1 | ✅ | 14.09.2026 |
+| 6 | 10 | Checkpoint/Kayıt | M1 | ⬜ | **sıradaki** |
+| — | — | *M1 kapısı: Bölüm 1'i birine oynat* | | ⬜ | |
+| 7 | 05 | Tilemap | M2 | ⬜ | |
+| 8 | 06 | Düşmanlar | M2 | ⬜ | |
+| 9 | 07 | Tehlikeler | M2 | ⬜ | |
+| 10 | 08 | Toplanabilirler | M2 | ⬜ | |
+| 11 | 17 | Zorluk | M2 | ⬜ | |
+| 12 | 11 | Sanat | M3 | ⬜ | |
+| 13 | 12 | Animasyon | M3 | ⬜ | |
+| 14 | 13 | Ses | M3 | ⬜ | |
+| 15 | 14 | Juice | M3 | ⬜ | |
+| 16 | 15 | UI | M4 | ⬜ | |
+| 17 | 16 | Sahne akışı | M4 | ⬜ | |
+| 18 | 18 | Test | M4 | ⬜ | |
+| 19 | 19 | Performans | M4 | ⬜ | |
+| 20 | 20 | Yayın | M4 | ⬜ | |
 
 ---
 
