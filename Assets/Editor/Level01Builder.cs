@@ -60,6 +60,7 @@ namespace Platformer.EditorTools
             // tasarlandiginda ARTIR: eski rekor otomatik sifirlanir.
             LevelBuilder.CreateGameManager(levelIndex: 0, designVersion: 3);
 
+            c.Build();               // karolari bas - KAYITTAN ONCE
             ApplyCameraBounds(c);
             SaveScene(scene);
 
