@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -36,6 +37,13 @@ namespace Platformer.EditorTools
         public const float AmbiguousLow = 5.32f;
         public const float AmbiguousHigh = 5.49f;
 
+        /// <summary>
+        /// Zipla yayinin tepesi, yatay mesafenin yuzde kacinda.
+        /// Dusus yercekimi cikistan 1,9 kat guclu oldugu icin tepe ortada degil,
+        /// biraz ileride: sqrt(1,9) / (sqrt(1,9) + 1) = 0,58.
+        /// </summary>
+        public const float ApexDistanceFraction = 0.58f;
+
         // ---------------------------------------------------------------
 
         private readonly Transform parent;
@@ -57,6 +65,15 @@ namespace Platformer.EditorTools
         /// <summary>Son yerlestirilen zemin parcasinin sol kenari ve genisligi.</summary>
         private float lastSegmentStart;
         private float lastSegmentWidth;
+
+        /// <summary>Hemen onceki islem bosluksa genisligi; degilse 0.</summary>
+        private float pendingGapWidth;
+
+        /// <summary>Basilabilir zemin araliklari (x = sol, y = sag).</summary>
+        private readonly List<Vector2> solidSpans = new List<Vector2>();
+
+        /// <summary>Diken araliklari (x = sol, y = sag).</summary>
+        private readonly List<Vector2> spikeSpans = new List<Vector2>();
 
         private int issueCount;
         private int warningCount;
@@ -80,6 +97,7 @@ namespace Platformer.EditorTools
         /// <summary>Duz zemin ekler ve imleci ilerletir.</summary>
         public LevelCursor Ground(float width, string name = null)
         {
+            pendingGapWidth = 0f;
             Place(name ?? $"Zemin_{X:0}", X, width, GroundTop);
             lastSegmentStart = X;
             lastSegmentWidth = width;
@@ -94,6 +112,8 @@ namespace Platformer.EditorTools
         public LevelCursor Step(float height, float width, string name = null)
         {
             ValidateHeight(height);
+            if (pendingGapWidth > 0f) ValidateGapWithRise(pendingGapWidth, height);
+            pendingGapWidth = 0f;
 
             GroundTop += height;
             Place(name ?? $"Basamak_{height:0.0}", X, width, GroundTop);
@@ -106,6 +126,7 @@ namespace Platformer.EditorTools
         /// <summary>Asagi inen kat. Dususte sinir yok, sadece olum cizgisi var.</summary>
         public LevelCursor Drop(float height, float width, string name = null)
         {
+            pendingGapWidth = 0f;
             GroundTop -= height;
             Place(name ?? $"Inis_{height:0.0}", X, width, GroundTop);
             lastSegmentStart = X;
@@ -125,6 +146,7 @@ namespace Platformer.EditorTools
 
             if (coinArc > 0) PlaceCoinArc(X, width, coinArc);
 
+            pendingGapWidth = width;
             X += width;
             return this;
         }
@@ -152,6 +174,8 @@ namespace Platformer.EditorTools
             float startX = offsetFromSegmentStart >= 0f
                 ? lastSegmentStart + offsetFromSegmentStart
                 : lastSegmentStart + (lastSegmentWidth - count) * 0.5f;
+
+            spikeSpans.Add(new Vector2(startX, startX + count));
 
             var go = new GameObject($"Diken_{count}");
             go.transform.position = new Vector3(startX + count * 0.5f, GroundTop + 0.5f, 0f);
@@ -257,6 +281,63 @@ namespace Platformer.EditorTools
             }
         }
 
+        /// <summary>
+        /// Belirli bir YUKSEKLIKTEKI platforma dash'siz ulasilabilecek
+        /// en uzun yatay mesafe.
+        ///
+        /// Duz zeminde 5,31 birim atlarsin. Ama 1,4 birim YUKARIDAKI bir
+        /// platforma atlayacaksan, inis noktasina varmadan once o yuksekligin
+        /// altina dusmus olmamalisin - yani mesafe kisalir.
+        ///
+        /// Yorunge tepeden sonra parabol ciziyor:
+        ///   x(h) = xTepe + (D - xTepe) * sqrt(1 - h/H)
+        /// h = 0 icin D'yi, h = H icin tepeyi verir.
+        /// </summary>
+        public static float MaxDistanceAtHeight(float height)
+        {
+            if (height <= 0f) return MaxDistanceNoDash;              // duz veya asagi
+            if (height >= MaxJumpHeight) return 0f;                  // cikilamaz
+
+            float apexX = MaxDistanceNoDash * ApexDistanceFraction;
+            return apexX + (MaxDistanceNoDash - apexX)
+                         * Mathf.Sqrt(1f - height / MaxJumpHeight);
+        }
+
+        /// <summary>
+        /// Bosluk + hemen ardindan yukari basamak. Ikisi tek tek gecilebilir
+        /// olsa da BIRLIKTE gecilemez olabilir - asil tehlike bu.
+        /// </summary>
+        private void ValidateGapWithRise(float gapWidth, float rise)
+        {
+            float limit = MaxDistanceAtHeight(rise);
+
+            if (gapWidth > limit)
+            {
+                issueCount++;
+                Debug.LogError(
+                    $"[{levelName}] x={X:0.0} — {gapWidth:0.00} birim bosluk + " +
+                    $"{rise:0.00} birim yukselis GECILEMEZ.\n" +
+                    $"  {rise:0.00} birim yukarida inis icin en fazla {limit:0.00} birim " +
+                    $"atlanir (duz zeminde {MaxDistanceNoDash:0.00} olurdu).\n" +
+                    $"  Ya boslugu daralt ya basamagi alcalt.");
+                return;
+            }
+
+            float ratio = gapWidth / limit;
+            if (ratio > 0.9f)
+            {
+                warningCount++;
+                Debug.LogWarning(
+                    $"[{levelName}] x={X:0.0} — {gapWidth:0.00} bosluk + {rise:0.00} " +
+                    $"yukselis: limitin %{ratio * 100f:0}'i ({limit:0.00}). " +
+                    $"Ilk bolumler icin cok sert.");
+                return;
+            }
+
+            Debug.Log($"[{levelName}] x={X:0.0} — {gapWidth:0.00} bosluk + {rise:0.00} " +
+                      $"yukselis: %{ratio * 100f:0} (limit {limit:0.00}).");
+        }
+
         private void ValidateHeight(float height)
         {
             if (height > MaxJumpHeight)
@@ -277,9 +358,65 @@ namespace Platformer.EditorTools
             }
         }
 
+        /// <summary>
+        /// Her dikenin ardinda TAM ziplayan oyuncuya yer var mi?
+        ///
+        /// Kotu tasarimin sinsi hali: oyuncu dikeni gorur, cekinir, tam
+        /// guc ziplar - ve dikenin arkasindaki bosluga duser. Yanlis yaptigi
+        /// icin degil, FAZLA dikkatli davrandigi icin olur. Boyle bir olum
+        /// oyuncuya "bu oyun bozuk" dedirtir.
+        ///
+        /// Bolum 1 v2'yi kurarken bu tuzaktan uc tane cikti. Elle bulundu;
+        /// bir daha elle aranmasin diye buraya tasindi.
+        /// </summary>
+        private void ValidateSpikeLandings()
+        {
+            foreach (Vector2 spike in spikeSpans)
+            {
+                float takeoff = spike.x - 0.5f;          // dikenin hemen oncesi
+                float landing = takeoff + MaxDistanceNoDash;
+
+                if (IsSolidAt(landing)) continue;
+
+                issueCount++;
+                Debug.LogError(
+                    $"[{levelName}] x={spike.x:0.0} — DIKEN TUZAGI.\n" +
+                    $"  Bu dikenden tam guc ziplayan oyuncu {landing:0.0} noktasina " +
+                    $"iniyor ve orada zemin YOK.\n" +
+                    $"  Dogru ziplayan olur. Dikenden sonra en az " +
+                    $"{MaxDistanceNoDash + 0.5f:0.0} birim zemin birak " +
+                    $"ya da dikeni geriye al.");
+            }
+        }
+
+        private bool IsSolidAt(float x)
+        {
+            foreach (Vector2 span in solidSpans)
+            {
+                if (x >= span.x - 0.01f && x <= span.y + 0.01f) return true;
+            }
+            return false;
+        }
+
         /// <summary>Insa bitince cagir: ozet ve sorun sayisi.</summary>
         public void Report()
         {
+            ValidateSpikeLandings();
+
+            // 4,2 birim/saniye: Bolum 1 v1'in OLCULEN degeri (83 birim / 19,58 sn,
+            // kayit dosyasindan). Onceki tahmin moveSpeed'i (8) kullaniyordu -
+            // yani oyuncunun hic ziplamadigini, duraksamadigini, para toplamadigini
+            // varsayiyordu. Bolum sureleri iki kat kisa gorunuyordu.
+            const float MeasuredUnitsPerSecond = 4.2f;
+            float estimate = X / MeasuredUnitsPerSecond;
+
+            // Bu bir ALT SINIR: 4,2 degeri v1'den geliyor ve v1 bolumun %54'u
+            // bos zemindi. Engel siklastikca oyuncu yavaslar, sure uzar.
+            // Bu yuzden sadece kesin hatalari isaretliyoruz.
+            string target = estimate > 90f ? "  ** 90 sn ustu: bolum COK UZUN **"
+                          : estimate < 20f ? "  ** 20 sn alti: bolum COK KISA **"
+                          : "  (hedef 30-90 sn)";
+
             string status = issueCount > 0
                 ? $"{issueCount} GECILEMEZ NOKTA"
                 : warningCount > 0
@@ -289,7 +426,7 @@ namespace Platformer.EditorTools
             Debug.Log(
                 $"[{levelName}] insa tamamlandi — {status}\n" +
                 $"  uzunluk: {X:0.0} birim\n" +
-                $"  yaklasik oynanis: {(X / 8f):0} saniye (kosarak, duraksamadan)");
+                $"  oynanis alt siniri: {estimate:0} saniye{target}");
         }
 
         public int IssueCount => issueCount;
@@ -300,6 +437,7 @@ namespace Platformer.EditorTools
 
         private void Place(string name, float xLeft, float width, float top)
         {
+            solidSpans.Add(new Vector2(xLeft, xLeft + width));
             MaxGroundTop = Mathf.Max(MaxGroundTop, top);
             MinGroundTop = Mathf.Min(MinGroundTop, top);
 

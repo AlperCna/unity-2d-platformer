@@ -274,12 +274,12 @@ Her yeni bölümde bir kez çalıştır, iş biter.
 
 ## Kabul kriteri
 
-- [ ] Zıplarken ekran yukarı aşağı oynamıyor
+- [x] Zıplarken ekran yukarı aşağı oynamıyor
 - [ ] Tam hızda koşarken ineceğin yeri görebiliyorsun
-- [ ] Aşağı düşerken nereye düştüğünü görebiliyorsun
-- [ ] Bölümün kenarında boşluk/gökyüzü görünmüyor
+- [x] Aşağı düşerken nereye düştüğünü görebiliyorsun
+- [x] Bölümün kenarında boşluk/gökyüzü görünmüyor
 - [ ] Yön değiştirirken kamera savrulmuyor
-- [ ] `Shake()` çalışıyor ve `timeScale = 0`'da donmuyor
+- [x] `Shake()` çalışıyor ve `timeScale = 0`'da donmuyor
 - [ ] Kamera hareketi fark edilmiyor (en iyi işaret)
 
 ---

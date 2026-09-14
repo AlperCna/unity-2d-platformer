@@ -231,14 +231,14 @@ yapacaksın ve her ekleme seni bitmeye yaklaştıracak.
 
 ## Kabul kriteri
 
-- [ ] Tek cümlelik tanım var ve sıradan değil
-- [ ] 3 sütun yazılı, her biri açıklamalı
-- [ ] Çekirdek döngü yazılı ve "200 kez yapılabilir" testini geçiyor
-- [ ] Tek imza mekaniği seçilmiş ve gerekçelendirilmiş
-- [ ] Kapsam tablosu dolu
-- [ ] 3 referans, "alıyorum/almıyorum" ayrımıyla
-- [ ] Hepsi `docs/VIZYON.md` içinde, bir sayfayı geçmiyor
-- [ ] "Olmayacak şeyler" listesi başlatıldı
+- [x] Tek cümlelik tanım var ve sıradan değil
+- [x] 3 sütun yazılı, her biri açıklamalı
+- [x] Çekirdek döngü yazılı ve "200 kez yapılabilir" testini geçiyor
+- [x] Tek imza mekaniği seçilmiş ve gerekçelendirilmiş
+- [x] Kapsam tablosu dolu
+- [x] 3 referans, "alıyorum/almıyorum" ayrımıyla
+- [x] Hepsi `docs/VIZYON.md` içinde, bir sayfayı geçmiyor
+- [x] "Olmayacak şeyler" listesi başlatıldı
 
 ---
 
