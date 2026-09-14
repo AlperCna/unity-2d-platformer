@@ -109,6 +109,21 @@ namespace Platformer.Player
         // --- Dahili sayaclar ---
         private float coyoteCounter;
         private float jumpBufferCounter;
+
+        /// <summary>
+        /// Tek yonlu platformdan inerken zemin algisini kapatan sayac.
+        ///
+        /// NEDEN GEREKLI: Physics2D.IgnoreCollision sadece CARPISMAYI
+        /// kapatiyor, SORGULARI degil. Zemin kontrolu OverlapBox ile
+        /// yapiliyor ve o platformu gormeye devam ediyor.
+        ///
+        /// Sonuc: karakter "yerdeyim" saniyor, ApplyGravity dikey hizi
+        /// -1'e sabitliyor ve karakter saniyede 1 birimle SIZIYOR.
+        /// 0,5 birim kalinligindaki platformu gecemeden carpisma geri
+        /// geliyor ve hicbir sey olmamis gibi duruyor - kullanicinin
+        /// gordugu tam olarak buydu.
+        /// </summary>
+        private float dropThroughGrace;
         private int jumpsLeft;
         private bool wasGroundedLastFrame;
         private bool frozen;
@@ -275,7 +290,13 @@ namespace Platformer.Player
 
             if (Input.GetButtonDown("Jump"))
             {
-                jumpBufferCounter = jumpBufferTime;
+                // ASAGI + ZIPLA = tek yonlu platformdan in, ZIPLAMA.
+                // Kontrol burada cunku karakter neyin ustunde durdugunu
+                // zaten biliyor - zemin kontrolu bunu her karede yapiyor.
+                if (!TryDropThroughOneWay())
+                {
+                    jumpBufferCounter = jumpBufferTime;
+                }
             }
 
             // Tus erken birakildiysa ziplamayi kes -> kisa zipla
@@ -315,20 +336,52 @@ namespace Platformer.Player
         }
 
         /// <summary>
-        /// Tamponlanmis zipla istegini iptal eder.
+        /// Asagi basiliyken ziplanirsa, altindaki tek yonlu platformdan
+        /// asagi inmeyi dener. Indiyse true doner ve zipla IPTAL edilir.
         ///
-        /// Tek yonlu platformdan ASAGI inerken gerekiyor: oyuncu ASAGI+ZIPLA
-        /// basiyor, ama niyeti ziplamak degil INMEK. Iptal edilmezse hem
-        /// platformdan gecer hem yukari ziplar - yani yukari cikip tekrar
-        /// ustune duser.
+        /// NEDEN BURADA:
+        /// Bu is once OneWayPlatform'un icindeydi ve iki kez tutmadi.
+        /// Birincisinde girdi fizik geri cagrisinda okunuyordu (kayboluyordu),
+        /// ikincisinde platform "ustumde kim var" diye carpisma olaylariyla
+        /// takip ediyordu - ama PlatformEffector2D carpismayi surekli acip
+        /// kapattigi icin o liste guvenilir degil.
+        ///
+        /// Karakter ise altinda ne oldugunu KESIN biliyor: zemin kontrolu
+        /// icin zaten her karede oraya bakiyor. Ayni kutuyu kullaniyoruz,
+        /// yani "yerde sayiliyorum" ile "ustunde durdugum sey" hep tutarli.
         /// </summary>
-        public void CancelBufferedJump()
+        private bool TryDropThroughOneWay()
         {
-            jumpBufferCounter = 0f;
+            if (!IsGrounded) return false;
+            if (Input.GetAxisRaw("Vertical") > -0.5f) return false;
+
+            Vector2 origin = (Vector2)transform.position + groundCheckOffset;
+            Collider2D ground = Physics2D.OverlapBox(origin, groundCheckSize, 0f, groundLayers);
+            if (ground == null) return false;
+
+            var platform = ground.GetComponent<Gameplay.OneWayPlatform>();
+            if (platform == null) return false;
+
+            platform.DropThrough(GetComponent<Collider2D>());
+
+            // Zemin algisini kisa sure kapat ve asagi bir itme ver.
+            // Ikisi birlikte, platformun kalinligini kesin gecmeyi garanti
+            // ediyor; sadece yercekimine birakmak yavas kaliyordu.
+            dropThroughGrace = 0.2f;
+            rb.SetVelocityY(-4f);
+            return true;
         }
 
         private void CheckGround()
         {
+            if (dropThroughGrace > 0f)
+            {
+                dropThroughGrace -= Time.fixedDeltaTime;
+                IsGrounded = false;
+                wasGroundedLastFrame = false;
+                return;
+            }
+
             Vector2 origin = (Vector2)transform.position + groundCheckOffset;
             IsGrounded = Physics2D.OverlapBox(origin, groundCheckSize, 0f, groundLayers) != null;
 
