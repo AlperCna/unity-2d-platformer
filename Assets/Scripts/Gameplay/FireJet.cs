@@ -21,8 +21,9 @@ namespace Platformer.Gameplay
         [Tooltip("Alevin tam boyu (birim).")]
         [SerializeField] private float length = 3f;
 
-        [Tooltip("Alevin genisligi (birim).")]
-        [SerializeField] private float width = 0.8f;
+        [Tooltip("Alevin genisligi. Sprite 1 birim genis oldugu icin " +
+                 "1 vermek yatay tekrari tamamen onler.")]
+        [SerializeField] private float width = 1f;
 
         [Tooltip("Puskurme yonu.")]
         [SerializeField] private Vector2 direction = Vector2.up;
@@ -65,6 +66,7 @@ namespace Platformer.Gameplay
             }
 
             direction = direction.sqrMagnitude < 0.01f ? Vector2.up : direction.normalized;
+
         }
 
         protected override void OnPhaseChanged(Phase phase, bool instant)
@@ -86,6 +88,7 @@ namespace Platformer.Gameplay
                 currentLength = targetLength;
                 Apply();
             }
+
         }
 
         private void LateUpdate()

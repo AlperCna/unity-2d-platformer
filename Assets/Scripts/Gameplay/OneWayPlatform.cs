@@ -66,15 +66,24 @@ namespace Platformer.Gameplay
         }
 
         /// <summary>
-        /// Girdi UPDATE'te okunuyor, carpisma geri cagrisinda DEGIL.
+        /// Girdi LATEUPDATE'te okunuyor. Iki ayri sebep var:
         ///
-        /// Input.GetButtonDown sadece Update icinde guvenilir. Onceki surum
-        /// bunu OnCollisionStay2D icinde okuyordu; o ise fizik adiminda
-        /// calisiyor ve bir karede hic veya birden fazla kez calisabiliyor.
-        /// Sonuc: asagi inme istegi bazen kayboluyor, oyuncu "bazen
-        /// calismiyor" diyordu - tekrar uretmesi zor bir hata.
+        /// 1) Carpisma geri cagrisinda OLMAZ. Input.GetButtonDown sadece
+        ///    kare basina bir kez dogru; OnCollisionStay2D ise fizik
+        ///    adiminda calisiyor ve bir karede hic veya birden fazla kez
+        ///    calisabiliyor. Istek bazen kayboluyordu.
+        ///
+        /// 2) Update de YETMEDI. Iki script ayni kareyi paylasiyor:
+        ///    PlayerController2D ziplamayi tamponluyor, bu script iptal
+        ///    ediyor. Unity'de iki script arasindaki Update sirasi TANIMSIZ,
+        ///    yani bu once calisirsa henuz var olmayan tamponu iptal ediyor
+        ///    ve oyuncu yine ziplayarak platforma geri duşuyordu.
+        ///
+        ///    LateUpdate butun Update'lerden SONRA calisir - tampon kesin
+        ///    dolmus olur. Fizik (FixedUpdate) ise bir sonraki karede
+        ///    calisacagi icin iptal zamaninda yetisiyor.
         /// </summary>
-        private void Update()
+        private void LateUpdate()
         {
             if (riders.Count == 0) return;
 
