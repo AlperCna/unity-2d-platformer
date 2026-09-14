@@ -23,11 +23,11 @@ namespace Platformer.EditorTools
         private const string ScenePath = "Assets/Scenes/Level01.unity";
         private const string MaterialPath = "Assets/Art/NoFriction.physicsMaterial2D";
 
-        private const int SortBackground = -100;
-        private const int SortPlatform = 0;
-        private const int SortItem = 5;
-        private const int SortEnemy = 8;
-        private const int SortPlayer = 10;
+        internal const int SortBackground = -100;
+        internal const int SortPlatform = 0;
+        internal const int SortItem = 5;
+        internal const int SortEnemy = 8;
+        internal const int SortPlayer = 10;
 
         internal static int groundLayer;
         internal static int playerLayer;
@@ -269,34 +269,17 @@ namespace Platformer.EditorTools
 
         // --- Karakter -------------------------------------------------
 
+        /// <summary>
+        /// Oyuncuyu prefab'dan yerlestirir.
+        ///
+        /// Eskiden burada sifirdan yaratiliyordu; o zaman Inspector'dan
+        /// yapilan her ayar bir sonraki kurulumda siliniyordu. Artik
+        /// Assets/Prefabs/Player.prefab duzenlenebiliyor ve kaliyor.
+        /// </summary>
         internal static GameObject CreatePlayer(Vector2 position)
         {
-            var playerObject = new GameObject("Player");
-            playerObject.tag = "Player";
-            playerObject.layer = playerLayer;
-            playerObject.transform.position = position;
-
-            var renderer = playerObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteFactory.Load("player");
-            renderer.sortingOrder = SortPlayer;
-
-            var body = playerObject.AddComponent<Rigidbody2D>();
-            body.freezeRotation = true;
-            body.gravityScale = 0f;
-
-            var capsule = playerObject.AddComponent<CapsuleCollider2D>();
-            capsule.size = new Vector2(0.78f, 0.96f);
-            capsule.direction = CapsuleDirection2D.Vertical;
-            capsule.sharedMaterial = CreateFrictionlessMaterial();
-
-            var controller = playerObject.AddComponent<PlayerController2D>();
-            var so = new SerializedObject(controller);
-            so.FindProperty("groundLayers").intValue = 1 << groundLayer;
-            so.ApplyModifiedProperties();
-
-            playerObject.AddComponent<PlayerHealth>();
-
-            return playerObject;
+            PrefabFactory.EnsureAll();
+            return PrefabFactory.Spawn(PrefabFactory.Player, position, null);
         }
 
         /// <summary>

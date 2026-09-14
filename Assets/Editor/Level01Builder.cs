@@ -1,7 +1,6 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using Platformer.CameraRig;
 
 namespace Platformer.EditorTools
 {
@@ -38,39 +37,17 @@ namespace Platformer.EditorTools
 
             if (!ok) return;
 
-            LevelBuilder.ConfigureProject();
-            SpriteFactory.GenerateAll();
-            TileAssetFactory.EnsureGenerated();
+            LevelScaffold.Level level = LevelScaffold.Create(
+                "Bolum 1",
+                levelIndex: 0,
+                // designVersion 3 = izgaraya tasinmis tasarim. Bolum yeniden
+                // tasarlandiginda ARTIR: eski rekor otomatik sifirlanir.
+                designVersion: 3,
+                playerSpawn: new Vector2(1.5f, 1.5f));
 
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            LevelCursor c = BuildLayout(level.Entities, level.Rig);
 
-            LevelBuilder.CreateBackground();
-
-            TilemapRig rig = TilemapRig.Create(LevelBuilder.groundLayer);
-
-            // Tilemap'e girmeyen her sey (para, checkpoint, bayrak, diken)
-            // burada toplaniyor - Epic 05'in katman ayrimi.
-            var root = new GameObject("Entities");
-            LevelCursor c = BuildLayout(root.transform, rig);
-
-            GameObject player = LevelBuilder.CreatePlayer(new Vector2(1.5f, 1.5f));
-            LevelBuilder.CreateCamera(player.transform);
-            LevelBuilder.CreateUI();
-            // designVersion 3 = izgaraya tasinmis tasarim (v3). Bolum yeniden
-            // tasarlandiginda ARTIR: eski rekor otomatik sifirlanir.
-            LevelBuilder.CreateGameManager(levelIndex: 0, designVersion: 3);
-
-            c.Build();               // karolari bas - KAYITTAN ONCE
-            ApplyCameraBounds(c);
-            SaveScene(scene);
-
-            c.Report();
-
-            if (c.IssueCount > 0)
-            {
-                Debug.LogError($"Bolum 1'de {c.IssueCount} gecilemez nokta var! " +
-                               "Konsoldaki hatalara bak.");
-            }
+            LevelScaffold.Finish(level, c, ScenePath);
         }
 
         // ===============================================================
@@ -171,59 +148,6 @@ namespace Platformer.EditorTools
             c.Goal();
 
             return c;
-        }
-
-        /// <summary>
-        /// Kamera sinirlarini CameraBoundsTool ile ayni hesaptan alir.
-        /// Tek uygulama olmasi onemli: daha once bu iki yerde ayri formuller
-        /// vardi ve buradaki yanlisti - kamerayi ust sinirina yapistirip
-        /// dikey hareketi tamamen durduruyordu.
-        /// </summary>
-        private static void ApplyCameraBounds(LevelCursor c)
-        {
-#if UNITY_2023_1_OR_NEWER
-            var follow = Object.FindAnyObjectByType<CameraFollow>();
-#else
-            var follow = Object.FindObjectOfType<CameraFollow>();
-#endif
-            if (follow == null) return;
-
-            // Bolumun kapladigi alan: zemin parcalari + uzerlerindeki icerik
-            var content = new Bounds();
-            content.SetMinMax(
-                new Vector3(0f, c.MinGroundTop - 1f, 0f),
-                new Vector3(c.X, c.MaxGroundTop + 2.5f, 0f));
-
-            CameraBoundsTool.Compute(follow, content, c.MinGroundTop, c.MaxGroundTop,
-                                     out Vector2 min, out Vector2 max, out string note);
-
-            var so = new SerializedObject(follow);
-            so.FindProperty("useBounds").boolValue = true;
-            so.FindProperty("minBounds").vector2Value = min;
-            so.FindProperty("maxBounds").vector2Value = max;
-            so.ApplyModifiedProperties();
-
-            Debug.Log($"Kamera sinirlari: min({min.x:0.0}, {min.y:0.0}) " +
-                      $"max({max.x:0.0}, {max.y:0.0})\n{note}");
-        }
-
-        private static void SaveScene(UnityEngine.SceneManagement.Scene scene)
-        {
-            if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
-            {
-                AssetDatabase.CreateFolder("Assets", "Scenes");
-            }
-
-            EditorSceneManager.SaveScene(scene, ScenePath);
-
-            var list = new System.Collections.Generic.List<EditorBuildSettingsScene>(
-                EditorBuildSettings.scenes);
-
-            if (!list.Exists(s => s.path == ScenePath))
-            {
-                list.Insert(0, new EditorBuildSettingsScene(ScenePath, true));
-                EditorBuildSettings.scenes = list.ToArray();
-            }
         }
     }
 }

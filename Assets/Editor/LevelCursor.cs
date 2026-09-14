@@ -241,43 +241,29 @@ namespace Platformer.EditorTools
             //
             // Hazards katmani, hucre boyu collider'in sorun olmadigi
             // tehlikeler (lav, su) icin hazir bekliyor.
-            var go = new GameObject($"Diken_{count}");
-            go.transform.position = new Vector3(startX + count * 0.5f, GroundTop + 0.5f, 0f);
-            go.transform.SetParent(parent);
+            GameObject go = PrefabFactory.Spawn(PrefabFactory.Spikes,
+                new Vector2(startX + count * 0.5f, GroundTop + 0.5f), parent);
+            if (go == null) return this;
 
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteFactory.Load("spike");
-            renderer.drawMode = SpriteDrawMode.Tiled;
-            renderer.tileMode = SpriteTileMode.Continuous;
+            go.name = $"Diken_{count}";
+
+            // Prefab tek birimlik; kac birim olacagini burada ayarliyoruz.
+            // Bunlar prefab USTUNDE degisiklik (override) olarak duruyor -
+            // prefab'in geri kalan ayarlari (collider yuksekligi, offset)
+            // prefab'dan gelmeye devam ediyor.
+            var renderer = go.GetComponent<SpriteRenderer>();
             renderer.size = new Vector2(count, 1f);
-            renderer.sortingOrder = 1;
 
-            // Collider gorselden KUCUK - oyuncu "degmedim ki" dememeli
-            var trigger = go.AddComponent<BoxCollider2D>();
-            trigger.isTrigger = true;
-            trigger.size = new Vector2(count - 0.25f, 0.5f);
-            trigger.offset = new Vector2(0f, -0.18f);
-
-            go.AddComponent<Gameplay.Hazard>();
+            var trigger = go.GetComponent<BoxCollider2D>();
+            trigger.size = new Vector2(count - 0.25f, trigger.size.y);
             return this;
         }
 
         public LevelCursor Checkpoint(float offsetFromSegmentStart = 1f)
         {
-            var go = new GameObject("Checkpoint");
-            go.transform.position = new Vector3(
-                lastSegmentStart + offsetFromSegmentStart, GroundTop + 0.75f, 0f);
-            go.transform.SetParent(parent);
-
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteFactory.Load("checkpoint");
-            renderer.sortingOrder = 5;
-
-            var trigger = go.AddComponent<BoxCollider2D>();
-            trigger.isTrigger = true;
-            trigger.size = new Vector2(1.2f, 1.5f);
-
-            go.AddComponent<Gameplay.Checkpoint>();
+            PrefabFactory.Spawn(PrefabFactory.Checkpoint,
+                new Vector2(lastSegmentStart + offsetFromSegmentStart, GroundTop + 0.75f),
+                parent);
             return this;
         }
 
@@ -287,19 +273,8 @@ namespace Platformer.EditorTools
                 ? lastSegmentStart + offsetFromSegmentStart
                 : lastSegmentStart + lastSegmentWidth * 0.6f;
 
-            var go = new GameObject("LevelGoal");
-            go.transform.position = new Vector3(gx, GroundTop + 0.875f, 0f);
-            go.transform.SetParent(parent);
-
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteFactory.Load("goal");
-            renderer.sortingOrder = 5;
-
-            var trigger = go.AddComponent<BoxCollider2D>();
-            trigger.isTrigger = true;
-            trigger.size = new Vector2(1.3f, 1.75f);
-
-            go.AddComponent<Gameplay.LevelGoal>();
+            PrefabFactory.Spawn(PrefabFactory.LevelGoal,
+                new Vector2(gx, GroundTop + 0.875f), parent);
             return this;
         }
 
@@ -580,23 +555,7 @@ namespace Platformer.EditorTools
 
         private void PlaceCoin(Vector2 position)
         {
-            var coin = new GameObject("Coin");
-            coin.transform.position = position;
-            coin.transform.SetParent(parent);
-
-            var visual = new GameObject("Visual");
-            visual.transform.SetParent(coin.transform);
-            visual.transform.localPosition = Vector3.zero;
-
-            var renderer = visual.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteFactory.Load("coin");
-            renderer.sortingOrder = 5;
-
-            var trigger = coin.AddComponent<CircleCollider2D>();
-            trigger.isTrigger = true;
-            trigger.radius = 0.45f;
-
-            coin.AddComponent<Gameplay.Coin>();
+            PrefabFactory.Spawn(PrefabFactory.Coin, position, parent);
         }
 
         /// <summary>
