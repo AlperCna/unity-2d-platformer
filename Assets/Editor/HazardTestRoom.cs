@@ -69,6 +69,19 @@ namespace Platformer.EditorTools
             c.Fire(4f, phaseOffset: 0f, length: 3.5f);
             c.Fire(10f, phaseOffset: 0.5f, length: 3.5f);
 
+            // --- 2b. TAVAN DIKENI: "ne kadar ziplayabilirsin?" --------
+            // Alcak koridor. Zemin guvenli ama tavanda diken var: tam
+            // zipla yaparsan olursun. Ayni prefab, 180 derece dondurulmus.
+            //
+            // Ayri bir prefab yapmadik cunku dort yon dort ayri prefab
+            // demek olurdu ve biri kacinilmaz olarak digerlerinden farkli
+            // ayarlanirdi - comert hitbox kurali bozulurdu.
+            c.Ground(14f, "Tavan_Koridoru");
+            c.Ceiling(clearance: 4f, thickness: 2f);
+            c.Spikes(4, offsetFromSegmentStart: 5f,
+                     facing: LevelCursor.SpikeFacing.Ceiling, surfaceOffset: 4f);
+            c.Coins(3, heightAboveGround: 1.4f);
+
             c.Gap(2f);
             c.Ground(6f, "Nefes_2");
             c.Checkpoint(2f);
@@ -123,6 +136,10 @@ namespace Platformer.EditorTools
                 "   - Once kucuk bir alev cikip uyarmali\n" +
                 "   - Iki ates ters fazda - biri kapaliyken digeri acik\n" +
                 "   - Alevin kenarini siyirinca olmemeli (collider dar)\n\n" +
+                "2b) TAVAN DIKENI    \"ne kadar ziplayabilirsin?\"\n" +
+                "   - Koridorda YURU: guvenli olmali\n" +
+                "   - Koridorda TAM ZIPLA: tavandaki dikene carpmalisin\n" +
+                "   - Diken asagi bakiyor mu, collider da dondu mu?\n\n" +
                 "3) DUSEN PLATFORM   \"durmadan ilerleyebilir misin?\"\n" +
                 "   - Basinca titremeli, sonra dusmeli\n" +
                 "   - Titreme sona dogru SIDDETLENMELI\n" +

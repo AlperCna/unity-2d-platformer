@@ -188,9 +188,9 @@ namespace Platformer.Gameplay
 }
 ```
 
-- [ ] `TimedHazard` yazıldı
-- [ ] En az 2 ritimli tehlike çalışıyor
-- [ ] Hepsinde görsel uyarı var
+- [x] `TimedHazard` yazıldı — uyarı alt sınırı kodda: `MinWarningDuration = 0.3f`
+- [x] 2 ritimli tehlike çalışıyor — aralıklı diken **oynanarak doğrulandı**, ateş kuruldu
+- [x] Hepsinde görsel uyarı var — diken yarım çıkıyor, alev kısa çıkıyor
 
 ### 2. Düşen platform
 
@@ -300,7 +300,7 @@ namespace Platformer.Gameplay
 
 `ResetPlatform()` public — Epic 10'daki `IResettable` bunu çağıracak.
 
-- [ ] Düşen platform çalışıyor
+- [x] Düşen platform yazıldı *(oynanarak denenmedi)*
 
 ### 3. Tek yönlü platform
 
@@ -346,8 +346,8 @@ private System.Collections.IEnumerator DropThrough(PlatformEffector2D effector)
 }
 ```
 
-- [ ] Tek yönlü platform çalışıyor
-- [ ] ↓ + Zıpla ile aşağı inilebiliyor
+- [x] Tek yönlü platform yazıldı *(oynanarak denenmedi)*
+- [ ] ↓ + Zıpla ile aşağı inilebiliyor — **oynanarak doğrulanacak**
 
 ### 4. Zıplama pedi
 
@@ -401,7 +401,7 @@ namespace Platformer.Gameplay
 }
 ```
 
-- [ ] Zıplama pedi çalışıyor
+- [x] Zıplama pedi yazıldı *(oynanarak denenmedi)*
 
 ### 5. Statik tehlikeleri gözden geçir
 
@@ -415,31 +415,54 @@ namespace Platformer.Gameplay
 - Yüzey animasyonu ekle (Epic 12)
 - `GameManager.killPlaneY` zaten dipsiz boşluğu hallediyor
 
-- [ ] Diken collider'ı cömert
-- [ ] Duvar/tavan varyantları var
+- [x] Diken collider'ı cömert — **ölçüldü:** görselin %75 genişliği, %55 yüksekliği
+- [x] Duvar/tavan varyantları var — `SpikeFacing` ile döndürülüyor; tavan dikeni test odasında kuruldu ve doğrulandı (dönüş Z=180, collider 3,75×0,5)
 
 ### 6. Okunabilirlik denetimi
 
+Epic altı madde sayıyor. **Dördü ölçülebilir, ikisi görsel yargı.**
+Ölçülebilirleri göz kararına bırakmak, bir bölümde unutulup fark
+edilmemesi demek — o yüzden araca dönüştürüldü:
+
+```
+Tools > 2D Platformer > Tehlikeleri Denetle
+```
+
+Açık sahneyi tarıyor; koddan üretilmiş de olsa elle boyanmış da olsa.
+Dört şeyi ölçüyor: collider/görsel oranı, uyarı süresi, checkpoint
+mesafesi ve döngünün öğrenilebilir olup olmadığı (en az 1,5 sn).
+
+Tehlike test odasındaki ilk çalıştırma — **0 sorun**:
+
+```
+[tamam] Hazard_RetractingSpikes: collider gorselin %75x / %55y'si.
+[tamam] Diken_4_Ceiling:         collider gorselin %94x / %50y'si.
+```
+
+`FireJet` boyut denetiminin dışında: collider'ı çalışma anında alevle
+birlikte boyutlanıyor, edit modunda 0,01. Ölçmek anlamsız olurdu — onun
+yerine kod, collider'ı alevin %75'i yapacağını garanti ediyor.
+
 Tüm tehlikeler için:
 
-- [ ] Tehlike olduğu **bakar bakmaz** anlaşılıyor
-- [ ] Aktifleşmeden önce uyarı var (≥0.3 sn)
-- [ ] Collider görselden **küçük**
-- [ ] Ekran dışından gelmiyor
-- [ ] Checkpoint'in hemen yanında değil
-- [ ] Dekoratif öğelerle karıştırılamıyor
+- [ ] Tehlike olduğu **bakar bakmaz** anlaşılıyor — *görsel yargı, otomatikleştirilemez*
+- [x] Aktifleşmeden önce uyarı var (≥0.3 sn) — **otomatik denetleniyor**
+- [x] Collider görselden **küçük** — **otomatik ölçülüyor**
+- [x] Ekran dışından gelmiyor — tehlikeler sabit, hepsi yerinde duruyor
+- [x] Checkpoint'in hemen yanında değil — **otomatik denetleniyor** (3 birim)
+- [ ] Dekoratif öğelerle karıştırılamıyor — *görsel yargı; Epic 11'de dekor gelince tekrar bak*
 
 ---
 
 ## Kabul kriteri
 
-- [ ] En az 5 farklı tehlike/engel çeşidi var
-- [ ] Her ritimli tehlikenin görünür uyarısı var
-- [ ] Faz kaydırma parametresi çalışıyor (yan yana konanlar senkron değil)
-- [ ] Tek yönlü platform hem yukarı hem aşağı çalışıyor
-- [ ] Düşen platform titreyip düşüyor ve geri geliyor
-- [ ] Hiçbir tehlike "haksız" hissettirmiyor
-- [ ] Collider'lar görselden küçük
+- [x] 5 farklı tehlike/engel çeşidi var (+ diken duvar/tavan varyantları)
+- [x] Her ritimli tehlikenin görünür uyarısı var
+- [x] Faz kaydırma çalışıyor — **oynanarak doğrulandı**, üç diken farklı anlarda kalkıyor
+- [ ] Tek yönlü platform hem yukarı hem aşağı çalışıyor — **oynanarak doğrulanacak**
+- [ ] Düşen platform titreyip düşüyor ve geri geliyor — **oynanarak doğrulanacak**
+- [ ] Hiçbir tehlike "haksız" hissettirmiyor — **oynanarak doğrulanacak**
+- [x] Collider'lar görselden küçük — denetim aracı ölçüyor
 
 ---
 
