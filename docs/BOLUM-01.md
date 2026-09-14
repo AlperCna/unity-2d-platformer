@@ -81,8 +81,30 @@ zorluk
 | 12 | 100,7–113,1 | Diken + **4,4 boşluk** (%83) | **Zirve** | ✔ |
 | 13 | 113,1–124,1 | Düz zemin, bayrak | Rahatlama | ✘ |
 
-**Toplam 124,1 birim.** Alt sınır ~30 sn; engeller sıklaştığı için gerçek
-süre daha uzun olmalı — [ölçülecek](#kontrol-listesi).
+**Toplam 124,1 birim.** Tahmin 29,5 sn, **ölçülen 28,86 sn** — tahmin %2
+tutturdu.
+
+### Ölçüm (ilk v2 oynanışı)
+
+| | v1 | v2 |
+|---|---|---|
+| Süre | 19,58 sn | **28,86 sn** |
+| Ölüm | 0 | 0 |
+| Para | 30/31 | **50/50** |
+
+Süre hedefin 1,1 saniye altında ama bu **temiz bir koşu**: sıfır ölüm,
+bütün paralar. Yani neredeyse optimal oynanış. Takılan bir oyuncu 30'u
+rahat geçer — bölümü sırf sayıyı tutturmak için uzatmak ölçüyü kandırmak
+olurdu.
+
+Asıl dikkat çeken **sıfır ölüm**: %83'lük final boşluğu ve diken koridoru
+ilk denemede geçildi. Bölüm 1 için bu kabul edilebilir (öğretme bölümü),
+ama Bölüm 2'nin gerçekten ölüm aldırması gerekiyor.
+
+**Not:** Bu süre `bestTime` alanından okunamadı — v1'in rekoru (19,58)
+orada duruyordu ve v2 daha uzun olduğu için kırılamazdı.
+`totalPlayTime` farkından (48,43 − 19,58) hesaplandı. Bu bir hataydı ve
+düzeltildi: [10-checkpoint-ve-kayit.md](10-checkpoint-ve-kayit.md#tasarım-sürümü).
 
 ---
 
@@ -222,7 +244,7 @@ zıplamanın nereden başlaması gerektiğini söylüyorlar. Alçak zıplama yet
 - [x] Paralar rota gösteriyor
 - [x] Zorluk eğrisi dalga (47 → 56 → **49** → 68 → 68 → **83**)
 - [x] Diken tuzağı yok (otomatik doğrulandı)
-- [ ] Süre 30–90 sn arasında — **oynanıp ölçülecek**
+- [~] Süre 30–90 sn arasında — **ölçüldü: 28,86 sn** (bkz. aşağıda)
 - [ ] 5 saniye testi: ekrana bakınca nereye gideceğin belli
 - [ ] Bulanıklık testi
 - [ ] Bir başkası takılmadan bitirdi

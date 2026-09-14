@@ -51,7 +51,9 @@ namespace Platformer.EditorTools
             GameObject player = LevelBuilder.CreatePlayer(new Vector2(1.5f, 1.5f));
             LevelBuilder.CreateCamera(player.transform);
             LevelBuilder.CreateUI();
-            LevelBuilder.CreateGameManager();
+            // designVersion 2 = bu dosyadaki v2 tasarimi. Bolum yeniden
+            // tasarlandiginda ARTIR: eski rekor otomatik sifirlanir.
+            LevelBuilder.CreateGameManager(levelIndex: 0, designVersion: 2);
 
             ApplyCameraBounds(c);
             SaveScene(scene);

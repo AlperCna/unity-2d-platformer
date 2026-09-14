@@ -467,6 +467,52 @@ private static void DeleteSaveFromMenu()
 
 ---
 
+### 9. Tasarım sürümü
+
+Bölüm 1 yeniden tasarlandığında (83 → 124 birim) ortaya çıkan hata:
+
+```
+save.json:  "bestTime": 19.575672      <- v1'in rekoru
+            "totalCoins": 50           <- v2'nin parası
+```
+
+Kayıt iki farklı bölümün verisini aynı anda tutuyordu. `CompleteLevel`
+"daha iyiyse sakla" diyor, yeni bölüm daha uzun olduğu için **hiçbir koşu
+o rekoru kıramaz** — 19,58 sonsuza kadar orada kalır ve yanlış bilgi verir.
+
+Fark edilmesi zor çünkü bir şey *bozulmuyor*: oyun çalışıyor, kayıt
+okunuyor, hiçbir hata yok. Sadece sayı yalan.
+
+Çözüm — `LevelProgress`'e tasarım sürümü:
+
+```csharp
+public int designVersion;
+```
+
+`GameManager` üzerinde `[SerializeField] private int levelDesignVersion`
+var, bölümü kuran editör aracı değerini veriyor. `CompleteLevel` kayıttaki
+sürümle uyuşmuyorsa rekorları sıfırlıyor:
+
+```csharp
+if (p.completed && p.designVersion != designVersion)
+{
+    p.bestTime = -1f;
+    p.coinsCollected = 0;
+    p.secretFound = false;
+}
+p.designVersion = designVersion;
+```
+
+`deathCount` **sıfırlanmıyor** — o bir rekor değil, ömür boyu sayaç.
+
+Kod: [`SaveManager.cs`](../Assets/Scripts/Core/SaveManager.cs),
+[`SaveData.cs`](../Assets/Scripts/Core/SaveData.cs)
+
+> **Bölüm tasarımını değiştirdiğinde `levelDesignVersion`'ı artır.**
+> Unutursan eski rekor ulaşılamaz bir sayı olarak kalır.
+
+---
+
 ## Kabul kriteri
 
 - [x] Bölüm içinde ölünce en fazla 45 sn geriye gidiyorsun
@@ -476,6 +522,7 @@ private static void DeleteSaveFromMenu()
 - [x] Kayıt dosyasını elle bozunca oyun çökmüyor
 - [ ] Ses ayarları kayıtlı ve geri yükleniyor *(alanlar hazır → Epic 13/15 bağlayacak)*
 - [x] Kayıt yazılırken elektrik kesilse eski kayıt bozulmuyor (tmp + File.Replace)
+- [x] Bölüm yeniden tasarlanınca eski rekor sıfırlanıyor (`designVersion`)
 
 ---
 
@@ -498,6 +545,10 @@ Geçici dosya + taşıma kullan.
 **Bozuk kaydı ele almamak.** Oyun açılmaz ve oyuncu ne yapacağını bilemez.
 
 **Manuel kayıt istemek.** "Kaydetmek istiyor musunuz?" — 2026'da hayır.
+
+**Bölüm tasarımı değişince rekoru sıfırlamamak.** Bu projede yaşandı: Bölüm 1
+uzatıldı, eski süre rekoru kayıtta kaldı ve kırılması imkânsız hâle geldi.
+Hiçbir hata vermez, sadece yanlış sayı gösterir. `designVersion` ile çözüldü.
 
 **Paraları respawn'da geri getirmek.** Aynı parayı 20 kez toplamak işkence.
 

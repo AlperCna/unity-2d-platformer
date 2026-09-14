@@ -19,6 +19,19 @@ namespace Platformer.Core
 
         /// <summary>Bu bolumde toplam kac kez olundu (tum denemeler).</summary>
         public int deathCount;
+
+        /// <summary>
+        /// Bolumun TASARIM surumu. Bolum yeniden tasarlaninca artar.
+        ///
+        /// Neden gerekli: Bolum 1 baştan tasarlandi (83 birim -> 124 birim)
+        /// ama eski rekor (19,58 sn) kayitta kaldi. Yeni bolum daha uzun
+        /// oldugu icin hicbir kosu o rekoru kiramaz - yani rekor sonsuza
+        /// kadar ULASILAMAZ ve YANLIS bir sayi olarak durur.
+        ///
+        /// Tasarim degisince rekorlar sifirlanir; sure ve para sayisi
+        /// ancak ayni bolume aitse karsilastirilabilir.
+        /// </summary>
+        public int designVersion;
     }
 
     /// <summary>
