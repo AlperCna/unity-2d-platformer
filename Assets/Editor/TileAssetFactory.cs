@@ -71,8 +71,11 @@ namespace Platformer.EditorTools
         /// <summary>Varliklar eksikse uretir. Bolum kurucular bunu cagirir.</summary>
         internal static void EnsureGenerated()
         {
-            TilesetFactory.GenerateIfMissing();
-            if (Load(0) == null) GenerateAll();
+            // Sayfa yenilendiyse karo varliklarinin sprite referanslari da
+            // tazelenmeli - yoksa Tile'lar eski dilimleri gostermeye calisir.
+            bool sheetRebuilt = TilesetFactory.EnsureUpToDate();
+
+            if (sheetRebuilt || Load(0) == null) GenerateAll();
         }
 
         private static void EnsureFolder()
