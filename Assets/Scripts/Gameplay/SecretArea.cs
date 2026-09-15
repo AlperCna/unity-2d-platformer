@@ -15,11 +15,16 @@ namespace Platformer.Gameplay
     /// Nasil calisiyor: bir duvar parcasi aslinda gecilebilir. Icine
     /// girince duvar saydamlasiyor ve arkasi gorunuyor.
     ///
-    /// EN ONEMLI KURAL: IPUCU ZORUNLU.
-    /// Ipucusuz sir, sir degil rastlantidir. Oyuncu duvara girmeyi
-    /// denemiyorsa oyun onu odullendirmiyor, sadece sansliyi odullendiriyor.
-    /// Ipucu genelde su: oraya gidemeyecegin bir yerde duran birkac para,
-    /// ya da duvarin dokusundaki kucuk bir farklilik.
+    /// IKI KURAL:
+    ///
+    /// 1. IPUCU ZORUNLU. Ipucusuz sir, sir degil rastlantidir - oyuncuyu
+    ///    degil sansi odullendirir. "Tools > Bolumu Denetle" bunu kontrol
+    ///    ediyor.
+    ///
+    /// 2. CIKIS ZORUNLU. Ilk surumde Bolum 1'in sir odasindan cikis yoktu
+    ///    ve oyuncu sirri bulunca OLMEK zorunda kaliyordu. Sir bir odul
+    ///    degil ceza oluyordu; "iyi ki merak etmemisim" dedirtir, ki
+    ///    aradiginizin tam tersi.
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     public class SecretArea : MonoBehaviour
@@ -101,15 +106,17 @@ namespace Platformer.Gameplay
         }
 
 #if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (string.IsNullOrWhiteSpace(hint))
-            {
-                Debug.LogWarning(
-                    $"{name}: bu sirrin IPUCUSU yazilmamis. Ipucusuz sir, sir " +
-                    "degil rastlantidir - oyuncuyu degil sansi odullendirir.", this);
-            }
-        }
+        // NOT: burada bir OnValidate uyarisi vardi ("ipucu yazilmamis")
+        // ve KALDIRILDI.
+        //
+        // Sebep: OnValidate, AddComponent aninda calisiyor - yani bolum
+        // kurucusu ipucunu ATAMADAN once. Her kurulumda bos yere uyari
+        // basiyordu ve dogru olan durumlar bile kirmizi gorunuyordu.
+        //
+        // Surekli bagiran bir uyari, uyari olmaktan cikip gurultu olur ve
+        // insan gercek olani da gormez. Kontrol artik sadece
+        // "Tools > 2D Platformer > Bolumu Denetle" icinde - orada her sey
+        // yerine oturmus haldeyken bakiliyor.
 
         private void OnDrawGizmos()
         {
