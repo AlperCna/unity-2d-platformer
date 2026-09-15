@@ -151,30 +151,51 @@ namespace Platformer.EditorTools
             canvas.Save("ground");
         }
 
-        /// <summary>Ana karakter: yuvarlatilmis govde, gozler, ayaklar.</summary>
+        /// <summary>
+        /// Ana karakter.
+        ///
+        /// SILUET KURALI: disbukey olmamali.
+        ///
+        /// Ilk surum yuvarlatilmis bir kutuydu ve olculdugunde dusmanla
+        /// %78, parayla %74 ortusuyordu - yani siluetten ayirt edilemiyordu.
+        /// Oyuncunun kendi karakterini bir lekeden ayiramamasi, sanatin
+        /// yapabilecegi en kotu sey.
+        ///
+        /// Cozum sekil: BACAK ARASI bosluk ve TEPE TUYU. Ikisi de silueti
+        /// disbukeylikten cikariyor; hicbir para, hicbir yuvarlak dusman
+        /// boyle bir hat cizemez.
+        ///
+        /// Ayrica paletin EN PARLAK rengi burada - "gozun ilk gittigi yer
+        /// oyuncu olmali" kurali (Epic 11, rol dagilimi).
+        /// </summary>
         private static void CreatePlayer()
         {
             var canvas = new PixelCanvas(32, 32);
 
-            // Govde
-            canvas.FillRoundedRect(5, 2, 22, 27, 6, PlayerBody);
+            // Tepe tuyu - silueti yukaridan kiriyor
+            canvas.FillRect(12, 28, 3, 4, PlayerDark);
+            canvas.FillRect(13, 30, 4, 2, PlayerBody);
 
-            // Alt golge - hacim hissi
-            canvas.FillRoundedRect(5, 2, 22, 7, 5, PlayerDark);
+            // Kafa: govdeden GENIS - insan silueti okunuyor
+            canvas.FillRoundedRect(5, 15, 22, 14, 5, PlayerBody);
+
+            // Govde: daha dar
+            canvas.FillRect(9, 6, 14, 10, PlayerBody);
+            canvas.FillRect(9, 6, 14, 4, PlayerDark);      // alt golge
+
+            // BACAKLAR - aralarindaki bosluk siluetin en ayirt edici yeri
+            canvas.FillRect(9, 0, 5, 7, PlayerDark);
+            canvas.FillRect(18, 0, 5, 7, PlayerDark);
 
             // Gozler
-            canvas.FillRect(11, 17, 4, 6, Color.white);
-            canvas.FillRect(19, 17, 4, 6, Color.white);
-            canvas.FillRect(12, 18, 3, 3, Ink);
-            canvas.FillRect(20, 18, 3, 3, Ink);
-
-            // Agiz
-            canvas.FillRect(14, 12, 5, 2, Ink);
+            canvas.FillRect(10, 20, 5, 6, Color.white);
+            canvas.FillRect(18, 20, 5, 6, Color.white);
+            canvas.FillRect(12, 21, 3, 3, Ink);
+            canvas.FillRect(20, 21, 3, 3, Ink);
 
             canvas.Save("player");
         }
 
-        /// <summary>Toplanabilir para: halka seklinde madeni para.</summary>
         private static void CreateCoin()
         {
             var canvas = new PixelCanvas(24, 24);
@@ -250,31 +271,46 @@ namespace Platformer.EditorTools
         }
 
         /// <summary>Devriye dusmani: yassi blob, iki goz, ofkeli kaslar.</summary>
+        /// <summary>
+        /// Devriye dusmani.
+        ///
+        /// Oyuncudan AYRI bir siluet sekli olmali. Ilk surumde ikisi de
+        /// yuvarlatilmis kutuydu ve %78 ortusuyorlardi.
+        ///
+        /// Simdi zit kurulmus: oyuncu DIK ve dar, bu ALCAK ve genis;
+        /// oyuncunun tepesinde tuy var, bunun sirtinda diken sirasi.
+        /// Gozunu kisip baktiginda bile "bu o degil" diyebilmelisin.
+        ///
+        /// Renk oyuncudan SONUK - fark edilmeli ama onunla yarismamali.
+        /// </summary>
         private static void CreateEnemy()
         {
-            var canvas = new PixelCanvas(32, 24);
+            var canvas = new PixelCanvas(32, 20);
 
-            canvas.FillRoundedRect(2, 1, 28, 21, 8, EnemyBody);
-            canvas.FillRoundedRect(2, 1, 28, 6, 5, EnemyDark);
+            // Alcak ve genis govde
+            canvas.FillRoundedRect(2, 3, 28, 12, 4, EnemyBody);
+            canvas.FillRoundedRect(2, 3, 28, 5, 3, EnemyDark);
 
-            // Gozler
-            canvas.FillRect(9, 11, 5, 6, Color.white);
-            canvas.FillRect(18, 11, 5, 6, Color.white);
-            canvas.FillRect(11, 12, 3, 3, Ink);
-            canvas.FillRect(20, 12, 3, 3, Ink);
+            // SIRT DIKENLERI - silueti yukaridan tirtikliyor,
+            // ayrica "bu dusman" diye bagiriyor
+            for (int i = 0; i < 5; i++)
+            {
+                canvas.FillTriangleUp(3 + i * 6, 14, 6, 6, EnemyDark);
+            }
 
-            // Kaslar - kizgin ifade
-            canvas.FillRect(9, 18, 5, 2, EnemyDark);
-            canvas.FillRect(18, 18, 5, 2, EnemyDark);
+            // Ayaklar - alttan da tirtikli
+            canvas.FillRect(5, 0, 5, 4, EnemyDark);
+            canvas.FillRect(22, 0, 5, 4, EnemyDark);
 
-            // Disler
-            canvas.FillRect(12, 6, 3, 3, Color.white);
-            canvas.FillRect(17, 6, 3, 3, Color.white);
+            // Gozler: kizgin, oyuncununkinden kucuk
+            canvas.FillRect(8, 8, 5, 4, Color.white);
+            canvas.FillRect(19, 8, 5, 4, Color.white);
+            canvas.FillRect(10, 9, 3, 3, Ink);
+            canvas.FillRect(20, 9, 3, 3, Ink);
 
             canvas.Save("enemy");
         }
 
-        /// <summary>Checkpoint diregi. Rengi script tarafindan degistirilir.</summary>
         /// <summary>
         /// Mermi atan dusman. Devriyeden BELIRGIN sekilde farkli gorunmeli:
         /// oyuncu bir bakista "bu ustune basilir mi, uzaktan mi tehlikeli"
@@ -342,10 +378,18 @@ namespace Platformer.EditorTools
         {
             var canvas = new PixelCanvas(32, 32);
 
+            // Alev oyuncudan BELIRGIN parlak olmali.
+            //
+            // Olculdugunde ikisinin parlakligi neredeyse esitti (fark 6,5).
+            // Renk korlugu olan oyuncu icin bu, tehlikeyi kendi
+            // karakterinden ayiramamak demek - ve ates bir TEHLIKE.
+            //
+            // Cekirdek buyutuldu ve beyaza yaklastirildi: hem daha okunur
+            // hem daha ates gibi. Sicak seyler parlak olur.
             Color outer = Hex("#D94E14");
-            Color mid = Hex("#FF8A3D");
-            Color core = Hex("#FFC46B");
-            Color hot = Hex("#FFF6D6");
+            Color mid = Hex("#FF9A4D");
+            Color core = Hex("#FFE0A0");
+            Color hot = Hex("#FFFDF2");
 
             for (int y = 0; y < 32; y++)
             {
@@ -353,9 +397,9 @@ namespace Platformer.EditorTools
                 int wobble = (y % 8 < 4) ? 0 : 1;
 
                 canvas.FillRect(2 + wobble, y, 28 - wobble * 2, 1, outer);
-                canvas.FillRect(6 + wobble, y, 20 - wobble * 2, 1, mid);
-                canvas.FillRect(10, y, 12, 1, core);
-                canvas.FillRect(14, y, 4, 1, hot);
+                canvas.FillRect(5 + wobble, y, 22 - wobble * 2, 1, mid);
+                canvas.FillRect(9, y, 14, 1, core);
+                canvas.FillRect(12, y, 8, 1, hot);
             }
 
             canvas.Save("flame");

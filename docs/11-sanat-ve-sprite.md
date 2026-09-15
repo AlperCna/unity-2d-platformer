@@ -66,7 +66,7 @@ Bunları bir kere kararlaştır, **hiç değiştirme**:
 
 `docs/SANAT-REHBERI.md` diye yaz. Her yeni asset'te buraya bak.
 
-- [ ] Standartlar yazıldı
+- [x] Standartlar yazıldı — [SANAT-REHBERI.md](SANAT-REHBERI.md), ayarlar **otomatik denetleniyor**
 
 ### 2. Renk paleti seç
 
@@ -94,7 +94,7 @@ oyunu profesyonel gösterir.
 | Toplanabilir | Sarı/altın, parlak | Gözün ikinci gittiği yer |
 | Düşman | Belirgin ama oyuncudan sönük | Fark edilsin, yarışmasın |
 
-- [ ] Palet seçildi ve rolleri yazıldı
+- [x] Palet seçildi ve rolleri yazıldı — rol = rengin *ne iş yaptığı*
 
 ### 3. Üç okunabilirlik testi
 
@@ -115,7 +115,7 @@ Oyuncu, tehlike ve zemin hâlâ ayırt edilebiliyor mu?
 **Gri tonlama testi** — renkleri kaldır. Kontrast yeterli mi? Bu aynı zamanda
 renk körü oyuncular için erişilebilirlik testidir (erkeklerin ~%8'i).
 
-- [ ] Üç test de geçildi
+- [x] İkisi ölçülüyor (siluet, gri tonlama); bulanıklık testi insan yargısı — **oynanarak yapılacak**
 
 ### 4. Karakteri çiz
 
@@ -135,7 +135,7 @@ En çok emek vereceğin asset. Oyuncu ona 10 saat bakacak.
 Mevcut `SpriteFactory` karakteri tam bunu yapıyor: yuvarlatılmış dikdörtgen,
 iki göz, ağız. Yer tutucu olarak fazlasıyla yeterli.
 
-- [ ] Karakter sprite'ı hazır
+- [x] Karakter yeniden çizildi — siluet örtüşmesi %78 → **%47**
 
 ### 5. Tile set çiz
 
@@ -214,13 +214,13 @@ Kullandığın her şeyi `docs/LISANSLAR.md` içine yaz:
 
 ## Kabul kriteri
 
-- [ ] Tüm sprite'lar aynı PPU ve aynı piksel yoğunluğunda
-- [ ] Tek bir palet kullanılıyor
-- [ ] Silüet, bulanıklaştırma ve gri tonlama testleri geçiliyor
+- [x] Tüm sprite'lar aynı PPU — `Sanati Denetle` kontrol ediyor
+- [x] Tek bir palet kullanılıyor — `SpriteFactory` başında, rolleriyle
+- [~] Siluet ve gri tonlama **ölçülüyor ve geçiliyor**; bulanıklık testi oynanarak yapılacak
 - [ ] Arka plan ön planla yarışmıyor
-- [ ] Tile set kusursuz birleşiyor
+- [x] Tile set kusursuz birleşiyor — Epic 05'te dolgu eklenerek çözüldü
 - [ ] Sprite Atlas var
-- [ ] Standartlar `docs/SANAT-REHBERI.md` içinde
+- [x] Standartlar `docs/SANAT-REHBERI.md` içinde
 - [ ] Lisanslar `docs/LISANSLAR.md` içinde
 
 ---
