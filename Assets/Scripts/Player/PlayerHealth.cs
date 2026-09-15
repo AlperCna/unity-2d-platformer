@@ -102,7 +102,7 @@ namespace Platformer.Player
 
             if (GameManager.Instance != null)
             {
-                GameManager.Instance.ReportPlayerDeath(transform.position);
+                GameManager.Instance.ReportPlayerDeath(transform.position, killer);
                 StartCoroutine(DeathSequence(GameManager.Instance.RespawnDelay));
             }
             else
