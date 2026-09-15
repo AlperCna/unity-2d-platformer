@@ -53,6 +53,12 @@ namespace Platformer.EditorTools
         /// force = true sadece gercekten yeniden uretmek istedigin zaman.
         /// DIKKAT: kendi cizimlerinin uzerine yazar.
         /// </summary>
+        /// <summary>
+        /// Uretilen sprite sayisi. Menu metninde kullaniliyor - elle
+        /// yazilan bir sayi listeye ek yapildikca bayatliyordu.
+        /// </summary>
+        public const int SpriteCount = 13;
+
         public static void GenerateAll(bool force = false)
         {
             EnsureFolder();

@@ -134,7 +134,8 @@ namespace Platformer.EditorTools
             // Bu menu bilincli bir istek: var olanlarin uzerine YAZAR.
             bool ok = EditorUtility.DisplayDialog(
                 "Grafikleri Yeniden Uret",
-                "Assets/Art altindaki 8 PNG YENIDEN uretilecek.\n\n" +
+                $"Assets/Art altindaki {SpriteFactory.SpriteCount} PNG YENIDEN " +
+                "uretilecek.\n\n" +
                 "Kendi cizimlerini koyduysan UZERINE YAZILIR.\n\nDevam edilsin mi?",
                 "Yeniden uret", "Vazgec");
 
