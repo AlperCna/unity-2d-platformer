@@ -116,6 +116,66 @@ başka hiçbir şeye benzemez hale getirmek.
 
 ---
 
+## Arka plan
+
+> *"Arka plan güzel olmak zorunda değil — **geri çekilmek** zorunda."*
+
+Üç katman, uzaktan yakına. `ParallaxLayer`'daki faktör alışılmışın
+**tersi**: 0 = kamerayla birlikte hareket eder (sonsuz uzak), 1 = sahneyle
+birlikte durur.
+
+| Katman | Faktör | Genişlik | Şekil | Parlaklık |
+|---|---|---|---|---|
+| Uzak | 0,15 | 16 birim | sivri dağ | 47,9 |
+| Orta | 0,45 | 24 birim | yumuşak tepe | 58,1 |
+| Yakın | 0,75 | 32 birim | geniş tepe | 65,0 |
+
+### Geri çekilme elle yapılmıyor
+
+`SpriteFactory.PullBack(renk, oran)` rengi **gökyüzüne doğru** karıştırıyor.
+Gözle "biraz soluklaştırayım" demek unutulur; `Lerp` unutulmaz.
+
+Ham palet bunu neden gerektiriyor: `HillNear` **77,3** parlaklıkta, zemin
+karosu **82,4**. Arada 5 birim — arka plan ön planla aynı banttaydı ve ilk
+oynayan kişi bunu "ortamı beğenmedim" diye bildirdi.
+
+### İki ayrı yarışma biçimi
+
+`Sanati Denetle` ikisini de ölçüyor, çünkü arka plan iki farklı yoldan
+yarışabilir:
+
+| Test | Kural | Neden |
+|---|---|---|
+| **Ton** | en sönük oynanış görselinden 15 birim daha sönük | aynı bantta olursa zemin seçilmez |
+| **Kalabalık** | iç kontrast < 60 | sönük ama **detaylı** arka plan da platformları yutar |
+
+İkincisi sinsi olan. Karşılaştırma için: karo setinin iç kontrastı 93,6.
+Arka plan ondan belirgin şekilde **düz** olmalı.
+
+### Arka planlar "ayırt edilemiyor" testine girmez
+
+Siluet karşılaştırması `bg_` ile başlayan görselleri atlıyor. Arka plan
+katmanlarının birbirine benzemesi **istenen** şey; teste sokulsalardı araç
+her çift için yanlış bayrak kaldırırdı.
+
+### Tekrar
+
+Katmanlar yatayda tekrar ediyor (`SpriteDrawMode.Tiled`). Ek yeri yok,
+çünkü siluet harmoniklerinin hepsi genişliğe tam bölünüyor:
+
+```
+sin(2πk(x+W)/W) = sin(2πkx/W + 2πk) = sin(2πkx/W)
+```
+
+Karo setinden farkı bu: orada dolgu gerekiyordu, burada desen matematiksel
+olarak devam ediyor.
+
+> ⚠️ `SpriteRenderer.size.y` sprite yüksekliğiyle **birebir aynı** olmalı.
+> Aksi halde dikeyde de tekrar eder — alev sprite'ı tam bu yüzden "iki ince
+> çubuk" olarak görünmüştü.
+
+---
+
 ## Görsel eklerken
 
 1. Paletten çık — yeni renk **ekleme**

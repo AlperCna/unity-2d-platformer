@@ -42,11 +42,37 @@ namespace Platformer.EditorTools
         /// <summary>Siluet karsilastirmasi icin ortak olcek.</summary>
         private const int NormalizeTo = 24;
 
+        /// <summary>
+        /// Arka plan, en sonuk oynanis gorselinden bu kadar daha sonuk olmali.
+        ///
+        /// Sayi olcumden geliyor: denetime giren en sonuk oynanis gorseli
+        /// zemin karosu (94,8). Karo seti daha sonuk (82,4) ama cok-sprite'li
+        /// oldugu icin LoadAll onu atliyor. 15 birim aralik, arka planin
+        /// zeminle ayni bantta kalmamasini garanti ediyor.
+        /// </summary>
+        private const float BackgroundHeadroom = 15f;
+
+        /// <summary>
+        /// Arka plan kendi icinde bu kadardan fazla kontrast tasimamali.
+        ///
+        /// Epic'in uyardigi hata: "guzel ama cok belirgin arka plan yuzunden
+        /// platformlarin secilememesi". Detayli bir arka plan sonuk olsa bile
+        /// yarisir. Karsilastirma icin: karo setinin ic kontrasti 93,6,
+        /// zemin karosununki 82. Arka plan bunlardan belirgin sekilde DUZ
+        /// olmali.
+        /// </summary>
+        private const float BackgroundMaxContrast = 60f;
+
         private class Art
         {
             public string name;
             public bool[] mask;      // NormalizeTo x NormalizeTo
             public float luminance;
+
+            /// <summary>Parlaklik dagiliminin %10-%90 araligi - "ne kadar kalabalik".</summary>
+            public float contrast;
+
+            public bool isBackground;
             public int width, height;
             public TextureImporter importer;
         }
@@ -70,6 +96,8 @@ namespace Platformer.EditorTools
             int problems = 0;
             problems += AuditConsistency(arts, report);
             problems += AuditReadability(arts, report);
+            problems += AuditBackgroundRecession(arts, report);
+            problems += AuditAtlas(report);
 
             report.AppendLine("--------------------------------------------------");
             report.AppendLine($"{arts.Count} sprite denetlendi, {problems} sorun bulundu.");
@@ -128,12 +156,17 @@ namespace Platformer.EditorTools
             report.AppendLine("OKUNABILIRLIK");
 
             int problems = 0;
-            var weak = new List<string>();
 
             for (int i = 0; i < arts.Count; i++)
             {
                 for (int j = i + 1; j < arts.Count; j++)
                 {
+                    // Arka planlar bu teste GIRMEZ. Birbirlerine benzemeleri
+                    // zaten istenen sey; on planla iliskileri ise ayri bir
+                    // soru ve asagida ayri olculuyor. Ayrim yapilmasaydi arac
+                    // her arka plan cifti icin yanlis bayrak kaldirirdi.
+                    if (arts[i].isBackground || arts[j].isBackground) continue;
+
                     float iou = Overlap(arts[i].mask, arts[j].mask);
                     float dl = Mathf.Abs(arts[i].luminance - arts[j].luminance);
 
@@ -154,11 +187,12 @@ namespace Platformer.EditorTools
 
             // Bilgi amacli: en yakin ciftler, bayrak olmasa da
             report.AppendLine();
-            report.AppendLine("  Parlakliklar (0-255):");
+            report.AppendLine("  Parlaklik / ic kontrast (0-255):");
             arts.Sort((a, b) => b.luminance.CompareTo(a.luminance));
             foreach (Art a in arts)
             {
-                report.AppendLine($"    {a.name,-12} {a.luminance,6:0.0}   {a.width}x{a.height}");
+                report.AppendLine($"    {a.name,-12} {a.luminance,6:0.0} {a.contrast,7:0.0}   " +
+                                  $"{a.width}x{a.height}{(a.isBackground ? "   [arka plan]" : "")}");
             }
 
             if (problems == 0)
@@ -168,6 +202,120 @@ namespace Platformer.EditorTools
             }
 
             return problems;
+        }
+
+        /// <summary>
+        /// Epic 11'in kabul kriteri: "Arka plan on planla yarismiyor."
+        ///
+        /// Bu uzun sure OLCULMEYEN tek kriterdi ve gozle bakinca gecmis
+        /// gorunuyordu. Olculdugunde gecmedigi cikti: eski arka plan bandi
+        /// 77,3 parlaklikta, zemin karosu 82,4 - arada 5 birim. Ilk oynayan
+        /// kisi "ortami begenmedim" dedi ve hakliydi.
+        ///
+        /// Iki ayri soru soruluyor, cunku arka plan iki farkli sekilde
+        /// yarisabilir:
+        ///   TON      arka plan on planla ayni parlaklikta mi
+        ///   KALABALIK arka plan kendi icinde cok mu detayli
+        ///
+        /// Ikincisi sinsi: sonuk ama detayli bir arka plan da platformlari
+        /// yutuyor.
+        /// </summary>
+        private static int AuditBackgroundRecession(List<Art> arts, StringBuilder report)
+        {
+            report.AppendLine();
+            report.AppendLine("ARKA PLAN GERI CEKILMESI");
+
+            var backgrounds = new List<Art>();
+            Art dimmestGameplay = null;
+
+            foreach (Art a in arts)
+            {
+                if (a.isBackground) { backgrounds.Add(a); continue; }
+                if (dimmestGameplay == null || a.luminance < dimmestGameplay.luminance) dimmestGameplay = a;
+            }
+
+            if (backgrounds.Count == 0)
+            {
+                report.AppendLine("  [atlandi] arka plan katmani yok.");
+                return 0;
+            }
+
+            if (dimmestGameplay == null)
+            {
+                report.AppendLine("  [atlandi] karsilastirilacak oynanis gorseli yok.");
+                return 0;
+            }
+
+            float ceiling = dimmestGameplay.luminance - BackgroundHeadroom;
+            report.AppendLine($"  En sonuk oynanis gorseli: {dimmestGameplay.name} " +
+                              $"({dimmestGameplay.luminance:0.0}) -> arka plan tavani {ceiling:0.0}");
+
+            int problems = 0;
+
+            foreach (Art bg in backgrounds)
+            {
+                if (bg.luminance > ceiling)
+                {
+                    problems++;
+                    report.AppendLine(
+                        $"  [YARISIYOR] {bg.name}: parlaklik {bg.luminance:0.0}, " +
+                        $"tavan {ceiling:0.0}.\n" +
+                        $"      SpriteFactory'de PullBack oranini artir.");
+                }
+
+                if (bg.contrast > BackgroundMaxContrast)
+                {
+                    problems++;
+                    report.AppendLine(
+                        $"  [KALABALIK] {bg.name}: ic kontrast {bg.contrast:0.0}, " +
+                        $"sinir {BackgroundMaxContrast:0}.\n" +
+                        $"      Sonuk olmasi yetmiyor - detayi da azaltmali.");
+                }
+            }
+
+            if (problems == 0)
+            {
+                report.AppendLine($"  [tamam] {backgrounds.Count} katman da geri cekilmis.");
+            }
+
+            return problems;
+        }
+
+        /// <summary>
+        /// Epic 11 gorev 7 — Sprite Atlas var mi ve gercekten calisiyor mu.
+        ///
+        /// Iki ayri sey soruluyor cunku ikisi de sessizce eksik kalabilir:
+        /// atlas dosyasi olmadan da oyun calisir (sadece yavas), ve atlas
+        /// dosyasi VARKEN paketleyici kapaliysa dosya hicbir ise yaramaz.
+        /// Ikincisi ozellikle sinsi: her sey yerinde gorunur.
+        /// </summary>
+        private static int AuditAtlas(StringBuilder report)
+        {
+            report.AppendLine();
+            report.AppendLine("SPRITE ATLAS");
+
+            bool exists = File.Exists(SpriteAtlasFactory.AtlasPath);
+            bool packerOn = EditorSettings.spritePackerMode != SpritePackerMode.Disabled;
+
+            if (exists && packerOn)
+            {
+                report.AppendLine($"  [tamam] atlas var, paketleyici acik " +
+                                  $"({EditorSettings.spritePackerMode}).");
+                return 0;
+            }
+
+            if (!exists)
+            {
+                report.AppendLine("  [YOK] Sprite Atlas uretilmemis.\n" +
+                                  "      Tools > 2D Platformer > Sprite Atlas Uret");
+            }
+            else
+            {
+                report.AppendLine("  [ETKISIZ] atlas dosyasi var ama sprite paketleyici KAPALI.\n" +
+                                  "      Atlas hicbir ise yaramiyor. Ayni menuyu calistir.");
+            }
+
+            return 1;
         }
 
         // ---------------------------------------------------------------
@@ -215,7 +363,7 @@ namespace Platformer.EditorTools
 
             // Parlaklik: sadece opak piksellerin ortalamasi
             float sum = 0f;
-            int opaque = 0;
+            var opaqueLuminances = new List<float>();
 
             var full = new bool[w * h];
             for (int i = 0; i < pixels.Length; i++)
@@ -223,17 +371,23 @@ namespace Platformer.EditorTools
                 if (pixels[i].a <= 40) continue;
 
                 full[i] = true;
-                opaque++;
-                sum += 0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b;
+                float luminance = 0.2126f * pixels[i].r + 0.7152f * pixels[i].g + 0.0722f * pixels[i].b;
+                opaqueLuminances.Add(luminance);
+                sum += luminance;
             }
+
+            int opaque = opaqueLuminances.Count;
+            string name = Path.GetFileNameWithoutExtension(path);
 
             var art = new Art
             {
-                name = Path.GetFileNameWithoutExtension(path),
+                name = name,
+                isBackground = name.StartsWith(SpriteFactory.BackgroundPrefix),
                 width = w,
                 height = h,
                 importer = importer,
                 luminance = opaque > 0 ? sum / opaque : 0f,
+                contrast = Contrast(opaqueLuminances),
                 mask = Normalize(full, w, h),
             };
 
@@ -262,6 +416,23 @@ namespace Platformer.EditorTools
             }
 
             return dst;
+        }
+
+        /// <summary>
+        /// Parlaklik dagiliminin %10-%90 araligi.
+        ///
+        /// Min-max degil: tek bir parlak piksel (goz isigi, kivilcim) butun
+        /// olcumu bozardi. Yuzdelik dilim o tek pikselden etkilenmiyor.
+        /// </summary>
+        private static float Contrast(List<float> luminances)
+        {
+            if (luminances.Count < 10) return 0f;
+
+            luminances.Sort();
+            float low = luminances[Mathf.FloorToInt(luminances.Count * 0.10f)];
+            float high = luminances[Mathf.FloorToInt(luminances.Count * 0.90f)];
+
+            return high - low;
         }
 
         /// <summary>Kesisim / birlesim - 1'e yaklastikca ayni siluet.</summary>

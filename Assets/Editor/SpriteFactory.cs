@@ -41,6 +41,30 @@ namespace Platformer.EditorTools
         public static readonly Color Metal = Hex("#8A94A6");
         public static readonly Color Ink = Hex("#1A1A22");
 
+        // --- Arka plan katmanlari ---
+
+        /// <summary>Uc arka plan katmaninin ortak yuksekligi (piksel) = 14 birim.</summary>
+        internal const int BackgroundHeight = 448;
+
+        /// <summary>En yuksek tepe noktasi, sprite tabanindan piksel = 13 birim.</summary>
+        internal const int BackgroundRidgeTop = 416;
+
+        /// <summary>Siluetin tepesindeki isik cizgisi (piksel).</summary>
+        private const int RidgeRimThickness = 2;
+
+        /// <summary>
+        /// Epic 11'in "geri cekilme" kurali: arka plan rengini gokyuzune
+        /// dogru karistir, kendiliginden geri cekilsin.
+        ///
+        /// Neden kodda zorunlu: olculdugunde HillNear'in ham hali 77,3
+        /// parlaklikta ve zemin karosu 82,4 idi - yani arka plan on planla
+        /// NEREDEYSE ayni tondaydi. Gozle bakinca "biraz koyu" gorunuyor
+        /// ama olcum yarismayi gosteriyor. Elle "soluklastirayim" demek
+        /// unutulur; Lerp unutulmaz.
+        /// </summary>
+        public static Color PullBack(Color color, float amount) =>
+            Color.Lerp(color, Sky, amount);
+
         /// <summary>
         /// Eksik sprite'lari uretir.
         ///
@@ -57,7 +81,14 @@ namespace Platformer.EditorTools
         /// Uretilen sprite sayisi. Menu metninde kullaniliyor - elle
         /// yazilan bir sayi listeye ek yapildikca bayatliyordu.
         /// </summary>
-        public const int SpriteCount = 13;
+        public const int SpriteCount = 16;
+
+        /// <summary>
+        /// Arka plan katmanlarinin ad oneki. Sanati Denetle bunlari
+        /// ayri degerlendiriyor: arka planlar birbirine BENZEMELI, o
+        /// yuzden "ayirt edilemiyor" testine sokulmalari yanlis olurdu.
+        /// </summary>
+        public const string BackgroundPrefix = "bg_";
 
         public static void GenerateAll(bool force = false)
         {
@@ -78,6 +109,9 @@ namespace Platformer.EditorTools
                 ("jumppad",    CreateJumpPad),
                 ("checkpoint", CreateCheckpoint),
                 ("goal",       CreateGoalFlag),
+                ("bg_far",     CreateBackgroundFar),
+                ("bg_mid",     CreateBackgroundMid),
+                ("bg_near",    CreateBackgroundNear),
             };
 
             int created = 0;
@@ -475,6 +509,112 @@ namespace Platformer.EditorTools
             }
 
             canvas.Save("goal");
+        }
+
+        // ---------------------------------------------------------------
+        // Arka plan katmanlari
+        //
+        // Onceki hali iki DUZ dikdortgendi (square sprite'i gerilmis).
+        // Epic'in "arka plan guzel olmak zorunda degil, GERI CEKILMEK
+        // zorunda" kurali saglaniyordu ama ortada bir sey yoktu - ilk
+        // oynayan kisinin "ortam" sikayeti buydu.
+        //
+        // Uzaktan yakina uc katman. Atmosferik perspektif: uzaktaki
+        // gokyuzune daha yakin, yakindaki daha koyu ve daha keskin.
+        // ---------------------------------------------------------------
+
+        private static void CreateBackgroundFar()
+        {
+            // Sivri dag silueti. En cok geri cekilen katman.
+            PaintRidge("bg_far", 512, 330, BackgroundRidgeTop,
+                       PullBack(HillFar, 0.60f), angular: true,
+                       new (int, float, float)[]
+                       {
+                           (2, 0.9f, 2.3f), (3, 1.0f, 0.0f),
+                           (5, 0.5f, 1.1f), (11, 0.18f, 0.5f),
+                       });
+        }
+
+        private static void CreateBackgroundMid()
+        {
+            // Yumusak tepeler. Genisligi uzaktan farkli - katmanlarin
+            // tekrari ust uste denk gelmesin diye periyotlar esit degil.
+            PaintRidge("bg_mid", 768, 300, BackgroundRidgeTop,
+                       PullBack(HillNear, 0.55f), angular: false,
+                       new (int, float, float)[]
+                       {
+                           (2, 1.0f, 0.4f), (5, 0.45f, 2.0f), (7, 0.22f, 0.7f),
+                       });
+        }
+
+        private static void CreateBackgroundNear()
+        {
+            // En genis periyot: bu katman kameraya gore en hizli kaydigi
+            // icin tekrari en cok goze carpan katman.
+            PaintRidge("bg_near", 1024, 300, BackgroundRidgeTop,
+                       PullBack(HillNear, 0.35f), angular: false,
+                       new (int, float, float)[]
+                       {
+                           (1, 1.0f, 0.4f), (3, 0.5f, 2.6f), (6, 0.18f, 1.3f),
+                       });
+        }
+
+        /// <summary>
+        /// Yatayda KUSURSUZ tekrar eden bir tepe silueti cizer.
+        ///
+        /// Butun harmonikler genislige tam boldugu icin sag kenar sol
+        /// kenarla birebir esleser: sin(2*pi*k*(x+W)/W) = sin(2*pi*k*x/W).
+        /// Boylece SpriteDrawMode.Tiled ile yan yana dizildiginde ek yeri
+        /// GORUNMEZ - karo setinde ogrenilen dersin aynisi, ama burada
+        /// dolgu gerekmiyor cunku desen matematiksel olarak devam ediyor.
+        ///
+        /// angular = true: |sin| sivri tepeler verir (dag)
+        /// angular = false: duz sin yumusak yuvarlak tepeler verir
+        /// </summary>
+        private static void PaintRidge(string spriteName, int width, int valley, int peak,
+                                       Color body, bool angular,
+                                       (int harmonic, float weight, float phase)[] terms)
+        {
+            // Once ham yuksekligi hesapla, sonra gercek min/max'a gore
+            // olcekle. Aksi halde harmonik agirliklarini elle normalize
+            // etmek gerekirdi ve siluet bandin tamamini kullanmazdi.
+            var raw = new float[width];
+            float lowest = float.MaxValue;
+            float highest = float.MinValue;
+
+            for (int x = 0; x < width; x++)
+            {
+                float sum = 0f;
+
+                for (int i = 0; i < terms.Length; i++)
+                {
+                    float angle = 2f * Mathf.PI * terms[i].harmonic * x / width + terms[i].phase;
+                    float wave = Mathf.Sin(angle);
+                    sum += terms[i].weight * (angular ? Mathf.Abs(wave) : wave);
+                }
+
+                raw[x] = sum;
+                if (sum < lowest) lowest = sum;
+                if (sum > highest) highest = sum;
+            }
+
+            float span = Mathf.Max(0.0001f, highest - lowest);
+            Color rim = Color.Lerp(body, Color.white, 0.12f);
+            var canvas = new PixelCanvas(width, BackgroundHeight);
+
+            for (int x = 0; x < width; x++)
+            {
+                float normalized = (raw[x] - lowest) / span;
+                int h = valley + Mathf.RoundToInt((peak - valley) * normalized);
+
+                canvas.FillRect(x, 0, 1, h, body);
+
+                // Tepedeki isik cizgisi - siluete hacim veriyor ama ic
+                // kontrasti dusuk tutuyor (Sanati Denetle bunu olcuyor).
+                canvas.FillRect(x, h - RidgeRimThickness, 1, RidgeRimThickness, rim);
+            }
+
+            canvas.Save(spriteName);
         }
 
         // ---------------------------------------------------------------

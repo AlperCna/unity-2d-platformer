@@ -353,19 +353,63 @@ namespace Platformer.EditorTools
 
         // --- Arka plan ------------------------------------------------
 
+        /// <summary>Arka plan seridinin dunya genisligi ve merkezi.</summary>
+        private const float BackgroundWidth = 280f;
+        private const float BackgroundCenterX = 70f;
+
+        /// <summary>
+        /// Uc katmanli paralaks arka plan.
+        ///
+        /// ParallaxLayer'daki "factor" alisilmisin TERSI: 0 = kamerayla
+        /// birlikte hareket eder (sonsuz uzak), 1 = sahneyle birlikte
+        /// durur. Epic'in tablosu da bu yonde.
+        ///
+        /// Alt kenarlarin ekranin altina tasmasi GEREKMIYOR: her katman
+        /// bir oncekinin dibini ortuyor. En yakin katmanin tabani yeterince
+        /// asagida olsun yeter.
+        /// </summary>
         internal static void CreateBackground()
         {
             var root = new GameObject("Background");
 
-            // Uzak tepe bandi - kamerayla neredeyse birlikte hareket eder
-            GameObject far = CreateStretchedSprite("Hills_Far", new Vector2(50f, 4f),
-                new Vector2(200f, 22f), SpriteFactory.HillFar, SortBackground, root.transform);
-            SetPrivateFloat(far.AddComponent<ParallaxLayer>(), "parallaxFactor", 0.2f);
+            CreateParallaxLayer(root.transform, "Hills_Far", "bg_far",
+                                peakY: 11f, factor: 0.15f, sortingOrder: SortBackground);
 
-            // Yakin tepe bandi
-            GameObject near = CreateStretchedSprite("Hills_Near", new Vector2(50f, -1f),
-                new Vector2(200f, 14f), SpriteFactory.HillNear, SortBackground + 5, root.transform);
-            SetPrivateFloat(near.AddComponent<ParallaxLayer>(), "parallaxFactor", 0.5f);
+            CreateParallaxLayer(root.transform, "Hills_Mid", "bg_mid",
+                                peakY: 8.5f, factor: 0.45f, sortingOrder: SortBackground + 2);
+
+            CreateParallaxLayer(root.transform, "Hills_Near", "bg_near",
+                                peakY: 7f, factor: 0.75f, sortingOrder: SortBackground + 4);
+        }
+
+        private static void CreateParallaxLayer(Transform parent, string objectName,
+            string spriteName, float peakY, float factor, int sortingOrder)
+        {
+            float heightUnits = SpriteFactory.BackgroundHeight / (float)SpriteFactory.PixelsPerUnit;
+            float ridgeTopUnits = SpriteFactory.BackgroundRidgeTop / (float)SpriteFactory.PixelsPerUnit;
+
+            var go = new GameObject(objectName);
+            go.transform.SetParent(parent);
+
+            // Tepeler istenen yuksekilige gelsin diye merkez geriye hesaplaniyor.
+            // Elle Y girmek, sprite boyutu degisince sessizce kayardi.
+            go.transform.position = new Vector3(
+                BackgroundCenterX,
+                peakY - ridgeTopUnits + heightUnits * 0.5f,
+                0f);
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = SpriteFactory.Load(spriteName);
+            renderer.sortingOrder = sortingOrder;
+
+            // Tiled: yatayda tekrar etsin diye. YUKSEKLIK SPRITE ILE BIREBIR
+            // AYNI olmali - aksi halde dikeyde de tekrar eder. Alev sprite'i
+            // tam bu yuzden "iki ince cubuk" olarak gorunmustu.
+            renderer.drawMode = SpriteDrawMode.Tiled;
+            renderer.tileMode = SpriteTileMode.Continuous;
+            renderer.size = new Vector2(BackgroundWidth, heightUnits);
+
+            SetPrivateFloat(go.AddComponent<ParallaxLayer>(), "parallaxFactor", factor);
         }
 
         // --- Bolum geometrisi ----------------------------------------
@@ -579,28 +623,6 @@ namespace Platformer.EditorTools
             trigger.size = new Vector2(1.3f, 1.75f);
 
             goal.AddComponent<LevelGoal>();
-        }
-
-        /// <summary>
-        /// Tek parca halinde esnetilmis sprite. Duz renk arka plan bantlari icin
-        /// kullanilir: Tiled mod burada binlerce gereksiz karo uretirdi.
-        /// </summary>
-        private static GameObject CreateStretchedSprite(string objectName, Vector2 center,
-            Vector2 size, Color color, int sortingOrder, Transform parent)
-        {
-            var go = new GameObject(objectName);
-            go.transform.position = center;
-            if (parent != null) go.transform.SetParent(parent);
-
-            // 'square' sprite'i tam 1x1 birim oldugu icin olcek dogrudan boyut demek
-            go.transform.localScale = new Vector3(size.x, size.y, 1f);
-
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = SpriteFactory.Load("square");
-            renderer.color = color;
-            renderer.sortingOrder = sortingOrder;
-
-            return go;
         }
 
         /// <summary>Tiled cizim modunda sprite olusturur - esnemek yerine tekrarlanir.</summary>
