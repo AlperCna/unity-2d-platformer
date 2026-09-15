@@ -95,6 +95,25 @@ biliyorsun — bu bayrak ancak **başkası** oynadığında anlamlı."*
 Tablodaki diğerleri (*"nereye gideceğim?"*, *"duraklatıp telefona bakma"*)
 insan gözlemi gerektiriyor; onlar görev 4'ün işi ve otomatikleştirilemez.
 
+### Ölçüm doğrulandı
+
+İlk kayıt bilerek üretilen bir ölümle sınandı. Dört alanın dördü de
+tasarımla örtüştü:
+
+| Kayıt | Tasarımda | |
+|---|---|---|
+| `x = 55,87` | Diken x = 56..57 | oyuncunun sağ kenarı 56,26 → dikenin içinde |
+| `y = 3,48` | Zemin 3 + yarı boy 0,48 | **tam eşleşme** |
+| `cause = Diken_1` | "Diken Tanıtımı"ndaki tek diken | doğru nesne |
+| `t = 9,68 sn` | 55,87 ÷ 9,68 = 5,77 birim/sn | yürüme hızı |
+
+Dördü birlikte olayı **yeniden kurabiliyor**: 9,7. saniyede, üçüncü zeminin
+üzerinde, yürüyerek dikene girilmiş. `y`'nin 3,48'e tam oturması
+zıplanmadığını söylüyor.
+
+`deaths: []` artık "ölüm yok" anlamına geliyor — "kayıt bozuk" değil.
+İkisini ayırt edemediğimiz sürece veri işe yaramazdı.
+
 ---
 
 ## Görevler
