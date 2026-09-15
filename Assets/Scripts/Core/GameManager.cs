@@ -128,6 +128,8 @@ namespace Platformer.Core
 
             CacheResettables();
 
+            LevelAnalytics.BeginLevel(levelIndex, levelDesignVersion);
+
             OnScoreChanged?.Invoke(CoinsCollected, TotalCoins);
             OnDeathCountChanged?.Invoke(DeathCount);
         }
@@ -244,11 +246,19 @@ namespace Platformer.Core
         /// PlayerHealth olum aninda burayi cagirir.
         /// Can azaltmaz - sinirsiz deneme var. Sadece sayar.
         /// </summary>
-        public void ReportPlayerDeath(Vector2 position)
+        public void ReportPlayerDeath(Vector2 position, GameObject killer = null)
         {
             DeathCount++;
             DeathPositions.Add(position);
             OnDeathCountChanged?.Invoke(DeathCount);
+
+            // Epic 17 - olculebilir hale getir.
+            //
+            // Sebep de kaydediliyor cunku "burada 12 kez olundu" ile
+            // "burada 12 kez DIKENDEN olundu" farkli seyler soyler:
+            // birincisi "burasi zor", ikincisi "bu diken haksiz".
+            LevelAnalytics.RecordDeath(position, LevelTime,
+                                       killer != null ? killer.name : "bosluk");
         }
 
         /// <summary>
@@ -316,6 +326,8 @@ namespace Platformer.Core
                 designVersion: levelDesignVersion,
                 gems: GemsCollected,
                 totalGems: TotalGems);
+
+            LevelAnalytics.RecordCompletion(LevelTime);
 
             OnLevelCompleted?.Invoke();
         }

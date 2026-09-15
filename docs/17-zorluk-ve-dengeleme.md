@@ -39,6 +39,64 @@ hissi de oluşmaz.
 
 ---
 
+## M2'de neyi yapabiliriz, neyi yapamayız
+
+Bu epic'in ön koşulu *"tüm bölümler oynanabilir olmalı"* — bizde **bir
+bölüm** var. Görevlerin bir kısmı 12 bölüm varsayıyor. Ayrımı baştan
+yapalım ki sonra "yapıldı" sanılmasın:
+
+| Görev | M2'de | Neden |
+|---|---|---|
+| 1. Bölüm rolleri | ⬜ | 12 bölümün rolü, o bölümler var olunca |
+| 2. Mekanik tanıtım sırası | 🔧 kısmen | Elimizdeki mekanikler için yazılabilir |
+| **3. Veri topla** | ✅ | **Tek bölümle de çalışır — en değerli parça** |
+| 4. Başkalarına oynat | ⬜ | Kullanıcının yapması gereken; M1 kapısı da bunu bekliyor |
+| 5. Kırmızı bayraklar | 🔧 kısmen | İkisi ölçülebilir, gerisi insan gözlemi |
+| 6. Ucuz ayarlama | ✅ | Tablo zaten kullanılabilir |
+| 7. Erişilebilirlik | ⬜ | Epic 15 (UI) ile birlikte anlamlı |
+
+---
+
+## Ölçüm altyapısı (görev 3)
+
+```
+Tools > 2D Platformer > Olum Isi Haritasi
+```
+
+`LevelAnalytics` her ölümü kaydediyor: **konum, bölüme girdikten kaç
+saniye sonra, ve ne öldürdü.**
+
+Sebebin kaydedilmesi önemli — çünkü *"burada 12 kez ölündü"* ile
+*"burada 12 kez **dikenden** ölündü"* farklı şeyler söyler. Birincisi
+"burası zor", ikincisi "bu diken haksız".
+
+Veri **kayıttan ayrı** dosyada (`analytics-level0.json`). Oyuncunun
+ilerlemesi ile geliştirme verisi ayrı şeyler: kayıt silinince ölçümler
+kaybolmamalı, ölçümler silinince ilerleme bozulmamalı.
+
+### Kümeleme neden gerekli
+
+Ham ölüm noktaları yanıltıcı: bir engelde ölen oyuncu her seferinde biraz
+farklı yerde ölüyor. Kümelemeden bakarsan *"her yerde biraz ölüm var"*
+görünür; 1,5 birimlik yarıçapla kümeleyince *"şu noktada 14 ölüm"* çıkar.
+
+### Otomatik kontrol edilen iki bayrak
+
+Epic'in kırmızı bayrak tablosundan **ölçülebilir** olanlar:
+
+| Bayrak | Nasıl ölçülüyor |
+|---|---|
+| Aynı noktada 10+ ölüm | Küme sayısı eşiği aşarsa uyarı + en sık sebep |
+| Hiç ölmeden bitirme | `completions > 0 && deaths == 0` |
+
+İkincisinde araç bir uyarı da basıyor: *"bölümü sen yaptın ve ezbere
+biliyorsun — bu bayrak ancak **başkası** oynadığında anlamlı."*
+
+Tablodaki diğerleri (*"nereye gideceğim?"*, *"duraklatıp telefona bakma"*)
+insan gözlemi gerektiriyor; onlar görev 4'ün işi ve otomatikleştirilemez.
+
+---
+
 ## Görevler
 
 ### 1. Bölüm rolleri
@@ -275,8 +333,8 @@ namespace Platformer.EditorTools
 
 Bir noktada kırmızı yığılma görüyorsan **orası bozuk**.
 
-- [ ] Analitik toplanıyor
-- [ ] Isı haritası çalışıyor
+- [x] Analitik toplanıyor — `LevelAnalytics`, konum + süre + sebep
+- [x] Isı haritası çalışıyor — `Tools > Olum Isi Haritasi`, kümeleme ve iki otomatik bayrak
 
 ### 4. Başkalarına oynat — en önemli görev
 
