@@ -40,9 +40,9 @@ namespace Platformer.EditorTools
             LevelScaffold.Level level = LevelScaffold.Create(
                 "Bolum 1",
                 levelIndex: 0,
-                // designVersion 4 = mucevher + sir eklendi (Epic 08). Bolum yeniden
+                // designVersion 5 = sir odasina cikis pedi eklendi. Bolum yeniden
                 // tasarlandiginda ARTIR: eski rekor otomatik sifirlanir.
-                designVersion: 4,
+                designVersion: 5,
                 playerSpawn: new Vector2(1.5f, 1.5f));
 
             LevelCursor c = BuildLayout(level.Entities, level.Rig);

@@ -416,12 +416,33 @@ namespace Platformer.EditorTools
             list.GetArrayElementAtIndex(0).objectReferenceValue = veilRenderer;
             so.ApplyModifiedProperties();
 
-            // Odul
+            // Odul - odanin SOL tarafinda
             for (int i = 0; i < gemCount; i++)
             {
-                float gx = centerX + (i - (gemCount - 1) * 0.5f) * 1.2f;
+                float gx = gap.x + 1f + i * 1.1f;
                 PrefabFactory.Spawn(PrefabFactory.Gem,
                     new Vector2(gx, chamberFloor + 0.9f), parent);
+            }
+
+            // CIKIS - odanin SAG tarafinda zipla pedi.
+            //
+            // Ilk surumde cikis YOKTU ve oyuncu sirri buldugunda olmek
+            // zorunda kaliyordu. Yani sir bir odul degil CEZA oluyordu:
+            // "iyi ki merak etmemisim" dedirtir, ki bu tam tersi.
+            //
+            // Ped sagda, mucevherler solda: oyuncu once odulu topluyor,
+            // hazir oldugunda cikiyor. Pedin uzerine dusseydi hic
+            // bakamadan geri firlardi.
+            GameObject pad = PrefabFactory.Spawn(PrefabFactory.JumpPad,
+                new Vector2(gap.y - 0.8f, chamberFloor), parent);
+
+            if (pad != null)
+            {
+                // Yuzeyin 1,5 birim ustune cikaracak kadar - oyuncu cikip
+                // yana dogru kontrol edebilsin
+                var padSo = new SerializedObject(pad.GetComponent<Gameplay.JumpPad>());
+                padSo.FindProperty("launchHeight").floatValue = depth + 1.5f;
+                padSo.ApplyModifiedProperties();
             }
 
             MinGroundTop = Mathf.Min(MinGroundTop, chamberFloor);
