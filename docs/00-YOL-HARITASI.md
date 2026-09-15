@@ -299,8 +299,8 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 | 7 | 05 | Tilemap | M2 | ✅ | 14.09.2026 |
 | 8 | 06 | Düşmanlar | M2 | ✅ | 14.09.2026 |
 | 9 | 07 | Tehlikeler | M2 | ✅ | 14.09.2026 |
-| 10 | 08 | Toplanabilirler | M2 | ⬜ | **sıradaki** |
-| 11 | 17 | Zorluk | M2 | ⬜ | |
+| 10 | 08 | Toplanabilirler | M2 | ✅ | 15.09.2026 |
+| 11 | 17 | Zorluk | M2 | ⬜ | **sıradaki — M2'nin son epic'i** |
 | 12 | 11 | Sanat | M3 | ⬜ | |
 | 13 | 12 | Animasyon | M3 | ⬜ | |
 | 14 | 13 | Ses | M3 | ⬜ | |

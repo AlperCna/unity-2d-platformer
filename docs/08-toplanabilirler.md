@@ -191,7 +191,7 @@ namespace Platformer.Gameplay
 **Kural: sır bulunabilir olmalı.** Hiçbir ipucu olmayan sır, sır değil
 kazadır. Her sırrın en az bir ipucu olsun.
 
-- [x] Sır sistemi yazıldı — `SecretArea` *(oynanarak denenecek)*
+- [x] Sır sistemi çalışıyor — **oynanarak doğrulandı**: bulundu, ödül alındı, çıkıldı
 - [x] Her sırrın ipucu var — **zorunlu**, `OnValidate` ve denetim aracı kontrol ediyor
 
 ### 4. Yönlendirme için para yerleştir
@@ -345,11 +345,55 @@ Artık üçü ayrı:
 
 ---
 
+## Sır odasının iki hatası
+
+Sır ilk denemede bulundu — tasarım tuttu. Ama arkasından iki hata çıktı ve
+ikisi de aynı sınıftan: **bir şeyin YOKLUĞU sessiz kaldı.**
+
+### 1. Çıkış yoktu
+
+Oda 5 birim derinde, maksimum zıplama 3,03. Oyuncu sırrı buldu ve
+**ölmekten başka yolu kalmadı.**
+
+Bu, sırrın amacını tersine çeviriyor. Olması gereken *"merak ettim,
+ödüllendirildim"*; olan *"iyi ki merak etmemişim"* — yani oyuncuyu bir
+daha keşfetmekten caydırıyor.
+
+Odanın sağına zıplama pedi kondu (Epic 07'den). Mücevherler solda, ped
+sağda: önce ödül toplanıyor, sonra çıkılıyor. Pedin üzerine düşülseydi
+hiç bakmadan geri fırlatırdı.
+
+**`SecretArea`'nın sınıf belgesine ikinci kural yazıldı: çıkış zorunlu.**
+
+### 2. Ped sessizce oluşturulamadı
+
+Düzeltmeden sonra bile oda çıkışsızdı. Sahne dosyasına bakıldı:
+
+| | |
+|---|---|
+| sır alanı, perde, mücevherler | var |
+| **çıkış pedi** | **GUID'i sahnede sıfır kez** |
+
+Yani `Secret()` çalıştı, mücevherleri koydu, pedi koymadı — ve kurulum
+raporunda **"sorun yok"** yazıyordu.
+
+Sebep Unity'nin derleme zamanlamasıydı (menü, derleme bitmeden çalışmış).
+Ama asıl sorun o değil: **`Spawn` null dönse bile kod hiçbir şey demeden
+devam ediyordu.**
+
+Artık hata basıyor ve `IssueCount`'u artırıyor, yani rapor "sorun yok"
+diyemiyor.
+
+> **Ders:** bir şeyin yokluğu sessiz kalırsa, kurulum raporu yalan söyler.
+> "Sorun yok" ancak *kontrol edilen* her şey için geçerli olabilir.
+
+---
+
 ## Kabul kriteri
 
 - [x] Paralar yol gösteriyor, rastgele serpilmemiş
 - [x] Combo sayacı çalışıyor ve sahne değişiminde sıfırlanıyor
-- [x] Bölüm 1'de 1 sır var, ipucuyla *(oynanarak denenecek)*
+- [x] Bölüm 1'de 1 sır var, ipucuyla — **oyuncu ipucusuz yardım almadan buldu**
 - [x] Sır bulununca perde saydamlaşıyor + 25 puan
 - [x] Bölüm sonu özeti mücevher ve sır satırlarını gösteriyor *(sadece varsa)*
 - [x] Hiçbir para ulaşılamaz yerde değil — **elle değil, ölçülerek**: `Bolumu Denetle` her toplanabilirin altına ışın atıp yüksekliğini kontrol ediyor
