@@ -487,8 +487,19 @@ namespace Platformer.EditorTools
         public LevelCursor TimedSpikes(float offsetFromSegmentStart, float phaseOffset = 0f,
                                        float cycleDuration = 2.2f)
         {
+            float startX = lastSegmentStart + offsetFromSegmentStart;
+
+            // Sabit dikenlerle AYNI tuzak kontrolune giriyor: dikenden tam
+            // guc ziplayan oyuncunun arkadaki bosluga dusmesi. Aralikli
+            // olmasi bunu degistirmiyor - aktif oldugunda ustunden
+            // ziplaniyor ve ayni mesafe katediliyor.
+            //
+            // Ilk yazilista bu kayit atlanmisti ve aralikli dikenler
+            // denetimin disinda kalmisti.
+            spikeSpans.Add(new Vector2(startX, startX + 1f));
+
             GameObject go = PrefabFactory.Spawn(PrefabFactory.RetractingSpikes,
-                new Vector2(lastSegmentStart + offsetFromSegmentStart, GroundTop), parent);
+                new Vector2(startX, GroundTop), parent);
             if (go == null) return this;
 
             var so = new SerializedObject(go.GetComponent<Gameplay.RetractingSpikes>());

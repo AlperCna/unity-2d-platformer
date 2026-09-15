@@ -84,6 +84,41 @@ zorluk
 **Toplam 124,1 birim** — kurulum çıktısıyla birebir doğrulandı, sorun yok.
 Tahmin 29,5 sn, ilk oynanış 28,86 sn — tahmin %2 tutturdu.
 
+### v5 → v6: başkası oynadı, bölüm uzatıldı
+
+**M1 kapısının beklediği test yapıldı.** Platform oyunlarını oynayan bir
+arkadaş, Bölüm 1'i **22,96 saniyede, sıfır ölümle** bitirdi.
+
+| Ne öğrendik | Sonuç |
+|---|---|
+| Hiç duraksamadı | Yönlendirme çalışıyor ✅ |
+| Mücevherleri gördü **ve aldı** | Yerleşim çalışıyor ✅ |
+| Sıkılmadı | Ritim çalışıyor ✅ |
+| Sıfır ölüm | Hiçbir şey haksız değil ✅ |
+| **22,96 sn** | Hedef 30–90 — **kısa** ❌ |
+| *"Sanat beğenilmedi"* | Epic 11'in işi |
+
+Sıfır ölüm bu sefer *"çok kolay"* demek değil: oyuncu deneyimliydi ve
+Bölüm 1 zaten **öğretme bölümü**. Kararı buna göre verildi:
+
+> **Zorluk artırılmadı, uzunluk artırıldı.** Bölüm 1 öğretme bölümü kalıyor;
+> asıl zorluk Bölüm 2'ye.
+
+Ama uzatmak boş zemin eklemek değil — v1'in hatası tam oydu. Eklenen iki
+şey de içerik:
+
+1. **Aralıklı diken bölümü** (+28 birim) — Bölüm 1'e eklenen tek yeni
+   mekanik. Sabit dikenin doğal devamı: *"bir şeyden kaçın"* →
+   *"doğru anda kaçın"*. Tanıt → uygulat → nefes.
+2. **Bir ritim cümlesi daha** (+6 birim) — yeni kavram değil, var olanın
+   tekrarı.
+
+**125 → 159 birim.** Arkadaşın hızıyla ~29 sn, tipik ilk oynanışta ~35 sn —
+ve aralıklı diken *beklemeyi* gerektirdiği için gerçek süre bunun üstünde
+olmalı.
+
+---
+
 ### Ölçüm
 
 | | v1 | v2 — 1. koşu | v2 — 2. koşu |
@@ -250,7 +285,7 @@ zıplamanın nereden başlaması gerektiğini söylüyorlar. Alçak zıplama yet
 - [x] Paralar rota gösteriyor
 - [x] Zorluk eğrisi dalga (47 → 56 → **49** → 68 → 68 → **83**)
 - [x] Diken tuzağı yok (otomatik doğrulandı)
-- [~] Süre 30–90 sn arasında — ilk oynanış **28,86 sn** (1,1 sn altında, kabul edildi)
-- [ ] 5 saniye testi: ekrana bakınca nereye gideceğin belli
+- [~] Süre 30–90 sn arasında — v6'da 159 birime uzatıldı (~29–35 sn), **ölçülecek**
+- [x] 5 saniye testi — başkası oynarken hiç duraksamadı, yönlendirme çalışıyor
 - [ ] Bulanıklık testi
-- [ ] Bir başkası takılmadan bitirdi
+- [x] Bir başkası takılmadan bitirdi — **22,96 sn, sıfır ölüm, hiç duraksamadan** (v5)

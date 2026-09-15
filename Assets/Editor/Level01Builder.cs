@@ -40,9 +40,9 @@ namespace Platformer.EditorTools
             LevelScaffold.Level level = LevelScaffold.Create(
                 "Bolum 1",
                 levelIndex: 0,
-                // designVersion 5 = sir odasina cikis pedi eklendi. Bolum yeniden
+                // designVersion 6 = aralikli diken bolumu + bir ritim cumlesi. Bolum yeniden
                 // tasarlandiginda ARTIR: eski rekor otomatik sifirlanir.
-                designVersion: 5,
+                designVersion: 6,
                 playerSpawn: new Vector2(1.5f, 1.5f));
 
             LevelCursor c = BuildLayout(level.Entities, level.Rig);
@@ -87,9 +87,11 @@ namespace Platformer.EditorTools
             c.Gap(3f, coinArc: 3);
             c.Ground(3f, "Ritim_2");
             c.Gap(3f, coinArc: 3);
-            c.Ground(4f, "Ritim_3");
-            c.Gap(2f, coinArc: 3);
+            c.Ground(3f, "Ritim_3");
+            c.Gap(3f, coinArc: 3);
             c.Ground(4f, "Ritim_4");
+            c.Gap(2f, coinArc: 3);
+            c.Ground(4f, "Ritim_5");
 
             // --- 6. NEFES + CHECKPOINT ----------------------------------
             c.Ground(8f, "Zemin_Nefes");
@@ -102,6 +104,32 @@ namespace Platformer.EditorTools
             // (LevelCursor.ValidateSpikeLandings bunu her kurulumda kontrol ediyor.)
             c.Ground(11f, "Zemin_DikenTanitim");
             c.Spikes(1, offsetFromSegmentStart: 5f);
+
+            // --- 7b. ARALIKLI DIKEN: TANIT ------------------------------
+            // Bolum 1'e eklenen TEK yeni mekanik. Sabit dikenin dogal
+            // devami: "bir seyden kacin" -> "DOGRU ANDA kacin".
+            //
+            // Genis zemin, tek diken, yavas dongu. Cikisini gorursun,
+            // beklersin, gecersin. Olum mumkun ama kacinmasi kolay -
+            // ogretme bolumunun kurali bu.
+            c.Ground(10f, "Zemin_AralikliTanitim");
+            c.TimedSpikes(5f, phaseOffset: 0f, cycleDuration: 2.6f);
+            c.Coins(3);
+
+            // --- 7c. ARALIKLI DIKEN: UYGULAT ---------------------------
+            // Iki diken, TERS FAZDA. Biri inerken digeri cikiyor.
+            //
+            // Artik "bekle ve gec" degil "ritmi yakala" - ve bu, bolumun
+            // zaten ogrettigi ritim fikrinin ustune biniyor. Yeni bir
+            // kavram degil, var olanin baska bir parcayla tekrari.
+            c.Ground(12f, "Zemin_AralikliUygulama");
+            c.TimedSpikes(3f, phaseOffset: 0f, cycleDuration: 2.6f);
+            c.TimedSpikes(8f, phaseOffset: 0.5f, cycleDuration: 2.6f);
+            c.Coins(3, heightAboveGround: 2f);
+
+            // --- 7d. NEFES + CHECKPOINT --------------------------------
+            c.Ground(6f, "Zemin_Nefes2");
+            c.Checkpoint(1.5f);
 
             // --- 8. TIRMANIS -------------- %68 --------------------------
             // 3 birimlik bosluk duz zeminde %56'dir. Ama karsi taraf 2 birim

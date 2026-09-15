@@ -295,7 +295,7 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 | 4 | 04 | Seviye tasarımı | M1 | ✅ | 14.09.2026 |
 | 5 | 09 | Can/Ölüm | M1 | ✅ | 14.09.2026 |
 | 6 | 10 | Checkpoint/Kayıt | M1 | ✅ | 14.09.2026 |
-| — | — | **M1 KAPISI: Bölüm 1'i birine oynat** | | ⬜ | *açık — kod tarafı bitti* |
+| — | — | **M1 KAPISI: Bölüm 1'i birine oynat** | | ✅ | 15.09.2026 — 22,96 sn, 0 ölüm |
 | 7 | 05 | Tilemap | M2 | ✅ | 14.09.2026 |
 | 8 | 06 | Düşmanlar | M2 | ✅ | 14.09.2026 |
 | 9 | 07 | Tehlikeler | M2 | ✅ | 14.09.2026 |
