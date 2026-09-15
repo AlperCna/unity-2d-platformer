@@ -434,13 +434,39 @@ insanlar oyununu bitirebilir. Hiçbir şey kaybetmezsin.
 
 ## Kabul kriteri
 
-- [ ] İlk bölüm ölmeden bitirilebiliyor
-- [ ] Zorluk testere dişi, düz artan değil
-- [ ] Her bölüm en fazla 1 yeni şey tanıtıyor
-- [ ] 3 farklı kişi oyunu bitirebildi
-- [ ] Tek bir noktada ölüm yığılması yok (ısı haritasıyla doğrulandı)
-- [ ] Hiç kimse "bu haksız" demedi
-- [ ] Gerçek ölüm sayıları hedeflerle uyumlu
+- [x] İlk bölüm ölmeden bitirilebiliyor — **başkası yaptı**: 22,96 sn, 0 ölüm
+- [ ] Zorluk testere dişi, düz artan değil — *bölüm İÇİNDE öyle; bölümler ARASINDA ölçülemez, tek bölüm var*
+- [x] Her bölüm en fazla 1 yeni şey tanıtıyor — Bölüm 1'in tek yenisi aralıklı diken
+- [ ] 3 farklı kişi oyunu bitirebildi — **1 kişi oynadı**, ikisi eksik
+- [x] Tek bir noktada ölüm yığılması yok — ısı haritası kuruldu ve doğrulandı; *tek örnekle yığılma zaten oluşamaz, asıl sınav çok oyunculu veri*
+- [x] Hiç kimse "bu haksız" demedi
+- [ ] Gerçek ölüm sayıları hedeflerle uyumlu — *hedefler görev 1'de belirlenecek, o da 12 bölüm gerektiriyor*
+
+---
+
+## M2 sonunda nerede duruyoruz
+
+**Yapılan:** ölçüm altyapısı kuruldu, doğrulandı ve ilk gerçek verisini verdi.
+
+| Koşu | Süre | Ölüm | Kim |
+|---|---|---|---|
+| v5 | 22,96 sn | 0 | **başkası** — deneyimli oyuncu |
+| v6 | 29,17 sn | 1 | tasarımcı (bölümü ezbere bilen) |
+
+v6'nın ölümü x=125,8'de, "DikenUygulama" bölümünün 2 birimlik dikeninde —
+yani bölümün en zor ikinci noktasında. Ölüm **doğru yerde**, ama tek örnek
+yığılma değil.
+
+**Yapılamayan ve neden:**
+
+- *3 farklı kişi* — 1 kişi oynadı. Bu epic'in en değerli görevi ve
+  otomatikleştirilemez.
+- *Bölümler arası zorluk eğrisi* — tek bölüm var.
+- *Ölüm hedefleriyle karşılaştırma* — hedefler 12 bölümün rolleri
+  belirlenince anlamlı.
+
+Bunlar Epic 16'dan (tüm bölümler oynanabilir) sonra tekrar açılmalı.
+**Ölçüm altyapısı o gün hazır olacak** — asıl kazanç bu.
 
 ---
 
