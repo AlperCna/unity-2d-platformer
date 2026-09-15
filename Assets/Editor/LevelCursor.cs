@@ -436,13 +436,40 @@ namespace Platformer.EditorTools
             GameObject pad = PrefabFactory.Spawn(PrefabFactory.JumpPad,
                 new Vector2(gap.y - 0.8f, chamberFloor), parent);
 
-            if (pad != null)
+            if (pad == null)
+            {
+                // SESSIZ KALMIYORUZ. Ped konulamazsa oyuncu sir odasina
+                // girip CIKAMAZ ve olmek zorunda kalir - yani sir bir odul
+                // degil ceza olur.
+                //
+                // Ilk surumde bu durum sessizce gecti ve ancak oyuncu
+                // odada mahsur kalinca anlasildi. Kurulum raporunda
+                // "sorun yok" yaziyordu.
+                issueCount++;
+                Debug.LogError(
+                    $"[{levelName}] Sir odasina CIKIS PEDI konulamadi.\n" +
+                    $"  Prefab: {PrefabFactory.PathOf(PrefabFactory.JumpPad)}\n" +
+                    "  Oyuncu odaya girince cikamaz, olmek zorunda kalir.");
+            }
+            else
             {
                 // Yuzeyin 1,5 birim ustune cikaracak kadar - oyuncu cikip
                 // yana dogru kontrol edebilsin
-                var padSo = new SerializedObject(pad.GetComponent<Gameplay.JumpPad>());
-                padSo.FindProperty("launchHeight").floatValue = depth + 1.5f;
-                padSo.ApplyModifiedProperties();
+                var jump = pad.GetComponent<Gameplay.JumpPad>();
+
+                if (jump == null)
+                {
+                    issueCount++;
+                    Debug.LogError($"[{levelName}] Cikis pedinde JumpPad bileseni yok - " +
+                                   "prefab bozuk. Assets/Prefabs/JumpPad.prefab'i silip " +
+                                   "bolumu yeniden kur, otomatik uretilir.");
+                }
+                else
+                {
+                    var padSo = new SerializedObject(jump);
+                    padSo.FindProperty("launchHeight").floatValue = depth + 1.5f;
+                    padSo.ApplyModifiedProperties();
+                }
             }
 
             MinGroundTop = Mathf.Min(MinGroundTop, chamberFloor);
