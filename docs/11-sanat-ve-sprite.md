@@ -172,7 +172,33 @@ seçilememesi. Arka plan güzel olmak zorunda değil — **geri çekilmek** zoru
 Hızlı çözüm: arka plan renklerini gökyüzü rengine doğru %40 karıştır.
 Otomatik olarak geri çekilir.
 
-- [ ] 3 parallax katmanı hazır, hepsi geri çekilmiş
+- [x] 3 parallax katmanı hazır, hepsi geri çekilmiş — faktörler epic'in
+  tablosuyla aynı (0,15 / 0,45 / 0,75)
+
+**Bulunan:** öncesinde "arka plan" iki **düz dikdörtgendi** — `square`
+sprite'ı gerilmiş, üzerine renk verilmiş. Ölçüldüğünde asıl sorun çıktı:
+yakın bandın rengi (`HillNear`) **77,3** parlaklıkta, zemin karosu **82,4**.
+Arada 5 birim. İlk oynayan kişi "ortamı beğenmedim" dedi ve ölçüm ona hak
+verdi — arka plan ön planla aynı tondaydı.
+
+**Yapılan:** üç katman da koddan üretilen, yatayda **kusursuz tekrar eden**
+tepe siluetleri oldu. Harmoniklerin hepsi genişliğe tam bölündüğü için
+`sin(2πk(x+W)/W) = sin(2πkx/W)` — ek yeri matematiksel olarak yok, karo
+setindeki gibi dolgu gerekmiyor.
+
+| Katman | Faktör | Genişlik | Şekil | Parlaklık |
+|---|---|---|---|---|
+| Uzak | 0,15 | 16 birim | sivri dağ (`\|sin\|`) | **47,9** |
+| Orta | 0,45 | 24 birim | yumuşak tepe | **58,1** |
+| Yakın | 0,75 | 32 birim | geniş tepe | **65,0** |
+
+Genişlikler kasten farklı: katmanların tekrarı üst üste denk gelmesin diye.
+Yakın katman en geniş, çünkü kameraya göre en hızlı kayan — tekrarı en çok
+göze çarpan katman o.
+
+Parlaklık merdiveni atmosferik perspektif: uzaktaki gökyüzüne yakın, yakın
+olan daha koyu. Hepsi zemin karosunun (94,8) altında ve bu artık
+**`Sanati Denetle` tarafından ölçülüyor**, göze bırakılmıyor.
 
 ### 7. Sprite Atlas oluştur (performans)
 
@@ -184,7 +210,24 @@ Tüm sprite'ları tek atlasta toplamak draw call sayısını ciddi düşürür.
 - `Allow Rotation` ✘ (pixel art'ta sorun çıkarır)
 - `Tight Packing` ✘
 
-- [ ] Sprite Atlas oluşturuldu
+- [x] Sprite Atlas oluşturuldu — `Tools > 2D Platformer > Sprite Atlas Uret`
+
+**Sapma:** epic "`Assets/Art` klasörünü sürükle" diyor. Klasörün tamamını
+atlasa atmak burada **iki şeyi bozardı**:
+
+| Dışarıda kalan | Neden |
+|---|---|
+| `tileset.png` | Zaten tek texture — kazanç sıfır. Üstelik karolar arası 2 piksellik dolgu **elle** üretildi (kenar pikselleri kopyalanarak). Paketleyici karoları yeniden yerleştirince o dolgu kaybolur ve *"toprağın içinde yeşil şeyler"* hatası geri gelir. |
+| `bg_*` | `SpriteDrawMode.Tiled` ile döşeniyorlar. Atlas içindeki bir sprite'ın UV'leri büyük bir texture'ın ortasında kaldığı için tekrar sınırlarında sızıntı riski var. Kazanç yine sıfır: her katman zaten tek çizim çağrısı. |
+
+Tek kural ikisini de kapsıyor: **döşenerek veya dilimlenerek çizilen sprite
+atlasa girmez.** Kod bunu isimle değil, `spriteImportMode` ve ad önekiyle
+ayırt ediyor — yeni sprite eklendiğinde liste elle güncellenmiyor.
+
+**İkinci sessiz hata:** `m_SpritePackerMode` başlangıçta **0 (Disabled)**
+idi. O hâlde atlas dosyası oluşur, her şey yerinde görünür ve **hiçbir işe
+yaramaz.** Üretici bunu da açıyor, `Sanati Denetle` de ayrıca kontrol
+ediyor.
 
 ### 8. Sanat kaynakları (çizmiyorsan)
 
@@ -208,7 +251,12 @@ Kullandığın her şeyi `docs/LISANSLAR.md` içine yaz:
 | Zıplama sesi | freesound.org/xxxx | CC-BY 3.0 | **Evet** |
 ```
 
-- [ ] Kaynak seçildi, lisanslar `docs/LISANSLAR.md` içinde
+- [x] Kaynak seçildi, lisanslar [LISANSLAR.md](LISANSLAR.md) içinde — **dış
+  kaynak yok**, her görsel kodla üretiliyor
+
+Epic'in "tek bir paketten al" kuralının en uç hâli: hiç karıştırmamak.
+Dosya yine de yazıldı, çünkü boş kalan asıl satırlar sesler — CC-BY atıf
+**zorunlu** kılıyor ve eksikse lisans ihlali oluyor.
 
 ---
 
@@ -217,11 +265,11 @@ Kullandığın her şeyi `docs/LISANSLAR.md` içine yaz:
 - [x] Tüm sprite'lar aynı PPU — `Sanati Denetle` kontrol ediyor
 - [x] Tek bir palet kullanılıyor — `SpriteFactory` başında, rolleriyle
 - [~] Siluet ve gri tonlama **ölçülüyor ve geçiliyor**; bulanıklık testi oynanarak yapılacak
-- [ ] Arka plan ön planla yarışmıyor
+- [x] Arka plan ön planla yarışmıyor — **ölçülüyor**: `Sanati Denetle` hem tonu hem iç kontrastı kontrol ediyor
 - [x] Tile set kusursuz birleşiyor — Epic 05'te dolgu eklenerek çözüldü
-- [ ] Sprite Atlas var
+- [x] Sprite Atlas var — **ölçülüyor**: `Sanati Denetle` hem dosyayı hem paketleyicinin açık olduğunu kontrol ediyor
 - [x] Standartlar `docs/SANAT-REHBERI.md` içinde
-- [ ] Lisanslar `docs/LISANSLAR.md` içinde
+- [x] Lisanslar [LISANSLAR.md](LISANSLAR.md) içinde
 
 ---
 

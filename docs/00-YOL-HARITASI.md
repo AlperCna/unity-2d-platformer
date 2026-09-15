@@ -301,7 +301,7 @@ kendiliğinden oluşacak, sen de odağını kaybetmeyeceksin.
 | 9 | 07 | Tehlikeler | M2 | ✅ | 14.09.2026 |
 | 10 | 08 | Toplanabilirler | M2 | ✅ | 15.09.2026 |
 | 11 | 17 | Zorluk | M2 | 🔧 | ölçüm kuruldu; *3 kişi testi* Epic 16'dan sonra |
-| 12 | 11 | Sanat | M3 | ⬜ | **sıradaki** — tek geri bildirim buraya işaret ediyor |
+| 12 | 11 | Sanat | M3 | 🔧 | 8 görevden 7'si bitti; *karo varyasyonları* kaldı |
 | 13 | 12 | Animasyon | M3 | ⬜ | |
 | 14 | 13 | Ses | M3 | ⬜ | |
 | 15 | 14 | Juice | M3 | ⬜ | |
